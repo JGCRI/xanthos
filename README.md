@@ -1,7 +1,7 @@
 # xanthos
 Xanthos is a Python model designed to quantify and analyse global water availability historically and in the future at 0.5° × 0.5° spatial resolution and a monthly time step.  Its performance and functionality was tested through real-world applications. It is open-source, extensible and accessible for researchers who work on long-term climate data for studies of global water supply, and the Global Change Assessment Model (GCAM). This model integrates inherent global gridded data maps, I/O modules, hydrologic processes and diagnostics modules parameterized by a user-defined configuration file.
 
-# !Notice!
+# Notice
 This repository uses the Git Large File Storage (LFS) extension (see https://git-lfs.github.com/ for details).  Please run the following command before cloning if you do not already have Git LFS installed:
 `git lfs install`
 
