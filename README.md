@@ -1,13 +1,13 @@
 # xanthos
-Xanthos is a Python package designed to quantify and analyse global water availability historically and in the future at 0.5° × 0.5° spatial resolution and a monthly time step.  Its performance and functionality was tested through real-world applications. It is open-source, extensible and accessible for researchers who work on long-term climate data for studies of global water supply, and the Global Change Assessment Model (GCAM). This package integrates inherent global gridded data maps, I/O modules, hydrologic processes and diagnostics modules parameterized by a user-defined configuration file.
+Xanthos is a Python model designed to quantify and analyse global water availability historically and in the future at 0.5° × 0.5° spatial resolution and a monthly time step.  Its performance and functionality was tested through real-world applications. It is open-source, extensible and accessible for researchers who work on long-term climate data for studies of global water supply, and the Global Change Assessment Model (GCAM). This model integrates inherent global gridded data maps, I/O modules, hydrologic processes and diagnostics modules parameterized by a user-defined configuration file.
 
 # Introduction
-Xanthos is a code package for calculating global water availability, developed at the Joint Global Change Research Institute of the Pacific Northwest National laboratory, USA. The initial objective of this model is to quantify changes in future freshwater availability under various climate change regimes, and to serve as the freshwater supply component of the Global Change Assessment Model (GCAM) [1-3]. The model has been used in previous publications to explore different climate and socioeconomic scenarios over the 21st century and assess their implications on water scarcity regionally and globally [4-5].
+Xanthos is a model for calculating global water availability, developed at the Joint Global Change Research Institute of the Pacific Northwest National laboratory, USA. The initial objective of this model is to quantify changes in future freshwater availability under various climate change regimes, and to serve as the freshwater supply component of the Global Change Assessment Model (GCAM) [1-3]. The model has been used in previous publications to explore different climate and socioeconomic scenarios over the 21st century and assess their implications on water scarcity regionally and globally [4-5].
 
 The core algorithm of Xanthos is the hydrology model, which includes modules for calculating potential evapotranspiration (PET), runoff generation, and stream routing – shown in Figure 1. The underlying equations and algorithms for the hydrology model were described in details in Hejazi et al [4], and Zhou et al. [6]. The model requires gridded monthly temperature and precipitation, a maximum soil water storage capacity map (assumed static over time in this study) and calculates gridded monthly runoff, PET, actual evapotranspiration, water storage in the soil column, channel water storage and average channel flow. The PET module uses the Hargreaves method [5], and requires monthly temperature data (average temperature and average daily temperature range in Celsius). The stream routing module includes a cell-to-cell river routing scheme adopted from the modified river transport model (RTM), which uses a linear advection formula [6]. The aggregation module of Xanthos provides estimates of maximum naturally-available water fluxes (mm) or volumes (billion m3) monthly or annually (i.e., total monthly runoff) for each river basin. Xanthos also offers the user an option to obtain the annual volumes (billion m3/year) of renewable water resources that are accessible for human use in each basin [7], which is calculated by the accessible-water module.
 
 Xanthos was designed for independent applications and it can also serve as the water supply component in GCAM. The primary goals are as follows:
-1.	Be distributed as an open-source package that can be utilized and extended by researchers who study global hydrology
+1.	Be distributed as an open-source model that can be utilized and extended by researchers who study global hydrology
 2.	Estimate gridded (0.5 degree resolution) monthly global results of runoff, average channel flow, actual evapotranspiration, and water storage in the soil column
 3.	Employ a standardized configuration and simplified input structure that is easy for the user to update
 4.	Direct diagnostics on the runoff results.
@@ -22,11 +22,11 @@ The grid used for global map is a 0.5° resolution, which results in an original
 
 Xanthos consists of four modules. The flow chart is illustrated in Figure 2. As described in the introduction, PET calculation, runoff generation, and river routing are the core components of the hydrology model. Xanthos requires comprehensive input data files, which is divided into two classes. The climate data files are the forcing input to the model. The global data maps are the static input that are kept the same for each simulation. The direct outputs from the hydrology model are monthly gridded runoff, average channel flow, potential evapotranspiration, actual evapotranspiration, channel storage, and water storage in soil column. The user can choose if they need: 1) aggregated runoff results by basin, country or region; 2) time series plots of runoff and average channel flow by basin, country or region; 3) preform comparison with other models (diagnostics); and 4) the calculation of accessible water.
 
-Corresponding to the flowchart in Figure 2, Figure 3 shows the overall architecture of Xanthos.  In the source code package, “GCAM_Hydro.py” defines the main function that integrates all the modules shown in Figure 2. “Test.py” is the executable Python file connecting “config.ini” and “GCAM_Hydro.py”. Thus, a simulation can be executed with a simple command:
+Corresponding to the flowchart in Figure 2, Figure 3 shows the overall architecture of Xanthos.  In the source code, “GCAM_Hydro.py” defines the main function that integrates all the modules shown in Figure 2. “Test.py” is the executable Python file connecting “config.ini” and “GCAM_Hydro.py”. Thus, a simulation can be executed with a simple command:
 
 `$ python test.py`
 
-To simplify the how-to-run process for the users, the full package also has separated the input package from the code package. The input package provides:
+To simplify the how-to-run process for the users, the full model also has separated the input package from the code package. The input package provides:
 1.	Climate data files, which constitute the major user controlled inputs, include three netcdf files for precipitation, temperature and daily maximum temperature range. The data is stored in a matrix format with the dimensions of 67420 rows and number-of-months columns.
 2.	Harmonized gridded global data maps and other parameter data files required, which can be modified or replaced by the user easily.
 3.	Example data files of other models for comparison in diagnostics.
@@ -59,7 +59,7 @@ Figure 3: The architecture of Xanthos in application
 Figure 4: Example of a configuration file
 
 # Quality control
-This package was intensively tested by cases of different climate forcing on Linux and Windows.  Two example cases were included with the input climate data files, to help the user get familiar with the features and functions of Xanthos:
+This model was intensively tested by cases of different climate forcing on Linux and Windows.  Two example cases were included with the input climate data files, to help the user get familiar with the features and functions of Xanthos:
   A. Case for a historical run, and with options for aggregation, diagnostics, accessible water and time series plots, turned on.
   B. Case for a future run, with the initial channel storage and soil moisture data taken from the ending values of case A, and with basic options.
 
