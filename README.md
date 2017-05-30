@@ -52,6 +52,7 @@ Xanthos was developed using Python1 (version 2.7) and related libraries. NumPy2 
 Figure 2: Flowchart of Xanthos
 
 ![alt-text](https://github.com/JGCRI/xanthos/blob/master/docs/structure.png)
+
 Figure 3: The architecture of Xanthos in application
 
 ![alt-text](https://github.com/JGCRI/xanthos/blob/master/docs/config.png)
