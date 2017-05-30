@@ -69,7 +69,6 @@ A direct indicator of performance is the automatically generated log file. The l
 Figure 5: Example of diagnostics plot for comparison of averaged annual runoff with results from other models at basin scale.
 
 # References
-References
 
 [1]   Edmonds, J., and Reilly J. M., 1985. Global Energy: Assessing the Future. Oxford University Press, New York, pp.317.
 
