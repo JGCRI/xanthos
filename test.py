@@ -9,7 +9,7 @@ import os, sys
 # sys.path.insert(0, './Source Code')
 import DataReader.IniReader as IniReader
 from Utils.Logging import Logger
-from GCAM_Hydro import Hydro as GCAM_Hydro
+from gcam_hydro import Hydro as GCAM_Hydro
 
 # Read simulator settings from configuration file
 settingFile = 'config_futu.ini'
