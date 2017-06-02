@@ -60,6 +60,7 @@ Figure 2: Flowchart of Xanthos
 Figure 3: The architecture of Xanthos in application
 
 ![alt-text](https://github.com/JGCRI/xanthos/blob/master/docs/config.png)
+
 Figure 4: Example of a configuration file
 
 # Quality control
