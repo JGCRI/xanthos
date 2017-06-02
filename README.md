@@ -1,12 +1,12 @@
 # xanthos
-Xanthos is a Python model designed to quantify and analyse global water availability historically and in the future at 0.5° × 0.5° spatial resolution and a monthly time step.  Its performance and functionality was tested through real-world applications. It is open-source, extensible and accessible for researchers who work on long-term climate data for studies of global water supply, and the Global Change Assessment Model (GCAM). This model integrates inherent global gridded data maps, I/O modules, hydrologic processes and diagnostics modules parameterized by a user-defined configuration file.
+Xanthos is a model designed to quantify and analyse global water availability historically and in the future at 0.5° × 0.5° spatial resolution and a monthly time step.  Its performance and functionality was tested through real-world applications. It is open-source, extensible and accessible for researchers who work on long-term climate data for studies of global water supply, and the Global Change Assessment Model (GCAM). This model written in Python integrates inherent global gridded data maps, I/O modules, hydrologic processes and diagnostics modules parameterized by a user-defined configuration file.
 
 # Notice
 This repository uses the Git Large File Storage (LFS) extension (see https://git-lfs.github.com/ for details).  Please run the following command before cloning if you do not already have Git LFS installed:
 `git lfs install`
 
 # Introduction
-Xanthos is a model for calculating global water availability, developed at the Joint Global Change Research Institute of the Pacific Northwest National laboratory, USA. The initial objective of this model is to quantify changes in future freshwater availability under various climate change regimes, and to serve as the freshwater supply component of the Global Change Assessment Model (GCAM) [1-3]. The model has been used in previous publications to explore different climate and socioeconomic scenarios over the 21st century and assess their implications on water scarcity regionally and globally [4-5].
+Xanthos is a model written in python calculating global water availability, developed at the Joint Global Change Research Institute of the Pacific Northwest National laboratory, USA. The initial objective of this model is to quantify changes in future freshwater availability under various climate change regimes, and to serve as the freshwater supply component of the Global Change Assessment Model (GCAM) [1-3]. The model has been used in previous publications to explore different climate and socioeconomic scenarios over the 21st century and assess their implications on water scarcity regionally and globally [4-5].
 
 The core algorithm of Xanthos is the hydrology model, which includes modules for calculating potential evapotranspiration (PET), runoff generation, and stream routing – shown in Figure 1. The underlying equations and algorithms for the hydrology model were described in details in Hejazi et al [4], and Zhou et al. [6]. The model requires gridded monthly temperature and precipitation, a maximum soil water storage capacity map (assumed static over time in this study) and calculates gridded monthly runoff, PET, actual evapotranspiration, water storage in the soil column, channel water storage and average channel flow. The PET module uses the Hargreaves method [5], and requires monthly temperature data (average temperature and average daily temperature range in Celsius). The stream routing module includes a cell-to-cell river routing scheme adopted from the modified river transport model (RTM), which uses a linear advection formula [6]. The aggregation module of Xanthos provides estimates of maximum naturally-available water fluxes (mm) or volumes (billion m3) monthly or annually (i.e., total monthly runoff) for each river basin. Xanthos also offers the user an option to obtain the annual volumes (billion m3/year) of renewable water resources that are accessible for human use in each basin [7], which is calculated by the accessible-water module.
 
@@ -16,41 +16,41 @@ Xanthos was designed for independent applications and it can also serve as the w
 3.	Employ a standardized configuration and simplified input structure that is easy for the user to update
 4.	Direct diagnostics on the runoff results.
 
-To achieve the above goals, Python was selected as the programming language because of its easy-to-use and easy-to-install-with-libraries and it flexibility.
+To achieve the above goals, Python was selected as the programming language because of its easy-to-use and easy-to-install-with-libraries and it flexibility. 
 
 ![alt-text](https://github.com/JGCRI/xanthos/blob/master/docs/workflow.png)
 Figure 1: Main inputs and outputs of the hydrology model (Runoff Generation & Stream Routing) which is the core module of Xanthos
 
 # Implementation and architecture
-The grid used for global map is a 0.5° resolution, which results in an original matrix of 360 × 720 to present the data. The total number of valid grids (land grids) is 67420. Those 67420 cells define a “gridded” map according to the coordinates listed in a separated coordinate file. Certain commonly used global data maps such as IDs of basins/countries/regions are harmonized into the gridded format.
+The grid used for global map is a 0.5° resolution, which results in an original matrix of 360 × 720 to present the data. The total number of valid grids (land grids) is 67420. Those 67420 cells define a “gridded” map according to the coordinates listed in a separated coordinate file. Certain commonly used global data maps such as IDs of basins/countries/regions are harmonized into the gridded format. 
 
-Xanthos consists of four modules. The flow chart is illustrated in Figure 2. As described in the introduction, PET calculation, runoff generation, and river routing are the core components of the hydrology model. Xanthos requires comprehensive input data files, which is divided into two classes. The climate data files are the forcing input to the model. The global data maps are the static input that are kept the same for each simulation. The direct outputs from the hydrology model are monthly gridded runoff, average channel flow, potential evapotranspiration, actual evapotranspiration, channel storage, and water storage in soil column. The user can choose if they need: 1) aggregated runoff results by basin, country or region; 2) time series plots of runoff and average channel flow by basin, country or region; 3) preform comparison with other models (diagnostics); and 4) the calculation of accessible water.
+Xanthos consists of four modules. The flow chart is illustrated in Figure 2. As described in the introduction, PET calculation, runoff generation, and river routing are the core components of the hydrology model. Xanthos requires comprehensive input data files, which is divided into two classes. The climate data files are the forcing input to the model. The global data maps are the static input that are kept the same for each simulation. The direct outputs from the hydrology model are monthly gridded runoff, average channel flow, potential evapotranspiration, actual evapotranspiration, channel storage, and water storage in soil column. The user can choose if they need: 1) aggregated runoff results by basin, country or region; 2) time series plots of runoff and average channel flow by basin, country or region; 3) preform runoff comparison with other models (diagnostics); and 4) the calculation of accessible water.
 
-Corresponding to the flowchart in Figure 2, Figure 3 shows the overall architecture of Xanthos.  In the source code, “GCAM_Hydro.py” defines the main function that integrates all the modules shown in Figure 2. “Test.py” is the executable Python file connecting “config.ini” and “GCAM_Hydro.py”. Thus, a simulation can be executed with a simple command:
+Corresponding to the flowchart in Figure 2, Figure 3 shows the overall architecture of Xanthos.  In the source code folder, “GCAM_Hydro.py” defines the main function that integrates all the modules shown in Figure 2. “Test.py” is the executable Python file connecting “config.ini” and “GCAM_Hydro.py”. Thus, a simulation can be executed with a simple command:
 
 `$ python test.py`
 
-To simplify the how-to-run process for the users, the full model also has separated the input package from the code package. The input package provides:
+To simplify the how-to-run process for the users, it also has separated the input folder from the code folder. The input folder provides:
 1.	Climate data files, which constitute the major user controlled inputs, include three netcdf files for precipitation, temperature and daily maximum temperature range. The data is stored in a matrix format with the dimensions of 67420 rows and number-of-months columns.
 2.	Harmonized gridded global data maps and other parameter data files required, which can be modified or replaced by the user easily.
 3.	Example data files of other models for comparison in diagnostics.
 4.	Example data files for accessible water.
 
-The details (data source, format, related pre-processing, etc.) of the input files are listed in a document included in the input folder.
+The details (data source, format, related pre-processing, etc.) of the input files are listed in a document (“ReadMe_Input_Data.txt”) included in the input folder.
 
-The interface between the user and Xanthos is a configuration file, i.e., “config.ini”. One simulation requires a unique configuration file. Inside this configuration file, sections are organized and each section contains a few of name-value pairs for model settings (Figure 4). Six sections are defined in the configuration file:
+The interface between the user and Xanthos is a configuration file, i.e., “config.ini”. One simulation requires a unique configuration file. This configuration file is organized into six separate sections, each of which contains a few of setting parameters (Figure 4). The six sections are:
 1.	Project (Required): defines the major settings such as the paths of input and output folders, the output formatting, options for aggregated runoff results, an option for diagnostics, an option for time series plot, and an option for calculation of accessible water
 2.	Climate (Required): defines the historical/future mode, paths of input climate forcing data - precipitation, temperature and daily temperature range files, and an option for initialization
 3.	GriddedMap (Required): defines the required data maps, such as coordinates of the grids, maximum soil moisture of each gird, ID of basin/country/region for each gird
-4.	Diagnostics (Required only if “PerformDiagnostics = 1” in section 1): defines the paths of the data files from other models, and the options for comparison at basin, country or region scale.
+4.	Diagnostics (Required only if “PerformDiagnostics = 1” in section 1): defines the paths of the data files from other models (example models are described in “Quality Control” section), and the options for comparison at basin, country or region scale.
 5.	TimeSeriesPlot (Required only if “CreateTimeSeriesPlot = 1” in section 1): defines the scale for plots and the selected basin/county/region to be used for generating the plots.
-6.	AccessibleWater (Required only if “CalculateAccessibleWater = 1” in section 1): defines all the related parameters to the calculation of accessible water, such as the total reservoir capacity at basin level, and baseflow index file.
+6.	AccessibleWater (Required only if “CalculateAccessibleWater = 1” in section 1): defines all the related parameters to the calculation of accessible water, such as the total reservoir capacity at basin level, and a baseflow index file.
 
-Section 4, 5 and 6 are optional responding to the flags defined in Section 1. An output folder will be automatically generated at the path defined in the configuration file.
+Section 4, 5 and 6 are optional responding to the flags defined in Section 1. Default data files for inputs are included in the input folder. An output folder will be automatically generated at the path defined in the configuration file.
 
 Xanthos can be executed in either historical or future mode. For the historical mode, the climate forcing data is taken from a historical time period (e.g. data before year 2005).  As for the future mode, initial soil moisture and channel storage conditions can be taken either from a historical case calculated by Xanthos or from other models, and the climate forcing data is for future years (e.g. 2006-2100). Xanthos allows the spin-up (model initiation by using the results from the first few years) phase by setting the years for the spin-up time.
-
-Xanthos was developed using Python1 (version 2.7) and related libraries. NumPy2 and SciPy3 are the fundamental packages for scientific computing data processing. Matplotlib4 is a library used for 2D plotting of timer series plots and scatter plots from diagnostics. Pandas5 was used in accessible water module for data analysis. The results are able to be saved into two formats: CSV (comma-separated values) and NetCDF. NetCDF6 is a self-describing, machine-independent data formats for array-oriented scientific data which requires much smaller storage space. By default, the input climate data files should be stored as NetCDF files, but they can also be stored as mat (MATLAB7 formatted) files if needed. The mat files can be read and write by input/output modules of SciPy.
+  
+Xanthos was developed using Python (version 2.7) and related libraries. NumPy and SciPy are the fundamental packages for scientific computing data processing. Matplotlib is a library used for 2D plotting of timer series plots and scatter plots from diagnostics. Pandas was used in accessible water module for data analysis. The results are able to be saved into two formats: CSV (comma-separated values) and NetCDF. NetCDF is a self-describing, machine-independent data formats for array-oriented scientific data which requires much smaller storage space. By default, the input climate data files should be stored as NetCDF files, but they can also be stored as mat (MATLAB formatted) files if needed. The mat files can be read and write by input/output modules of SciPy.
 
 ![alt-text](https://github.com/JGCRI/xanthos/blob/master/docs/flowchart.png)
 Figure 2: Flowchart of Xanthos
@@ -64,14 +64,36 @@ Figure 4: Example of a configuration file
 
 # Quality control
 This model was intensively tested by cases of different climate forcing on Linux and Windows.  Two example cases were included with the input climate data files, to help the user get familiar with the features and functions of Xanthos:
-  A. Case for a historical run, and with options for aggregation, diagnostics, accessible water and time series plots, turned on.
+  A. Case for a historical run, and with options for aggregation, diagnostics, accessible water and time series plots, turned on.   
   B. Case for a future run, with the initial channel storage and soil moisture data taken from the ending values of case A, and with basic options.
 
-A direct indicator of performance is the automatically generated log file. The log file lists model settings, the processing steps, and CPU cost and warnings if applicable. The diagnostics module provides another option for the user to examine the quality of the model results of runoff. It compares the runoff results by basin scale, country scale or region scale to data sets of other models, such as the Variable Infiltration Capacity (VIC) model [8], Water Balance Model (WBM) and Water Balance Model Composite (WBMc) [9], UNH/GRDC [10-11]. Figure 5 is a scatter plot that shows an example of the plots created by the diagnostics module. If the scatters are blew the “x=y” line, the model overestimates the runoff compared to four models (e.g., VIC, WBM, WBMc and UNH/GRDC), and if they are above then the model underestimates. The gridded streamflow outputs are not regulated streamflow results. They are not available for direct comparison with other researches (for example, Dai’s results [12]), and hence are not included in diagnostics.
+An automatically generated log file provides details of each model run. The log file lists model settings, the processing steps, and CPU cost and warnings if applicable. The diagnostics module provides another option for the user to examine the quality of the model results of runoff. It compares the runoff results by basin scale, country scale or region scale to data sets of other models, such as the Variable Infiltration Capacity (VIC) model [8], Water Balance Model (WBM) and Water Balance Model Composite (WBMc) [9], UNH/GRDC [10-11]. Figure 5 is a scatter plot that shows an example of the plots created by the diagnostics module. If the scatters are below the “x=y” line, the model overestimates the runoff compared to four models (e.g., VIC, WBM, WBMc and UNH/GRDC), and if they are above then the model underestimates. The gridded streamflow outputs are not regulated streamflow results. They are not available for direct comparison with other researches (for example, Dai’s results [12]), and hence are not included in diagnostics.
 
 ![alt-text](https://github.com/JGCRI/xanthos/blob/master/docs/diag_basin.png)
 Figure 5: Example of diagnostics plot for comparison of averaged annual runoff with results from other models at basin scale.
 
+# Reuse potential
+The Python and dependent library packages used are all open-source. This model is highly modularized as described previously. Each module is able to be used independently by the user. Modification of a certain step could be restricted to the corresponding module. Extension of the model is achievable by adding a new module to an existing sub-folder or a new sub-folder.  Documentation is organized through intensive comments inside the python code and the example configuration file. Execution will also produce a detailed log file lists model settings, the processing steps, CPU cost and warnings if applicable. 
+
+For application purpose, there is also several options to output the gridded results. Two types of file format, CSV or NetCDF. Two choices of unit, mm/month or billion m3/month. And also, the user can determine if annual results are needed by combining 12-month results together (The unit is mm/year or billion m3/year).
+
+Xanthos is built as a part of integrated software for global water demand/supply/scarcity model, which the authors’ team is continuing the development.
+
+# Programming language
+Python (2.7.11)
+
+# Dependencies
+NumPy (version 1.11)
+
+Scipy (version 0.18)
+
+Matplotlib (version 1.5)
+
+Pandas (version 0.19)
+
+Netcdf (version 1.2.4)
+
+ 
 # References
 
 [1]   Edmonds, J., and Reilly J. M., 1985. Global Energy: Assessing the Future. Oxford University Press, New York, pp.317.

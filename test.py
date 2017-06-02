@@ -12,7 +12,7 @@ from Utils.Logging import Logger
 from gcam_hydro import Hydro as GCAM_Hydro
 
 # Read simulator settings from configuration file
-settingFile = 'config_futu.ini'
+settingFile = 'config_hist.ini' # Use config_hist.ini first for historical case; Then config_futu.ini for future case
 settings = IniReader.getSimulatorSettings(settingFile)
 # Check if outputFolder exist or not
 if not os.path.exists(settings.OutputFolder):

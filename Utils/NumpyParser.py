@@ -15,7 +15,8 @@ def GetArrayCSV(filename, headerNum):
 def GetArrayTXT(filename, headerNum):
     try:
         f = open(filename, "rU")
-        if '1.11' in numpy.__version__ or '1.10' in numpy.__version__:
+        a = numpy.__version__
+        if int(a.split('.')[1])>= 10:
             data = numpy.genfromtxt(f, delimiter=" ", skip_header=headerNum, filling_values="0")
         else:
             data = numpy.genfromtxt(f, delimiter=" ", skiprows=headerNum, filling_values="0")
