@@ -6,6 +6,11 @@ Created on Oct 26, 2016
 1. The option to aggregate the gridded results by the river basins / country / region
 2. Output in csv files, total runoff by basin/country/region... (row) and month/year (column), unit is determined by user settings
 
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+
 '''
 
 import numpy as np

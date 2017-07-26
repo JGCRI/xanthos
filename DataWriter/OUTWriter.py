@@ -3,6 +3,12 @@ Created on Oct 11, 2016
 @author: lixi729
 @Project: Xanthos V1.0
 
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+
+
 Output Settings:
 OutputFormat:  = 0(default, netcdf file); = 1(csv file)
 OutputUnit:    = 0(default, mm); = 1(km3)

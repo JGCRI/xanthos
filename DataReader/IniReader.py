@@ -5,6 +5,12 @@ Created on Oct 4, 2016
 @author: lixi729
 @email: xinya.li@pnl.gov
 @Project: Xanthos V1.0
+
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+
 '''
 import sys
 from configobj import ConfigObj  # install configobj package in Python

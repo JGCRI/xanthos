@@ -3,6 +3,12 @@ Created on Jan 5, 2017
 @author: lixi729
 @Project: Xanthos V1.0
 
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+
+
 Perform diagnostics by comparing the estimates of average total annual runoff (km^3/yr) of this study to other models.
 
 # Estimates of average total annual runoff (km^3/yr)

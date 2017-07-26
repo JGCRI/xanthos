@@ -4,6 +4,11 @@ Created on Feb 10, 2017
 @Project: Xanthos V1.0
 
 
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+
+
 Generate Time series plots
 
 '''

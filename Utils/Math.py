@@ -1,6 +1,10 @@
 '''
 Created on Feb 16, 2016
 @author: lixi729
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
 '''
 import numpy as np
 

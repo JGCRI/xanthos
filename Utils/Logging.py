@@ -2,6 +2,11 @@
 Created on Jun 9, 2016
 @author: lixi729
 
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+
+
 This is the class to define logging process:
 
 print command will write to screen and a logging file

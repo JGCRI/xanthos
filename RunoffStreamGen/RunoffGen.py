@@ -5,6 +5,12 @@ Module for generating monthly runoff from climatological input data
 @author: lixi729
 @email: xinya.li@pnl.gov
 @Project: Xanthos V1.0
+
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+
 '''
 
 import numpy as np
