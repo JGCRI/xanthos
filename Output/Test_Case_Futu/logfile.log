@@ -1,0 +1,41 @@
+ProjectName : Test_Case_Futu
+InputFolder : ./Input/GriddedMaps/
+OutputFolder: ./Output/Test_Case_Futu/
+Precipitation File          : ./Input/Climate/rcp4p5/pr_bced_1960_1999_ipsl-cm5a-lr_rcp4p5_MonAvg_200601_202012.nc
+Temperature File            : ./Input/Climate/rcp4p5/tas_bced_1960_1999_ipsl-cm5a-lr_rcp4p5_MonAvg_200601_202012.nc
+Daily Temperature Range File: ./Input/Climate/rcp4p5/dtr_bced_1960_1999_ipsl-cm5a-lr_rcp4p5_MonAvg_200601_202012.nc
+StartYear - End Year        : 2006 - 2020
+Number of Months            : 180
+Future Mode!
+Historic Soil Moisture File: ./Output/Test_Case_Hist/Sav_hist_bced_1960_1999_ipsl-cm5a-lr_historical_MonAvg_199601_200512.nc
+Historic Channel Storage File: ./Output/Test_Case_Hist/ChStorage_hist_bced_1960_1999_ipsl-cm5a-lr_historical_MonAvg_199601_200512.nc
+# Start Hydrologic Model:
+---Load Climate Data: 0.384000062943 seconds ---
+---Load Gridded Map Data: 2.0759999752 seconds ---
+---Simulation of the Global Water Balance Model (GWBM):
+------Prepare simulation Data: 0.335999965668 seconds ------
+------Start the simulation for all months: 
+Year 2006
+Year 2007
+Year 2008
+Year 2009
+Year 2010
+Year 2011
+Year 2012
+Year 2013
+Year 2014
+Year 2015
+Year 2016
+Year 2017
+Year 2018
+Year 2019
+Year 2020
+------Simulation has finished successfully: 285.66899991 seconds ------
+---Output simulation results:
+Save in csv files
+Output data annually
+Unit is  km^3/year
+Output dimension is (67420, 15)
+---Output finished: 7.71799993515 seconds ---
+# Hydrologic Model total time: 296.182999849 seconds
+End of Test_Case_Futu

@@ -44,7 +44,7 @@ def Hydro(settings):
     '''
 
     t0 = time.time()
-    print "# Start GCAM Hydro:"
+    print "# Start Hydrologic Model:"
     # Load Climate Data
     t1 = time.time()
     #
@@ -187,10 +187,9 @@ def Hydro(settings):
         TimeSeriesPlot(settings, q, ac, GridConstants)
         t4 = time.time()
         print("---Plots has finished successfully: %s seconds ------" % (t4 - t3))
-        print("# GCAM Hydro total time: %s seconds" % (t2 - t0 + t4 - t3))
+        print("# Hydrologic Model total time: %s seconds" % (t2 - t0 + t4 - t3))
     else:
-        print("# GCAM Hydro total time: %s seconds" % (t2 - t0))
-
+        print("# Hydrologic Model total time: %s seconds" % (t2 - t0))
 
 
 
