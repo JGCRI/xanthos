@@ -12,19 +12,19 @@ These files are prepared by the user.
 Monthly average precipitation, positive values
 Unit: mm/month
 Dimension: 67420*NMonth
-Format: MATLAB file (*.mat) or NETCDF file (*.nc), variable name is needed in configuration file
+Format: MATLAB file (*.mat) or NETCDF (classic) file (*.nc), variable name is needed in configuration file
 
 2. Temperature
 Monthly average temperature
-Unit: Celsius
+Unit: Celsius/month
 Dimension: 67420*NMonth
-Format: MATLAB file (*.mat) or NETCDF file (*.nc), variable name is needed in configuration file
+Format: MATLAB file (*.mat) or NETCDF (classic) file (*.nc), variable name is needed in configuration file
 
 3. Daily temperature range
 Monthly average of range between maximum and minimum daily temperatures, positive values
-Unit: Celsius
+Unit: Celsius/month
 Dimension: 67420*NMonth
-Format: MATLAB file (*.mat) or NETCDF file (*.nc), variable name is needed in configuration file
+Format: MATLAB file (*.mat) or NETCDF (classic) file (*.nc), variable name is needed in configuration file
 
 
 <GriddedMaps>
@@ -90,7 +90,7 @@ Wu, H., J. S. Kimball, H. Li, M. Huang, L. R. Leung, and R. F. Adler (2012), A n
 Annual gridded runoff of 30 years from 1971-2000
 Unit: km^3/year
 Dimension: 67420*30
-Format: MATLAB file (*.mat), variable name is "q"
+Format: MATLAB file (*.mat) or NETCDF (classic) file (*.nc), variable name is "q"
 Reference: Leng, G., Tang, Q. and Rayburg, S., 2015. Climate change impacts on meteorological, agricultural and hydrological droughts in China. Global and Planetary Change 126:23-34. DOI: http://doi.org/10.1016/j.gloplacha.2015.01.003
 e.g. vic_watch_hist_nosoc_co2_qtot_global_annual_1971_2000.mat
 Note: Xanthos will use the averaged runoff according to the time period of climate forcing, e.g. climate forcing is in 1996-2005, the VIC data in 1996-2000 will be averaged for comparison.
@@ -109,7 +109,7 @@ e.g. wbm_qestimates.csv, wbmc_qestimates.csv
 Averaged gridded runoff of Year 1986-1995
 Unit: km^3/year
 Dimension: 67420*1
-Format: MATLAB file (*.mat), variable name is "q"
+Format: MATLAB file (*.mat) or NETCDF (classic) file (*.nc), variable name is "q"
 e.g. UNH_GRDC_average_annual_1986_1995.mat
 Pre-processing: 
 Original Data can be accessed at http://daac.ornl.gov/cgi-bin/dsviewer.pl?ds_id=994
