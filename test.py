@@ -13,7 +13,7 @@ import os, sys
 # sys.path.insert(0, './Source Code')
 import DataReader.IniReader as IniReader
 from Utils.Logging import Logger
-from gcam_hydro import Hydro as GCAM_Hydro
+from gcam_hydro import Hydro
 
 # Read simulator settings from configuration file
 settingFile = 'config_hist.ini' # Use config_hist.ini first for historical case; Then config_futu.ini for future case
@@ -29,7 +29,7 @@ sys.stdout.log = open(settings.OutputFolder + "logfile.log", "w")
 IniReader.PrintInfo(settings)
 
 # Call the main function
-GCAM_Hydro(settings)
+Hydro(settings)
 
 print "End of", settings.ProjectName
 

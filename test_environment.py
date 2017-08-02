@@ -33,6 +33,7 @@ except:
 #scipy
 try:
     import scipy
+    from scipy import io as spio
     print "# scipy version", scipy.__version__
 except:
     print "!!! scipy is not installed."
@@ -57,11 +58,4 @@ try:
     print "# configobj version", configobj.__version__
 except:
     print "!!! configobj is not installed."
-    
-# netCDF4
-try:
-    import netCDF4
-    print "# netCDF4 version", netCDF4.__version__
-except:
-    print "!!! netCDF4 is not installed."
     

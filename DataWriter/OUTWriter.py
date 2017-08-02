@@ -18,6 +18,7 @@ OutputInYear:  = 0(default, per month); =1(per year, the output will combine 12-
 
 import numpy as np
 from scipy import io as spio
+#from netCDF4 import Dataset
 
 def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
     ChStorageNameStr = Settings.OutputNameStr
@@ -124,6 +125,7 @@ def SaveCSV(filename, data):
 def SaveNetCDF(filename, data, Settings, varstr):
     filename = filename + ".nc"
     # open
+#    datagrp = Dataset(filename, 'w', format='NETCDF4')
     datagrp = spio.netcdf.netcdf_file(filename, 'w')
     (nrows, ncols) = data.shape
 
@@ -143,6 +145,7 @@ def SaveNetCDF(filename, data, Settings, varstr):
     griddata.description = varstr + "_" + unit
 
     # data
+#    griddata[:, :] = data[:, :]
     griddata[:, :] = data[:, :].copy()
 
     # close

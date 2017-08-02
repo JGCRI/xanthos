@@ -17,6 +17,7 @@ Copyright (c) 2017, Battelle Memorial Institute
 import os, sys
 from scipy import io as spio
 import numpy as np
+#from netCDF4 import Dataset
 
 from Utils.NumpyParser import GetArrayCSV, GetArrayTXT
 from Utils.Math import sub2ind
@@ -179,12 +180,15 @@ def load_const_griddata(fn, headerNum=0, key=" "):
             print "Error! File does not exist:", fn
             sys.exit()
 
+#        datagrp = Dataset(fn, 'r', format='NETCDF4')
         datagrp = spio.netcdf.netcdf_file(fn, 'r')
 
         # copy() added to handle numpy 'ValueError:assignment destination is read-only' related to non-contiguous memory
         try:
+#            data = datagrp[key][:, :]
             data = datagrp.variables[key][:, :].copy()
         except:
+#            data = datagrp[key][:]            
             data = datagrp.variables[key][:].copy()
 
         datagrp.close()
