@@ -16,7 +16,7 @@ Copyright (c) 2017, Battelle Memorial Institute
 import numpy as np
 
 
-def Aggregation(settings, GridConstants, q, ac):
+def Aggregation(settings, GridConstants, q):
     Aggregation = {}
 
     if settings.AggregateRunoffBasin > 0 or settings.AggregateRunoffCountry > 0 or settings.AggregateRunoffGCAMRegion > 0:
@@ -24,34 +24,27 @@ def Aggregation(settings, GridConstants, q, ac):
         if settings.AggregateRunoffBasin > 0:  # Basin
             print("Aggregation by Basin")
             Aggregation['Basin_runoff'] = Aggregation_Map(settings, GridConstants['BasinIDs'],
-                                                          GridConstants['BasinNames'], q, "Basin_runoff")
-            Aggregation['Basin_streamflow'] = Aggregation_Map(settings, GridConstants['BasinIDs'],
-                                                              GridConstants['BasinNames'], ac, "Basin_streamflow")
-            print "Basin_runoff and Basin_streamflow: unit is ", settings.OutputUnitStr
+                                                          GridConstants['BasinNames'], q, "Basin_runoff")        
+            print "Basin_runoff: unit is ", settings.OutputUnitStr
 
         if settings.AggregateRunoffCountry > 0:  # Country
             print("Aggregation by Country")
             Aggregation['Country_runoff'] = Aggregation_Map(settings, GridConstants['CountryIDs'],
                                                             GridConstants['CountryNames'], q, "Country_runoff")
-            Aggregation['Country_streamflow'] = Aggregation_Map(settings, GridConstants['CountryIDs'],
-                                                                GridConstants['CountryNames'], ac, "Country_streamflow")
-            print "Country_runoff and Country_streamflow: unit is ", settings.OutputUnitStr
+            print "Country_runoff: unit is ", settings.OutputUnitStr
 
         if settings.AggregateRunoffGCAMRegion > 0:  # GCAMRegion
             print("Aggregation by GCAM Region")
             Aggregation['Region_runoff'] = Aggregation_Map(settings, GridConstants['GCAMRegionIDs'],
                                                            GridConstants['GCAMRegionNames'], q, "GCAMRegion_runoff")
-            Aggregation['Region_streamflow'] = Aggregation_Map(settings, GridConstants['GCAMRegionIDs'],
-                                                               GridConstants['GCAMRegionNames'], ac,
-                                                               "GCAMRegion_streamflow")
-            print "Country_runoff and Country_streamflow: unit is ", settings.OutputUnitStr
+            print "Country_runoff: unit is ", settings.OutputUnitStr
 
     return Aggregation
 
 
 def Aggregation_Map(settings, Map, Names, runoff, varstr):
-    '''aggregate runoff/streamflow by basin/country/region..., aggregate monthly values to annual.
-    Return table of total runoff/streamflow by basin/country/region... (row) and year (column) and output in csv'''
+    '''aggregate runoff by basin/country/region..., aggregate monthly values to annual.
+    Return table of total runoff by basin/country/region... (row) and year (column) and output in csv'''
 
     if settings.OutputInYear == 1:
         NT = int(settings.nmonths / 12)

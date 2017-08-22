@@ -10,15 +10,15 @@ Historic Mode!
 Spin-up     :Initialize the model using the first 3 years
 Diagnostics will be performed using the data file: ./Input/Diagnostics/vic_watch_hist_nosoc_co2_qtot_global_annual_1971_2000.nc
 # Start Hydrologic Model:
----Load Climate Data: 0.134999990463 seconds ---
----Load Gridded Map Data: 1.79999995232 seconds ---
+---Load Climate Data: 0.957000017166 seconds ---
+---Load Gridded Map Data: 2.21499991417 seconds ---
 ---Simulation of the Global Water Balance Model (GWBM):
-------Prepare simulation Data: 0.365000009537 seconds ------
+------Prepare simulation Data: 0.410000085831 seconds ------
 ------Start the spin-up initialization:
 Year 1996
 Year 1997
 Year 1998
-------Spin-up has finished successfully: 59.6070001125 seconds ------
+------Spin-up has finished successfully: 57.3919999599 seconds ------
 ------Start the simulation for all months: 
 Year 1996
 Year 1997
@@ -30,11 +30,11 @@ Year 2002
 Year 2003
 Year 2004
 Year 2005
-------Simulation has finished successfully: 262.222000122 seconds ------
+------Simulation has finished successfully: 252.398000002 seconds ------
 ---Start Accessible Water:
----Accessible Water has finished successfully: 1.41899991035 seconds ------
+---Accessible Water has finished successfully: 1.4279999733 seconds ------
 ---Start Diagnostics:
----Diagnostics has finished successfully: 5.84899997711 seconds ------
+---Diagnostics has finished successfully: 5.90400004387 seconds ------
 ---Output simulation results:
 Save in netcdf files
 Unit is  mm/month
@@ -42,19 +42,14 @@ Output dimension is (67420, 120)
 The following two files are saved as initialization data sets (latest month) for future mode:
 ChStorage: monthly output, unit is m^3/month, dimension is (67420, 120)
 Soil column moisture: monthly output, unit is mm/month, dimension is (67420, 120)
----Output finished: 12.7100000381 seconds ---
+---Output finished: 12.7089998722 seconds ---
 ---Start Aggregation:
 Aggregation by Basin
-Basin_runoff and Basin_streamflow: unit is  mm/month
+Basin_runoff: unit is  mm/month
 Aggregation by Country
-Country_runoff and Country_streamflow: unit is  mm/month
+Country_runoff: unit is  mm/month
 Aggregation by GCAM Region
-Country_runoff and Country_streamflow: unit is  mm/month
----Aggregation has finished successfully: 102.578999996 seconds ------
----Creating Time Series Plots:
-Scale: Basin, Create plots for all
-Scale: Country, Create plots for all
-Scale: GCAMRegion, Create plots for all
----Plots has finished successfully: 752.519000053 seconds ------
-# Hydrologic Model total time: 1029.75100017 seconds
+Country_runoff: unit is  mm/month
+---Aggregation has finished successfully: 47.0180001259 seconds ------
+# Hydrologic Model total time: 268.688999891 seconds
 End of Test_Case_Hist

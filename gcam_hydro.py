@@ -157,7 +157,7 @@ def Hydro(settings):
         print("---Accessible Water has finished successfully: %s seconds ------" % (t4 - t3))
 
 
-        # Diagnostics
+    # Diagnostics
     if settings.PerformDiagnostics:
         t3 = time.time()
         print("---Start Diagnostics:")
@@ -166,7 +166,7 @@ def Hydro(settings):
         print("---Diagnostics has finished successfully: %s seconds ------" % (t4 - t3))
 
 
-        # Output simulation results
+    # Output simulation results
     print "---Output simulation results:"
     q, ac = OUTWriter(settings, GridConstants['Area'], PET, AET, Q, Sav, ChStorage, Avg_ChFlow)
     t2 = time.time()
@@ -176,7 +176,7 @@ def Hydro(settings):
     if settings.AggregateRunoffBasin > 0 or settings.AggregateRunoffCountry > 0 or settings.AggregateRunoffGCAMRegion > 0:
         t3 = time.time()
         print("---Start Aggregation:")
-        Aggregation(settings, GridConstants, q, ac)
+        Aggregation(settings, GridConstants, q)
         t4 = time.time()
         print("---Aggregation has finished successfully: %s seconds ------" % (t4 - t3))
 
