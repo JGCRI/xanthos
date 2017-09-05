@@ -40,7 +40,7 @@ The flowchart of Xanthos is illustrated in Figure 2 and Figure 3 shows the overa
 1.	DataReader: Configuration (class “ConfigSettings”) and import inputs (“DataLoad” module) according to user defined INI<sup>11</sup> file (“IniReader” module)
 2.	DataWriter: Export outputs (“OUTWriter” module) by options
 3.	Diagnostics: Aggregate gridded runoff results at basin/country/region scales (“Aggregation” module), perform diagnostics (“Diagnostics” module), or create time series plots  (“TimeSeries” module) by options
-4.	RunoffStreamGen: Calculate PET (“PETCalculation” module), calculate runoff (“RunoffGen” module) and r routing (“StreamRouting” module) using monthly water balance model, calculate accessible water (“Accessible” module)
+4.	RunoffStreamGen: Calculate PET (“PETCalculation” module), calculate runoff (“RunoffGen” module) and river routing (“StreamRouting” module) using monthly water balance model, calculate accessible water (“Accessible” module)
 
 Xanthos can be executed in either historical or future mode. For the historical mode, the climate forcing data is taken from a historical time period (e.g. data before year 2005).  As for the future mode, initial soil moisture and channel storage conditions can be taken either from a historical case calculated by Xanthos or from other models, and the climate forcing data is for future years (e.g. 2006-2100). Xanthos allows the spin-up (model initiation by using the results from the first few years) phase by setting the years for the spin-up time.
 
