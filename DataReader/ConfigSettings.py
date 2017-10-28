@@ -13,8 +13,10 @@ Copyright (c) 2017, Battelle Memorial Institute
 '''
 
 
-class ConfigSettings():
+class ConfigSettings:
+
     def __init__(self):
+
         '''Project'''
         self.ProjectName = None
         self.InputFolder = None
