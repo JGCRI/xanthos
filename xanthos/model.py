@@ -10,8 +10,8 @@ Copyright (c) 2017, Battelle Memorial Institute
 
 import os
 import sys
-import DataReader.IniReader as IniReader
-from Utils.Logging import Logger
+from xanthos.DataReader.IniReader import ConfigReader
+from xanthos.Utils.Logging import Logger
 from gcam_hydro import Hydro
 
 
@@ -35,7 +35,7 @@ class Xanthos:
         """
         Set up run.
         """
-        self.s = IniReader.getSimulatorSettings(self.ini)
+        self.s = ConfigReader(self.ini)
 
         # create output directory
         self.make_dir(self.s.OutputFolder)
@@ -53,20 +53,12 @@ class Xanthos:
         self.stage()
 
         with open(self.log_file, 'w') as sys.stdout.log:
+            self.s.log_info()
 
-            IniReader.PrintInfo(self.s)
+            # instantiate Hydro class
+            h = Hydro(self.s)
 
-            # call main function to run model
-            Hydro(self.s)
+            # run model
+            h.process()
 
             print("End of {0}".format(self.s.ProjectName))
-
-
-if __name__ == "__main__":
-
-    ini = '/users/ladmin/repos/github/xanthos/config_hist.ini'
-
-    xth = Xanthos(ini)
-
-    xth.execute()
-
