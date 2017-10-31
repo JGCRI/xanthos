@@ -18,8 +18,8 @@ import sys
 from scipy import io as spio
 import numpy as np
 
-from Utils.NumpyParser import GetArrayCSV, GetArrayTXT
-from Utils.Math import sub2ind
+from xanthos.Utils.NumpyParser import GetArrayCSV, GetArrayTXT
+from xanthos.Utils.Math import sub2ind
 
 
 def load_gcm_data(settings):
@@ -76,38 +76,6 @@ def load_gcm_var(fn, varname):
     return data
 
 
-def load_dam_data(settings):
-    """Loads dam data"""
-
-    constants = {}
-
-    # data = spio.loadmat(settings.InputFolder+'damid.mat')
-    # constants['Damid'] = data['damid']
-
-    data = spio.loadmat(settings.InputFolder + 'inflow.mat')
-    constants['Inflow'] = data['inflow']
-
-    data = spio.loadmat(settings.InputFolder + 'totalinflow.mat')
-    constants['TotalInflow'] = data['totalinflow']
-
-    data = spio.loadmat(settings.InputFolder + 'purpose.mat')
-    constants['Purpose'] = data['purpose']
-
-    data = spio.loadmat(settings.InputFolder + 'capacity.mat')
-    constants['Capacity'] = data['capacity']
-
-    data = spio.loadmat(settings.InputFolder + 'wdirr.mat')
-    constants['WdIrr'] = data['wdirr']
-
-    data = spio.loadmat(settings.InputFolder + 'wdnonirr.mat')
-    constants['WdNonirr'] = data['wdnonirr']
-
-    data = spio.loadmat(settings.InputFolder + 'meanirr.mat')
-    constants['MeanWdirr'] = data['meanirr']
-
-    return constants
-
-
 def check_size(data, ng, nm):
     n = 0
     m = 0
@@ -134,56 +102,63 @@ def check_n_years(data):
 def load_map_data(settings):
     constants = {}
 
-    '''' Area value for each land grid cell: 67420 x 1, convert from ha to km2 '''
+    # Area value for each land grid cell: 67420 x 1, convert from ha to km2
     constants['Area'] = load_const_griddata(settings.Area) * 0.01
 
-    '''' Coordinates for flattened grid:  67420 x 5, the columns are ID#, lon, lat, ilon, ilat '''
+    # Coordinates for flattened grid:  67420 x 5, the columns are ID#, lon, lat, ilon, ilat
     constants['Coord'] = load_const_griddata(settings.Coord)
     settings.mapindex = sub2ind([settings.ngridrow, settings.ngridcol], constants['Coord'][:, 4].astype(int) - 1,
                                 constants['Coord'][:, 3].astype(int) - 1)
 
-    ''' DRT data, 280 x 720, -9999 for missing values, convert to 67420 X 1'''
+    # DRT data, 280 x 720, -9999 for missing values, convert to 67420 X 1
     orig = load_const_griddata(settings.FlowDis)
     constants['FlowDis'] = vectorizeGridData(orig, settings, 68)
 
     orig = load_const_griddata(settings.FlowDir)
     constants['FlowDir'] = vectorizeGridData(orig, settings, 68)
 
-    ''' Basin ID Map: 67420 x 1, 235 Basins '''
+    # load channel velocity data used in routing
+    chv = load_const_griddata(settings.ChVeloc)
+    chv0 = np.zeros_like(chv)
+    chv0[:, 0:359] = chv[:, 360:719]
+    chv0[:, 360:719] = chv[:, 0:359]
+    constants['ChVeloc'] = vectorizeGridData(chv0, settings, 68)
+
+    # Basin ID Map: 67420 x 1, 235 Basins
     constants['BasinIDs'] = load_const_griddata(settings.BasinIDs, 1).astype(int)
 
-    ''' Corresponding to Basin ID Map, 235 Basin Names: 1D String Array'''
+    # Corresponding to Basin ID Map, 235 Basin Names: 1D String Array
     constants['BasinNames'] = load_const_griddata(settings.BasinNames)
 
-    ''' GCAM Region ID Map :  67420 x 1 (The nonag region table will be the 'primary' region assignment)'''
+    # GCAM Region ID Map :  67420 x 1 (The nonag region table will be the 'primary' region assignment)
     constants['GCAMRegionIDs'] = load_const_griddata(settings.GCAMRegionIDs, 1).astype(int)
 
-    ''' Corresponding to GCAM Region ID Map'''
+    # Corresponding to GCAM Region ID Map
     with open(settings.GCAMRegionNames, 'r') as f:
         f.readline()
         temp = f.read().split('\n')
         constants['GCAMRegionNames'] = np.array([i.split(',') for i in temp])[:, 0]
 
-    '''Country ID Map : 67420 x 1 (249 countries: 1-249)'''
+    # Country ID Map : 67420 x 1 (249 countries: 1-249)
     constants['CountryIDs'] = load_const_griddata(settings.CountryIDs, 1).astype(int)
 
-    ''' Corresponding to Country ID Map, 0-248 index number and 249 Country Names: 2D String Array'''
+    # Corresponding to Country ID Map, 0-248 index number and 249 Country Names: 2D String Array
     with open(settings.CountryNames, 'r') as f:
         temp = f.read().splitlines()
         constants['CountryNames'] = np.array([i.split(',') for i in temp])[:, 1]
 
-    ''' Max Soil Moisture Map (mm/month): 67420 x 1'''
+    # Max Soil Moisture Map (mm/month): 67420 x 1
     constants['MaxSoilMois'] = load_const_griddata(settings.MaxSoilMois, 1)
 
-    ''' Water Bodies: assign MSM = 999, 306 x 2, Col 1 is the cell number in 67420'''
+    # Water Bodies: assign MSM = 999, 306 x 2, Col 1 is the cell number in 67420
     constants['LakesMSM'] = load_const_griddata(settings.LakesMSM).astype(int)
     constants['LakesMSM'][:, 0] -= 1
 
-    #    ''' Rivers:  assign MSM = 999, 4198 x 2, Col 1 is the cell number in 67420'''
+    #    ''' Rivers:  assign MSM = 999, 4198 x 2, Col 1 is the cell number in 67420
     #    constants['RiversMSM']      = load_const_griddata(settings.RiversMSM).astype(int)
     #    constants['RiversMSM'][:,0]  -= 1
 
-    ''' Additional water bodies: assign MSM = 999, 421 x 2,  Col 1 is the cell number in 67420'''
+    # Additional water bodies: assign MSM = 999, 421 x 2,  Col 1 is the cell number in 67420
     constants['AdditWaterMSM'] = load_const_griddata(settings.AdditWaterMSM).astype(int)
     constants['AdditWaterMSM'][:, 0] -= 1
 

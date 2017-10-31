@@ -139,7 +139,8 @@ class Hydro:
         self.FlowDis_1D = np.copy(self.GridConstants['FlowDis'])
         self.FlowDis_1D[np.where(self.FlowDis_1D < 1000)[0]] = 1000
         self.Ins_ChFlow = np.zeros((self.s.ncell,), dtype=float)
-        self.ChVeloc_1D = np.ones((self.s.ncell,), dtype=float)
+        self.ChVeloc_1D = np.copy(self.GridConstants['ChVeloc'])
+        self.ChVeloc_1D[np.where(self.ChVeloc_1D < 0)[0]] = 0
 
         # -1, 1-67420
         self.dsid = SR.downstream(self.GridConstants['Coord'], self.GridConstants['FlowDir'], self.s)
@@ -160,14 +161,6 @@ class Hydro:
     def prep_arrays(self, nm):
         """
         Prepare arrays
-        :param nm:
-        :param Precip:
-        :param Temp:
-        :param DTR:
-        :param lambdaT:
-        :param dr:
-        :param M:
-        :return:
         """
         self.P = np.copy(self.Precip[:, nm])  # keep nan in P
         self.T = np.nan_to_num(self.Temp[:, nm])  # nan to zero

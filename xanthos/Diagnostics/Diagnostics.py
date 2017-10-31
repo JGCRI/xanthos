@@ -25,7 +25,7 @@ from scipy import io as spio
 import numpy as np
 import matplotlib.pyplot as plt
 
-from DataReader.DataLoad import load_const_griddata as loadfile
+from xanthos.DataReader.DataLoad import load_const_griddata as loadfile
 
 
 def Diagnostics(settings, Q, Avg_ChFlow, GridConstants):

@@ -27,6 +27,7 @@ class ConfigReader:
         p = c['Project']
         m = c['Climate']
         r = c['Reference']
+        g = c['Routing']
         d = c['Diagnostics']
         t = c['TimeSeriesPlot']
         a = c['AccessibleWater']
@@ -40,6 +41,7 @@ class ConfigReader:
         self.OutputFolder = os.path.join(self.root, '{}/{}'.format(p['OutputFolder'], self.ProjectName))
         self.ClimateFolder = os.path.join(self.InputFolder, p['ClimateDir'])
         self.Reference = os.path.join(self.InputFolder, p['RefDir'])
+        self.RoutingDir = os.path.join(self.InputFolder, p['RoutingDir'])
         self.DiagDir = os.path.join(self.InputFolder, p['DiagDir'])
         self.AccWatDir = os.path.join(self.InputFolder, p['AccWatDir'])
         self.HydActDir = os.path.join(self.InputFolder, p['HydActDir'])
@@ -114,6 +116,9 @@ class ConfigReader:
         self.ChSlope = None
         self.DrainArea = None
         self.RiversMSM = None
+
+        # routing
+        self.ChVeloc = os.path.join(self.RoutingDir, g['ChVeloc'])
 
         # diagnostics
         if self.PerformDiagnostics:
