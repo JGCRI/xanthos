@@ -9,3 +9,6 @@
 
 # exclude output dir
 example/output
+
+# ignore .mat files
+*.mat
