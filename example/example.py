@@ -8,7 +8,7 @@ from xanthos.model import Xanthos
 if __name__ == "__main__":
 
     # full path to parameterized config file
-    ini = '/users/ladmin/repos/github/xanthos/example/config_hist.ini'
+    ini = '/users/ladmin/repos/github/xanthos/example/config_abcd.ini'
 
     # instantiate xanthos class
     xth = Xanthos(ini)

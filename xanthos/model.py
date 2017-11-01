@@ -10,7 +10,7 @@ Copyright (c) 2017, Battelle Memorial Institute
 
 import os
 import sys
-from xanthos.DataReader.IniReader import ConfigReader
+from xanthos.data_reader.IniReader import ConfigReader
 from xanthos.Utils.Logging import Logger
 from gcam_hydro import Hydro
 
@@ -53,7 +53,8 @@ class Xanthos:
         self.stage()
 
         with open(self.log_file, 'w') as sys.stdout.log:
-            self.s.log_info()
+
+            # self.s.log_info()
 
             # instantiate Hydro class
             h = Hydro(self.s)

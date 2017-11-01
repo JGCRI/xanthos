@@ -1,4 +1,4 @@
-'''
+"""
 Created on Jan 5, 2017
 @author: lixi729
 @Project: Xanthos V1.0
@@ -20,12 +20,13 @@ Perform diagnostics by comparing the estimates of average total annual runoff (k
 # - VIC     The major comparison
 # - WBM     Ref comparison: WBM (Fekete et al., 2000) and WBMc (Fekete et al., 2000) are also used as additional comparisons (2 column csv files)
 # - UNH     Ref comparison: UNH-GRDC 1986-1995
-'''
-from scipy import io as spio
+"""
+
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 
-from xanthos.DataReader.DataLoad import load_const_griddata as loadfile
+from xanthos.data_reader.DataLoad import load_const_griddata as loadfile
 
 
 def Diagnostics(settings, Q, Avg_ChFlow, GridConstants):
@@ -76,8 +77,11 @@ def Diagnostics(settings, Q, Avg_ChFlow, GridConstants):
             qb[:, 4] = Aggregation_Diagnostics(settings, GridConstants['BasinIDs'], UNH)
             qb = np.insert(qb, 0, np.sum(qb, axis=0), axis=0)  # add global
             BasinNames = np.insert(GridConstants['BasinNames'], 0, 'Global')
-            writecsvDiagnostics(settings.OutputFolder + "Diagnostics_Runoff_Basin_Scale", qb, plotname, BasinNames)
-            outputname = settings.OutputFolder + "Diagnostics_Runoff_Basin_Scale"
+
+            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Basin_Scale"), qb, plotname, BasinNames)
+
+            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Basin_Scale")
+
             Plot_Diagnostics(qb[1:, :], outputname, 'Basin', plotname)
 
             for i in range(qb.shape[0]):
@@ -102,8 +106,10 @@ def Diagnostics(settings, Q, Avg_ChFlow, GridConstants):
             qc[:, 4] = Aggregation_Diagnostics(settings, GridConstants['CountryIDs'], UNH)
             qc = np.insert(qc, 0, np.sum(qc, axis=0), axis=0)  # add global
             CountryNames = np.insert(GridConstants['CountryNames'], 0, 'Global')
-            writecsvDiagnostics(settings.OutputFolder + "Diagnostics_Runoff_Country_Scale", qc, plotname, CountryNames)
-            outputname = settings.OutputFolder + "Diagnostics_Runoff_Country_Scale"
+
+            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Country_Scale"), qc, plotname, CountryNames)
+            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Country_Scale")
+
             Plot_Diagnostics(qc[1:, :], outputname, 'Country', plotname)
 
             for i in range(qc.shape[0]):
@@ -128,8 +134,10 @@ def Diagnostics(settings, Q, Avg_ChFlow, GridConstants):
             qr[:, 4] = Aggregation_Diagnostics(settings, GridConstants['GCAMRegionIDs'], UNH)
             qr = np.insert(qr, 0, np.sum(qr, axis=0), axis=0)  # add global
             RegionNames = np.insert(GridConstants['GCAMRegionNames'], 0, 'Global')
-            writecsvDiagnostics(settings.OutputFolder + "Diagnostics_Runoff_Region_Scale", qr, plotname, RegionNames)
-            outputname = settings.OutputFolder + "Diagnostics_Runoff_Region_Scale"
+
+            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Region_Scale"), qr, plotname, RegionNames)
+            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Region_Scale")
+
             Plot_Diagnostics(qr[1:, :], outputname, 'Region', plotname)
 
             for i in range(qr.shape[0]):

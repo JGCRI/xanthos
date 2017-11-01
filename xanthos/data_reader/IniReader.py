@@ -25,9 +25,10 @@ class ConfigReader:
         c = ConfigObj(ini)
 
         p = c['Project']
-        m = c['Climate']
         r = c['Reference']
-        g = c['Routing']
+        ro = c['Runoff']
+        rt = c['Routing']
+        #pt = c['PET']
         d = c['Diagnostics']
         t = c['TimeSeriesPlot']
         a = c['AccessibleWater']
@@ -39,8 +40,8 @@ class ConfigReader:
         self.ProjectName = p['ProjectName']
         self.InputFolder = os.path.join(self.root, p['InputFolder'])
         self.OutputFolder = os.path.join(self.root, '{}/{}'.format(p['OutputFolder'], self.ProjectName))
-        self.ClimateFolder = os.path.join(self.InputFolder, p['ClimateDir'])
         self.Reference = os.path.join(self.InputFolder, p['RefDir'])
+        self.RunoffDir = os.path.join(self.InputFolder, p['RunoffDir'])
         self.RoutingDir = os.path.join(self.InputFolder, p['RoutingDir'])
         self.DiagDir = os.path.join(self.InputFolder, p['DiagDir'])
         self.AccWatDir = os.path.join(self.InputFolder, p['AccWatDir'])
@@ -56,10 +57,7 @@ class ConfigReader:
         self.StartYear = int(p['StartYear'])
         self.EndYear = int(p['EndYear'])
         self.nmonths = (self.EndYear - self.StartYear + 1) * 12
-        self.SpinUp = int(p['SpinUp'])
         self.pet = p['pet']
-        self.runoff = p['runoff']
-        self.routing = p['routing']
         self.OutputFormat = int(p['OutputFormat'])
         self.OutputUnit = int(p['OutputUnit'])
         self.OutputInYear = int(p['OutputInYear'])
@@ -72,30 +70,76 @@ class ConfigReader:
         self.CalculateHydropowerPotential = int(p['CalculateHydropowerPotential'])
         self.CalculateHydropowerActual = int(p['CalculateHydropowerActual'])
 
-        # climate data
-        self.OutputNameStr = m['ClimateScenario']
-        self.PrecipitationFile = os.path.join(self.ClimateFolder, m['PrecipitationFile'])
-        self.PrecipVarName = m['PrecipVarName']
-        self.TemperatureFile = os.path.join(self.ClimateFolder, m['TemperatureFile'])
-        self.TempVarName = m['TempVarName']
-        self.DailyTemperatureRangeFile = os.path.join(self.ClimateFolder, m['DailyTemperatureRangeFile'])
-        self.DTRVarName = m['DTRVarName']
+        # runoff
+        self.runoff_module = ro['runoff_module'].lower()
 
-        self.ChStorageFile = None
-        self.ChStorageVarName = None
-        self.SavFile = None
-        self.SavVarName = None
+        if self.runoff_module == 'hejazi':
 
-        if self.HistFlag == 'False':
-            try:
-                self.ChStorageFile = m['ChStorageFile']
-                self.ChStorageVarName = m['ChStorageVarName']
-                self.SavFile = m['SavFile']
-                self.SavVarName = m['SavVarName']
+            ro_mod = ro['Hejazi']
+            self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['model_dir'])
+            self.SpinUp = int(ro_mod['SpinUp'])
 
-            except KeyError:
-                print("Error: ChStorageFile and ChStorageVarName are not defined for Future Mode.")
-                sys.exit()
+            ro_clm = ro_mod['Climate']
+            self.ClimateFolder = os.path.join(self.ro_model_dir, ro_clm['climate_dir'])
+            self.OutputNameStr = ro_clm['ClimateScenario']
+            self.PrecipitationFile = os.path.join(self.ClimateFolder, ro_clm['PrecipitationFile'])
+            self.PrecipVarName = ro_clm['PrecipVarName']
+            self.TemperatureFile = os.path.join(self.ClimateFolder, ro_clm['TemperatureFile'])
+            self.TempVarName = ro_clm['TempVarName']
+            self.DailyTemperatureRangeFile = os.path.join(self.ClimateFolder, ro_clm['DailyTemperatureRangeFile'])
+            self.DTRVarName = ro_clm['DTRVarName']
+
+            # channel storage file full path name with extension if running future
+            self.ChStorageFile = None
+            self.ChStorageVarName = None
+
+            # soil moisture file full path name with extension if running future
+            self.SavFile = None
+            self.SavVarName = None
+
+            if self.HistFlag == 'False':
+                try:
+                    self.ChStorageFile = ro_clm['ChStorageFile']
+                    self.ChStorageVarName = ro_clm['ChStorageVarName']
+                    self.SavFile = ro_clm['SavFile']
+                    self.SavVarName = ro_clm['SavVarName']
+
+                except KeyError:
+                    print("Error: ChStorageFile and ChStorageVarName are not defined for Future Mode.")
+                    sys.exit()
+
+        elif self.runoff_module == 'abcd':
+
+            ro_mod = ro['abcd']
+            self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['model_dir'])
+            self.ro_out_dir = os.path.join(self.ro_model_dir, ro_mod['output_dir'])
+            self.SpinUp = int(ro_mod['SpinUp'])
+            self.ro_jobs = int(ro_mod['jobs'])
+
+            ro_clm = ro_mod['Climate']
+            self.ClimateFolder = os.path.join(self.ro_model_dir, ro_clm['climate_dir'])
+            self.hist_dir = os.path.join(self.ClimateFolder, ro_clm['hist_dir'])
+            self.hist_var = ro_clm['hist_var']
+            self.calib_dir = os.path.join(self.ClimateFolder, ro_clm['calib_dir'])
+            self.calib_var = ro_clm['calib_var']
+
+        else:
+            print("ERROR: Runoff module '{0}' not found.".format(self.runoff_module))
+            print("Please check spelling and try again.")
+            sys.exit()
+
+        # routing
+        self.routing_module = rt['routing_module'].lower()
+
+        if self.routing_module == 'simple':
+            rt_mod = rt['simple']
+            self.rt_model_dir = os.path.join(self.RoutingDir, rt_mod['model_dir'])
+            self.ChVeloc = os.path.join(self.rt_model_dir, rt_mod['ChVeloc'])
+
+        else:
+            print("ERROR: Routing module '{0}' not found.".format(self.routing_module))
+            print("Please check spelling and try again.")
+            sys.exit()
 
         # reference
         self.Area = os.path.join(self.Reference, r['Area'])
@@ -111,14 +155,10 @@ class ConfigReader:
         self.MaxSoilMois = os.path.join(self.Reference, r['MaxSoilMois'])
         self.LakesMSM = os.path.join(self.Reference, r['LakesMSM'])
         self.AdditWaterMSM = os.path.join(self.Reference, r['AdditWaterMSM'])
-
         self.CellArea = None
         self.ChSlope = None
         self.DrainArea = None
         self.RiversMSM = None
-
-        # routing
-        self.ChVeloc = os.path.join(self.RoutingDir, g['ChVeloc'])
 
         # diagnostics
         if self.PerformDiagnostics:
