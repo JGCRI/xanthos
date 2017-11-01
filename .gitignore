@@ -6,3 +6,6 @@
 
 # exclude .idea dir
 .idea
+
+# exclude output dir
+example/output
