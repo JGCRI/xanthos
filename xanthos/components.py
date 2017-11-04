@@ -1,38 +1,47 @@
 """
-@date     10/14/2016
-@author   lixi729
-@email:   xinya.li@pnl.gov
-@Project: Xanthos V1.0
-@Function: Run model to create runoff and streamrouting results
+Components for use in model configurations.
+
+@author   Chris R. Vernon , lixi729
+@email:   chris.vernon@pnnl.gov; xinya.li@pnl.gov
+@Project: Xanthos 2.0
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
 """
+
 import numpy as np
 import time
 
 import xanthos.data_reader.DataLoad as DataLoad
 from xanthos.DataWriter.OUTWriter import OUTWriter
-
-import xanthos.pet.hargreaves as PETCalculation
-import xanthos.runoff as runoff
-import xanthos.routing.simple as SR
-
 from xanthos.Diagnostics.Aggregation import Aggregation
 from xanthos.Diagnostics.Diagnostics import Diagnostics
 from xanthos.Diagnostics.TimeSeries import TimeSeriesPlot
-
 from xanthos.accessible.accessible import AccessibleWater
 from xanthos.hydropower.potential import HydropowerPotential
 from xanthos.hydropower.actual import HydropowerActual
 
+import xanthos.pet.hargreaves as pet_mod
+import xanthos.routing.simple as routing_mod
 
-class Hydro:
 
-    def __init__(self, settings):
+class Components:
+    """
+    Components for use in model configurations.
 
-        self.s = settings
+    @author   Chris R. Vernon , lixi729
+    @email:   chris.vernon@pnnl.gov; xinya.li@pnl.gov
+    @Project: Xanthos 2.0
+
+    License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+    Copyright (c) 2017, Battelle Memorial Institute
+    """
+
+    def __init__(self, config):
+
+        self.s = config
 
         # climate data
         self.Precip = None
@@ -48,6 +57,8 @@ class Hydro:
         self.M = None
         self.lambdaT = None
         self.dr = None
+        self.pet_t = None
+        self.pet_out = None
 
         # soil moisture content
         self.MSMC = None
@@ -97,7 +108,7 @@ class Hydro:
         # Load Climate Data
         t0 = time.time()
 
-        self.Precip, self.Temp, self.DTR, self.sav_prev, self.chs_prev = DataLoad.load_gcm_data(self.s)
+        self.Precip, self.Temp, self.DTR = DataLoad.load_gcm_data(self.s)
 
         t1 = time.time()
         print("---Load Climate Data: %s seconds ---" % (t1 - t0))
@@ -111,13 +122,6 @@ class Hydro:
         # Loads grid constants (gridded maps) as dictionary
         self.GridConstants = DataLoad.load_map_data(self.s)
 
-        # create a matrix (MSMC: Maximum Soil Moisture Capacity) with all data
-        # 1: area; 2: region; 3: Max Soil Moisture (mm/month)
-        self.MSMC = DataLoad.get_MaxSoilMoisture_matrix(self.GridConstants, self.s.ncell)
-
-        # extract grid area
-        self.grid_area = np.copy(self.MSMC[:, 0])
-
         t1 = time.time()
         print("---Load Gridded Map Data: %s seconds ---" % (t1 - t0))
 
@@ -130,9 +134,9 @@ class Hydro:
         self.X = self.latitude * np.pi / 180.
 
         # month-of-year and days per month for each month
-        self.M = PETCalculation.set_month_arrays(self.s)
+        self.M = pet_mod.set_month_arrays(self.s.nmonths, self.s.StartYear, self.s.EndYear)
 
-        self.lambdaT, self.dr = PETCalculation.calc_sinusoidal_factor(self.M)
+        self.lambdaT, self.dr = pet_mod.calc_sinusoidal_factor(self.M)
 
     def setup_msmc(self):
         """
@@ -140,8 +144,19 @@ class Hydro:
         runoff model. If future mode, read values from historical file.
         """
 
+        # create a matrix (MSMC: Maximum Soil Moisture Capacity) with all data
+        # 1: area; 2: region; 3: Max Soil Moisture (mm/month)
+        self.MSMC = DataLoad.get_MaxSoilMoisture_matrix(self.GridConstants, self.s.ncell)
+
+        # extract grid area
+        self.grid_area = np.copy(self.MSMC[:, 0])
+
         # soil moisture
         self.Sm = np.copy(self.MSMC[:, 2])
+
+        # load historic soil moisture data if future or create zeros array if historic
+        self.sav_prev = DataLoad.load_soil_data(self.s)
+        self.chs_prev = DataLoad.load_chs_data(self.s)
 
         if self.s.HistFlag == "True":
             self.sav_prev = 0.5 * self.Sm
@@ -157,79 +172,54 @@ class Hydro:
         self.ChVeloc_1D[np.where(self.ChVeloc_1D < 0)[0]] = 0
 
         # -1, 1-67420
-        self.dsid = SR.downstream(self.GridConstants['Coord'], self.GridConstants['FlowDir'], self.s)
+        self.dsid = routing_mod.downstream(self.GridConstants['Coord'], self.GridConstants['FlowDir'], self.s)
 
         # 1-67420
-        self.upid = SR.upstream(self.GridConstants['Coord'], self.dsid, self.s)
-        self.UM = SR.upstream_genmatrix(self.upid)
+        self.upid = routing_mod.upstream(self.GridConstants['Coord'], self.dsid, self.s)
+        self.UM = routing_mod.upstream_genmatrix(self.upid)
 
     def setup_alloc(self):
 
-        self.PET = np.zeros_like(self.Precip)
-        self.AET = np.zeros_like(self.Precip)
-        self.Q = np.zeros_like(self.Precip)
-        self.Sav = np.zeros_like(self.Precip)
-        self.ChStorage = np.zeros_like(self.Precip)
-        self.Avg_ChFlow = np.zeros_like(self.Precip)
+        self.PET = np.zeros(shape=(self.s.ncell, self.s.nmonths))
+        self.AET = np.zeros(shape=(self.s.ncell, self.s.nmonths))
+        self.Q = np.zeros(shape=(self.s.ncell, self.s.nmonths))
+        self.Sav = np.zeros(shape=(self.s.ncell, self.s.nmonths))
+        self.ChStorage = np.zeros(shape=(self.s.ncell, self.s.nmonths))
+        self.Avg_ChFlow = np.zeros(shape=(self.s.ncell, self.s.nmonths))
 
     def prep_arrays(self, nm=None):
         """
         Prepare arrays
         """
-        # for all
         if nm is None:
             self.P = np.copy(self.Precip)  # keep nan in P
             self.T = np.nan_to_num(self.Temp)  # nan to zero
             self.D = np.nan_to_num(self.DTR)  # nan to zero
-            self.Y = np.copy(self.lambdaT)
-            self.DR = np.copy(self.dr)
-            self.mm = np.copy(self.M[:, 2])
+            self.pet_out = np.zeros_like(self.Precip)
 
         else:
             self.P = np.copy(self.Precip[:, nm])  # keep nan in P
             self.T = np.nan_to_num(self.Temp[:, nm])  # nan to zero
             self.D = np.nan_to_num(self.DTR[:, nm])  # nan to zero
-            self.Y = np.copy(self.lambdaT[nm])
-            self.DR = np.copy(self.dr[nm])
-            self.mm = np.copy(self.M[nm, 2])
+            self.pet_out = None
 
-    def staging(self):
+    def prep_pet(self, nm):
         """
-        Stage data for processing.
+        Prepare PET for processing.
         """
-        t0 = time.time()
+        self.Y = np.copy(self.lambdaT[nm])
+        self.DR = np.copy(self.dr[nm])
+        self.mm = np.copy(self.M[nm, 2])
+        self.temp_pet = np.nan_to_num(self.Temp[:, nm])  # nan to zero
+        self.dtr_pet = np.nan_to_num(self.DTR[:, nm])  # nan to zero
 
-        # load climate data
-        self.load_climate()
-
-        # load reference data
-        self.load_reference()
-
-        # PET calculation related
-        self.setup_pet()
-
-        # MSMC related data
-        self.setup_msmc()
-
-        # Flow related data
-        self.setup_flow()
-
-        # allocation
-        self.setup_alloc()
-
-        t1 = time.time()
-        print("---Prepare simulation Data: %s seconds ------" % (t1 - t0))
-
-    def calculate_pet(self):
+    def calculate_pet(self, archive=False):
         """
         Calculate monthly potential evapo-transpiration.
         """
-        if self.s.pet.lower() == 'hargreaves':
-            self.pet_t = PETCalculation.calculate_pet(self.T, self.D, self.X, self.Y, self.DR, self.mm)
+        if self.s.pet_module == 'hargreaves':
 
-        else:
-            # use Hargreaves as default
-            self.pet_t = PETCalculation.calculate_pet(self.T, self.D, self.X, self.Y, self.DR, self.mm)
+            self.pet_t = pet_mod.calculate_pet(self.temp_pet, self.dtr_pet, self.X, self.Y, self.DR, self.mm)
 
     def calculate_runoff(self, nm=None):
         """
@@ -238,24 +228,20 @@ class Hydro:
         Runoff takes a feedback of soil moisture content (sav_prev).  This is updated for each iteration of a month.
         """
         if self.s.runoff_module == 'hejazi':
-            # import desired runoff module
-            from runoff import hejazi
+            import xanthos.runoff.hejazi as runoff_mod
 
-            rg = hejazi.runoffgen(self.pet_t, self.P, self.T, self.D, self.s, self.Sm, self.X, self.Y, self.mm, self.DR, self.sav_prev)
+            rg = runoff_mod.runoffgen(self.pet_t, self.P, self.T, self.D, self.s, self.Sm, self.X, self.Y, self.mm, self.DR, self.sav_prev)
             self.PET[:, nm], self.AET[:, nm], self.Q[:, nm], self.Sav[:, nm] = rg
 
         elif self.s.runoff_module == 'abcd':
-            # import desired runoff module
-            from runoff import abcd
+            import xanthos.runoff.abcd as runoff_mod
 
             # run all basins at once in parallel
-            abcd.abcd_parallel(num_basins=235, calib_dir=self.s.calib_dir, calib_var=self.s.calib_var,
-                               hist_dir=self.s.hist_dir, hist_var=self.s.hist_var,
-                               out_dir=self.s.ro_out_dir, n_months=self.s.nmonths,
-                               spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
+            rg = runoff_mod.abcd_execute(n_basins=235, basin_ids=self.GridConstants['BasinIDs'],
+                                         pet=self.pet_out, precip=self.P, tmin=self.T, calib_file=self.s.calib_file,
+                                         out_dir=self.s.ro_out_dir, n_months=self.s.nmonths,
+                                         spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
 
-            # build array to pass to router
-            rg = abcd.abcd_outputs(out_dir, n_months=self.s.nmonths)
             self.PET, self.AET, self.Q, self.Sav = rg
 
     def calculate_routing(self, nm):
@@ -267,104 +253,125 @@ class Hydro:
             # 3 hour time step for simplified solver
             self.deltat_routing = 3 * 3600
 
-            sr = SR.streamrouting(self.FlowDis_1D, self.chs_prev, self.Ins_ChFlow, self.ChVeloc_1D,
-                                  self.Q[:, nm], self.grid_area, self.mm, self.deltat_routing, self.UM)
+            sr = routing_mod.streamrouting(self.FlowDis_1D, self.chs_prev, self.Ins_ChFlow, self.ChVeloc_1D,
+                                           self.Q[:, nm], self.grid_area, self.mm, self.deltat_routing, self.UM)
 
             self.ChStorage[:, nm], self.Avg_ChFlow[:, nm], self.Ins_ChFlow = sr
 
-    def simulation(self, steps, type=1):
+    def simulation(self, num_steps=None, pet=True, runoff=True, runoff_step='month',
+                   routing=True, routing_step='month', notify='simulation'):
         """
-        Run model simulation for a single time step.
+        Run model simulation for a defined configuration.
 
-        @:param steps:          The number of time steps
-        @:param type:           Simulation type.  Depends on combination of model components
-                                selected by the user.
-
-                                Type 1:  hejazi runoff module with routing (Default)
-                                Type 2:  abcd runoff module with routing
+        :param num_steps:           The number of time steps to process (INT)
+        :param pet:                 True if running PET, False if embedded in runoff model
+        :param runoff:              True if running Runoff, False if not
+        :param runoff_step:         The time unit as a string; if None the runoff model iterates internally, else 'month'
+        :param routing:             True if running Routing, False if not
+        :param routing_step:        The time unit as a string; if None the routing model iterates internally, else 'month'
+        :param notify:              A string that is used to add to log print that describes whether the simulation is
+                                    spin-up or regular
         """
-        if type == 1:
+        # pass simulation if there are no steps to process
+        if num_steps == 0:
+            pass
 
-            for nm in range(steps):
+        else:
+            if (runoff_step == 'month') and (routing_step == 'month'):
 
-                if np.mod(nm, 12) == 0:
-                    print("Year: {}".format(self.M[nm, 0]))
+                print("---{} in progress...".format(notify))
+                t0 = time.time()
 
-                # set up data for processing
-                self.prep_arrays(nm)
+                for nm in range(num_steps):
 
-                # calculate pet
-                self.calculate_pet()
+                    if np.mod(nm, 12) == 0:
+                        print("Processing Year: {}".format(self.M[nm, 0]))
 
-                # calculate runoff and generate monthly potential ET, actual ET, runoff, and soil moisture
-                self.calculate_runoff(nm)
+                    # set up climate data for processing
+                    self.prep_arrays(nm)
 
-                # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-                self.calculate_routing(nm)
+                    # set up PET data for processing
+                    self.prep_pet(nm)
 
-                # update soil moisture (sav) and channel storage (chs) arrays for next step
-                self.sav_prev = np.copy(self.Sav[:, nm])
-                self.chs_prev = np.copy(self.ChStorage[:, nm])
+                    # calculate pet
+                    if pet:
+                        self.calculate_pet()
 
-        elif type == 2:
+                    # calculate runoff and generate monthly potential ET, actual ET, runoff, and soil moisture
+                    if runoff:
+                        self.calculate_runoff(nm)
 
-            # set up data for processing
-            self.prep_arrays()
+                        # update soil moisture (sav) array for next step
+                        self.sav_prev = np.copy(self.Sav[:, nm])
 
-            # calculate pet
-            # self.calculate_pet()
+                    # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
+                    if routing:
 
-            # calculate runoff for all basins all months
-            self.calculate_runoff()
+                        self.calculate_routing(nm)
 
-            for nm in range(steps):
+                        # update channel storage (chs) array for next step
+                        self.chs_prev = np.copy(self.ChStorage[:, nm])
 
-                if np.mod(nm, 12) == 0:
-                    print("Year: {}".format(self.M[nm, 0]))
+                print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
-                # calculate the number of days in the month
-                self.mm = np.copy(self.M[nm, 2])
+            elif (runoff_step is None) and (routing_step == 'month'):
 
-                # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-                self.calculate_routing(nm)
+                print("---{} in progress... ".format(notify))
+                t0 = time.time()
 
-                # update channel storage (chs) arrays for next step
-                self.chs_prev = np.copy(self.ChStorage[:, nm])
+                # set up climate data for processing
+                self.prep_arrays()
 
-    def spin_up(self):
-        """
-        Run spin-up for a user-defined number of years. If 0, then pass.
-        """
-        if self.s.SpinUp > 0:
+                # calculate PET
+                if pet:
+                    print("---Processing PET...")
+                    t = time.time()
 
-            print("---Start the spin-up initialization:")
-            t0 = time.time()
+                    for nm in range(num_steps):
 
-            self.simulation(self.s.SpinUp * 12, type=1)
+                        # set up PET data for processing
+                        self.prep_pet(nm)
 
-            print("---Spin-up has finished successfully: %s seconds ---" % (time.time() - t0))
+                        # calculate pet
+                        self.calculate_pet()
 
-    def execute(self):
-        """
-        Run simulation for defined months.
-        """
-        print("---Start the simulation for all months: ")
-        t0 = time.time()
+                        # archive pet month in array
+                        self.pet_out[:, nm] = self.pet_t
 
-        if self.s.runoff_module == 'hejazi':
+                    print("---PET processed in {} seconds---".format(time.time() - t))
 
-            # run spin-up
-            self.spin_up()
+                # calculate runoff for all basins all months
+                if runoff:
+                    print("---Processing Runoff...")
+                    t = time.time()
 
-            # run simulation
-            self.simulation(self.s.nmonths, type=1)
+                    self.calculate_runoff()
 
-        elif self.s.runoff_module == 'abcd':
+                    print("---Runoff processed in {} seconds---".format(time.time() - t))
 
-            # run simulation; spin-up is conducted in the ABCD module
-            self.simulation(self.s.nmonths, type=2)
+                # update soil moisture (sav) array for use in future mode
+                self.sav_prev = np.copy(self.Sav)
 
-        print("---Simulation has finished successfully: %s seconds ---" % (time.time() - t0))
+                # process routing
+                if routing:
+
+                    print("---Processing Routing...")
+                    t = time.time()
+
+                    for nm in range(self.s.nmonths):
+
+                        # calculate the number of days in the month
+                        #self.mm = np.copy(self.M[nm, 2])
+
+                        # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
+                        self.calculate_routing(nm)
+
+                        # update channel storage (chs) arrays for next step
+                        self.chs_prev = np.copy(self.ChStorage[:, nm])
+
+                    print("---Routing processed in {} seconds---".format(time.time() - t))
+
+                print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
     def accessible_water(self):
         """
@@ -468,34 +475,4 @@ class Hydro:
         Avg_ChFlow:  monthly average stream flow [ncell x nmonth]
         ChStorage:   month-end channel storage [ncell x nmonth]
         """
-        t0 = time.time()
-        print("# Start Hydrologic Model:")
-
-        # set up data for run
-        self.staging()
-
-        # execute simulation
-        self.execute()
-
-        # accessible water module
-        self.accessible_water()
-
-        # hydropower potential
-        self.hydropower_potential()
-
-        # hydropower actual
-        self.hydropower_actual()
-
-        # diagnostics
-        self.diagnostics()
-
-        # output simulation data
-        self.output_simulation()
-
-        # aggregate outputs
-        self.aggregate_outputs()
-
-        # create time series plots
-        self.plots()
-
-        print("# Hydrologic Model total time: %s seconds" % (time.time() - t0))
+        pass

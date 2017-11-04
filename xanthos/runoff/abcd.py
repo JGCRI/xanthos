@@ -1,8 +1,19 @@
+"""
+ABCD runoff model.
+
+@author   Chris R. Vernon
+@email:   chris.vernon@pnnl.gov
+@Project: Xanthos 2.0
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+"""
+
 import numpy as np
 import os
+import sys
 from joblib import Parallel, delayed
-
-import xanthos.data_reader.abcd_reader as rdr
 
 
 class ABCD:
@@ -20,6 +31,7 @@ class ABCD:
 
     @:param prm     Object containing calibrated data
     @:param hist    Object containing Watch data
+                    hist.
     @:return a      Float from 0-1
     @:return b      Float from 100-1000 mm
     @:return c      Float from 0-1
@@ -27,11 +39,11 @@ class ABCD:
     @:return m      Float from 0-1
     """
 
-    def __init__(self, prm, hist, coords, process_steps, spinup_factor, method='dist'):
+    def __init__(self, pars, pet, precip, tmin, process_steps, spinup_factor, method='dist'):
 
         # load data
-        self.prm = prm
-        self.hist = hist
+        # self.prm = prm
+        # self.hist = hist
 
         # set processing method and steps
         self.method = method
@@ -40,16 +52,16 @@ class ABCD:
         self.spinup_steps = process_steps * spinup_factor
 
         # assign attributes
-        self.a = prm.pars[0][0]
-        self.b = prm.pars[0][1] * 1000
-        self.c = prm.pars[0][2]
-        self.d = prm.pars[0][3]
-        self.m = prm.pars[0][4]
+        self.a = pars[0]
+        self.b = pars[1] * 1000
+        self.c = pars[2]
+        self.d = pars[3]
+        self.m = pars[4]
 
         # values coordinate to [a, b, c, d, m]
-        self.lb = np.array([0.001, 0.1, 0, 0, 0])
-        self.ub = np.array([1, 4, 1, 1, 1])
-        self.nn = len(self.lb)
+        # self.lb = np.array([0.001, 0.1, 0, 0, 0])
+        # self.ub = np.array([1, 4, 1, 1, 1])
+        # self.nn = len(self.lb)
 
         # values [initial runoff, soil moisture storage, groundwater storage
         self.inv = np.array([20, 100, 500])
@@ -59,31 +71,36 @@ class ABCD:
         if method == 'lump':
 
             # get mean array of each item
-            self.pet = np.nanmean(hist.pet[:, 0:self.steps], axis=0)
-            self.p = np.nanmean(hist.p[:, 0:self.steps], axis=0)
-            self.tmin = np.nanmean(hist.tmin[:, 0:self.steps], axis=0)
-            self.robs = np.nanmean(hist.robs[:, 0:self.steps], axis=0)
-            self.maxstor = np.nanmean(hist.maxstor, axis=0)
-            self.bfi = np.nanmean(hist.bfi[:, 0:self.steps], axis=0)
+            self.pet = np.nanmean(pet[:, 0:self.steps], axis=0)
+            self.p = np.nanmean(precip[:, 0:self.steps], axis=0)
+            self.tmin = np.nanmean(tmin[:, 0:self.steps], axis=0)
+
+            # self.robs = np.nanmean(hist.robs[:, 0:self.steps], axis=0)
+            # self.maxstor = np.nanmean(hist.maxstor, axis=0)
+            # self.bfi = np.nanmean(hist.bfi[:, 0:self.steps], axis=0)
 
         else:
 
-            self.pet = hist.pet[:, 0:self.steps]
-            self.p = hist.p[:, 0:self.steps]
-            self.tmin = hist.tmin[:, 0:self.steps]
-            self.robs = hist.robs[:, 0:self.steps]
-            self.maxstor = hist.maxstor
-            self.bfi = hist.bfi
+            # PET as input
+            self.pet = pet[:, 0:self.steps]
+
+            # precipitation as input
+            self.p = precip[:, 0:self.steps]
+
+            # temperature minimum as input
+            self.tmin = tmin[:, 0:self.steps]
+
+            # self.robs = hist.robs[:, 0:self.steps]
+            # self.maxstor = hist.maxstor
+            # self.bfi = hist.bfi
 
         # set start points
         self.pet0 = np.tile(self.pet, self.spinup_factor)
         self.p0 = np.tile(self.p, self.spinup_factor)
         self.tmin0 = np.tile(self.tmin, self.spinup_factor)
-        self.robs0 = np.tile(self.robs, self.spinup_factor)
-        self.maxstor0 = np.tile(self.maxstor, self.spinup_factor)
 
-        # get basin coordinates for each cell
-        self.coords = coords
+        # self.robs0 = np.tile(self.robs, self.spinup_factor)
+        # self.maxstor0 = np.tile(self.maxstor, self.spinup_factor)
 
         # populate param arrays
         self.snm = None
@@ -307,7 +324,15 @@ class ABCD:
         Reset initial values for runoff [0], soil moisture [1], and groundwater storage [2] based on spin-up as the
         average of the last three Decembers.
         """
-        dec_idx = [self.spinup_steps - 36, self.spinup_steps - 24, self.spinup_steps - 12]
+        try:
+            # get Decembers from end of array (-1=last december, -13=two years ago, -25=three years ago)
+            dec_idx = [-1, -13, -25]
+
+        except IndexError:
+            print('Spin-up factor must produce at least 10 years spin-up.')
+            print('Your factor ({0}) when multiplied by the total years ({1}) yeids a spin-up of {2} years.'.format(self.spinup_factor, self.steps/12, self.spinup_steps/12))
+            print('Please reconfigure and try again.')
+            sys.exit()
 
         if self.method == 'lump':
             rsim_rollover = self.rsim[dec_idx]
@@ -333,7 +358,7 @@ class ABCD:
         # initialize arrays for spinup
         self.init_arrays(self.p0, self.tmin0)
 
-        # run spinup with initial settings and calibrated a, b, c, d, m params
+        # run spin-up with initial settings and calibrated a, b, c, d, m params
         for i in range(0, self.spinup_steps, 1):
 
             if self.method == 'lump':
@@ -373,7 +398,7 @@ class ABCD:
         self.simulate()
 
 
-def _run_basin(basin_num, calib_dir, calib_var, hist_dir, hist_var, out_dir, n_months, spinup_factor=2, method='dist', verbose=False):
+def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, out_dir, n_months, spinup_factor=2, method='dist'):
     """
     Run the ABCD model for each basin.
 
@@ -384,40 +409,32 @@ def _run_basin(basin_num, calib_dir, calib_var, hist_dir, hist_var, out_dir, n_m
     :param method:          Either 'dist' for distributed, or 'lump' for lumped processing
     :param verbose:         True if all ABCD parameters are to be exported, False if only coords and rsim (Default)
     """
-    # number of months, number of parameters from WATCH, basin number
 
-    c_f = os.path.join(calib_dir, 'Cal_{0}_noconstrain_basin_{1}.mat'.format(method, basin_num))
+    # import ABCD parameters for the target basin
+    pars = pars_abcdm[basin_num-1]
 
-    w_f = os.path.join(hist_dir, 'WATCH_basin_{0}_grid.mat'.format(basin_num))
+    # get index where equals basin
+    basin_idx = np.where(basin_ids == basin_num)
 
-    # read parameters from calibration
-    prm = rdr.ReadParams(c_f, calib_var)
-
-    # read historic data from watch
-    hist = rdr.ReadWatch(w_f, hist_var)
-
-    # get coordinates
-    coords = hist.grids
+    # extract data where equals basin
+    _pet = pet[basin_idx]
+    _precip = precip[basin_idx]
+    _tmin = tmin[basin_idx]
 
     # instantiate the model
-    he = ABCD(prm, hist, coords, n_months, spinup_factor, method=method)
+    he = ABCD(pars, _pet, _precip, _tmin, n_months, spinup_factor, method=method)
 
     # run it
     he.emulate()
 
     # stack outputs
-    if verbose:
-        vals = np.hstack([he.coords, he.robs, he.rsim, he.ea, he.pet, he.g, he.s, he.re,
-                            he.dr, he.base, he.xs, he.rain, he.snow, he.snm])
-
-    else:
-        vals = np.hstack([he.coords, he.pet, he.ea, he.rsim, he.g, he.s])
+    vals = np.hstack([he.pet, he.ea, he.rsim, he.s])
 
     # write output
     np.save(os.path.join(out_dir, 'abcd_output_basin_{0}.npy'.format(basin_num)), vals)
 
 
-def abcd_parallel(num_basins, out_dir, n_months, spinup_factor=1, jobs=-1):
+def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, out_dir, n_months, spinup_factor=1, jobs=-1):
     """
     This model is made to run a basin at a time.  Running them in parallel greatly speeds things up.
     Outputs of each function are saved to an output directory.  The user can choose to output just
@@ -425,10 +442,10 @@ def abcd_parallel(num_basins, out_dir, n_months, spinup_factor=1, jobs=-1):
 
     :param num_basins:          How many basin to run
     """
-    Parallel(n_jobs=jobs)(delayed(_run_basin)(i, out_dir, n_months, spinup_factor) for i in range(1, num_basins + 1, 1))
+    Parallel(n_jobs=jobs)(delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, out_dir, n_months, spinup_factor) for i in range(1, num_basins + 1, 1))
 
 
-def abcd_outputs(pth, n_months):
+def abcd_outputs(pth, n_months, basin_ids, ncells):
     """
     Load each saved array of outputs from the ABCD runs and stack them.
 
@@ -436,6 +453,10 @@ def abcd_outputs(pth, n_months):
     :return         A NumPy array for coordinates (long, lat) and simulated runoff
                     with the shape (grid cells, value per month).
     """
+    _aet = np.zeros(shape=(ncells, n_months))
+    _q = np.zeros(shape=(ncells, n_months))
+    _sav = np.zeros(shape=(ncells, n_months))
+    _pet = np.zeros(shape=(ncells, n_months))
 
     # get a full path list to all files in output dir
     files = [os.path.join(pth, i) for i in os.listdir(pth) if os.path.splitext(i)[1] == '.npy']
@@ -443,42 +464,56 @@ def abcd_outputs(pth, n_months):
     # for each file, load it and then stack it
     for idx, f in enumerate(files):
 
-        if idx == 0:
-            a0 = np.load(f)
+        # get basin id...
+        basin_id = int(os.path.splitext(f)[0].split('_')[-1])
 
-        else:
-            a1 = np.load(f)
-            arr = np.vstack((a0, a1))
-            a0 = arr.copy()
+        # get basin idx...
+        basin_idx = np.where(basin_ids == basin_id)
 
-    coords = arr[:, 0:2]
-    start = 2
-    end = start + n_months
+        # if idx == 0:
+        arr = np.load(f)
 
-    # slice out pet
-    pet = arr[:, start:end]
-    start = end
-    end = start + n_months
+        start = 0
+        end = start + n_months
 
-    # slice out aet
-    aet = arr[:, start:end]
-    start = end
-    end = start + n_months
+        # slice out pet
+        _pet[basin_idx] = arr[:, start:end]
 
-    # slice out q
-    q = arr[:, start:end]
-    start = end
-    end = start + n_months
+        start = end
+        end = start + n_months
 
-    # slice out ground water storage
-    g = arr[:, start:end]
-    start = end
-    end = start + n_months
+        # slice out aet
+        _aet[basin_idx] = arr[:, start:end]
 
-    # slice out soil moisture storage
-    s = arr[:, start:end]
+        start = end
+        end = start + n_months
 
-    # sum storage to get soil column storage
-    sav = g + s
+        # slice out q
+        _q[basin_idx] = arr[:, start:end]
 
-    return pet.real, aet.real, q.real, sav.real
+        start = end
+        end = start + n_months
+
+        # slice out soil moisture storage
+        _sav[basin_idx] = arr[:, start:end]
+
+    return _pet, _aet, _q, _sav
+
+
+def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, out_dir, n_months, spinup_factor, jobs):
+    """
+    Run the ABCD model.
+    :return:
+    """
+    # read parameters from calibration
+    prm = np.load(calib_file)
+
+    # run all basins at once in parallel
+    abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
+                  pet=pet, precip=precip, tmin=tmin, out_dir=out_dir,
+                  n_months=n_months, spinup_factor=spinup_factor, jobs=jobs)
+
+    # build array to pass to router
+    _pet, _aet, _q, _sav = abcd_outputs(out_dir, n_months=n_months, basin_ids=basin_ids, ncells=67420)
+
+    return _pet, _aet, _q, _sav

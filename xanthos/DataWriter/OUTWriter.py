@@ -126,7 +126,6 @@ def SaveCSV(filename, data):
 def SaveNetCDF(filename, data, Settings, varstr):
     filename = filename + ".nc"
     # open
-#    datagrp = Dataset(filename, 'w', format='NETCDF4')
     datagrp = spio.netcdf.netcdf_file(filename, 'w')
     (nrows, ncols) = data.shape
 
@@ -146,7 +145,6 @@ def SaveNetCDF(filename, data, Settings, varstr):
     griddata.description = varstr + "_" + unit
 
     # data
-#    griddata[:, :] = data[:, :]
     griddata[:, :] = data[:, :].copy()
 
     # close

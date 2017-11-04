@@ -99,12 +99,8 @@ def acos(x):
     return y
 
 
-def set_month_arrays(settings):
+def set_month_arrays(nmonth, StartYear, EndYear):
     counter = 0
-    nmonth = settings.nmonths
-    StartYear = settings.StartYear
-    EndYear = settings.EndYear
-
     M = np.zeros((nmonth, 3), dtype=int)  # year, month, number of days in month
     M1 = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     M2 = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]

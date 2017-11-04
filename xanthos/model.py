@@ -1,7 +1,9 @@
 """
-@Date: 10/01/2016
-@author: Xinya Li (xinya.li@pnl.gov)
-@Project: Xanthos V1.0
+Model interface for Xanthos
+
+@author   Chris R. Vernon
+@email:   chris.vernon@pnnl.gov
+@Project: Xanthos 2.0
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
@@ -12,7 +14,7 @@ import os
 import sys
 from xanthos.data_reader.IniReader import ConfigReader
 from xanthos.Utils.Logging import Logger
-from gcam_hydro import Hydro
+import xanthos.configurations as mods
 
 
 class Xanthos:
@@ -20,7 +22,7 @@ class Xanthos:
     def __init__(self, ini):
 
         self.ini = ini
-        self.s = None
+        self.config = None
         self.log_file = None
 
     @staticmethod
@@ -35,14 +37,14 @@ class Xanthos:
         """
         Set up run.
         """
-        self.s = ConfigReader(self.ini)
+        self.config = ConfigReader(self.ini)
 
         # create output directory
-        self.make_dir(self.s.OutputFolder)
+        self.make_dir(self.config.OutputFolder)
 
         # instantiate and write log file
         sys.stdout = Logger()
-        self.log_file = os.path.join(self.s.OutputFolder, 'logfile.log')
+        self.log_file = os.path.join(self.config.OutputFolder, 'logfile.log')
 
     def execute(self):
         """
@@ -54,12 +56,9 @@ class Xanthos:
 
         with open(self.log_file, 'w') as sys.stdout.log:
 
-            # self.s.log_info()
+            self.config.log_info()
 
-            # instantiate Hydro class
-            h = Hydro(self.s)
+            # run selected model configuration
+            eval('mods.{0}(self.config)'.format(self.config.mod_cfg))
 
-            # run model
-            h.process()
-
-            print("End of {0}".format(self.s.ProjectName))
+            print("End of {0}".format(self.config.ProjectName))

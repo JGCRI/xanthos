@@ -45,21 +45,44 @@ def load_gcm_data(settings):
     # So should be strictly a positive value. Defaults the value to zero.
     dtr[np.where(dtr < 0)] = 0  # NaNs in dtr -> warning RuntimeWarning: invalid value encountered
 
-    # Initialize channel storage/soil moisture.
-    if settings.HistFlag == "True":  # For historical runs just use zeros
-        inic = np.zeros((settings.ncell,), dtype=float)
-        inis = np.zeros((settings.ncell,), dtype=float)
-
-    else:
-        # For future runs, we want to initialize with the last value of the historical channel storage/soil moisture.
-        inic = load_const_griddata(settings.ChStorageFile, 0, settings.ChStorageVarName)[:, -1]
-        inis = load_const_griddata(settings.SavFile, 0, settings.SavVarName)[:, -1]
-
     check_size((pre, temp, dtr), settings.ncell, settings.nmonths)
     check_n_years(pre)
 
-    return pre, temp, dtr, inis, inic
+    return pre, temp, dtr
 
+
+def load_soil_data(settings):
+    """
+    Load soil moisture file into array if in future mode, else stage zeros array.
+    """
+    try:
+        # Initialize channel storage/soil moisture.
+        if settings.HistFlag == "True":
+            return np.zeros((settings.ncell,), dtype=float)
+
+        else:
+            # For future runs, we want to initialize with the last value of the historical channel storage/soil moisture.
+            return load_const_griddata(settings.SavFile, 0, settings.SavVarName)[:, -1]
+    # if not in use
+    except AttributeError:
+        return np.zeros((settings.ncell,), dtype=float)
+
+
+def load_chs_data(settings):
+    """
+    Load channel velocity file into array if in future mode, else stage zeros array.
+    """
+    try:
+
+        # Initialize channel storage/soil moisture.
+        if settings.HistFlag == "True":
+            return np.zeros((settings.ncell,), dtype=float)
+
+        else:
+            # For future runs, we want to initialize with the last value of the historical channel storage/soil moisture.
+            return load_const_griddata(settings.ChStorageFile, 0, settings.ChStorageVarName)[:, -1]
+    except AttributeError:
+        return np.zeros((settings.ncell,), dtype=float)
 
 def load_gcm_var(fn, varname):
     """

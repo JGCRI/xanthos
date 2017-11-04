@@ -1,3 +1,13 @@
+"""
+@author   Chris R. Vernon
+@email:   chris.vernon@pnnl.gov
+@Project: Xanthos 2.0
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+"""
+
 from setuptools import setup, find_packages
 
 

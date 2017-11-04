@@ -28,7 +28,8 @@ class ConfigReader:
         r = c['Reference']
         ro = c['Runoff']
         rt = c['Routing']
-        #pt = c['PET']
+        pt = c['PET']
+        clm = c['Climate']
         d = c['Diagnostics']
         t = c['TimeSeriesPlot']
         a = c['AccessibleWater']
@@ -39,10 +40,12 @@ class ConfigReader:
         self.root = p['RootDir']
         self.ProjectName = p['ProjectName']
         self.InputFolder = os.path.join(self.root, p['InputFolder'])
-        self.OutputFolder = os.path.join(self.root, '{}/{}'.format(p['OutputFolder'], self.ProjectName))
+        self.OutDir = self.create_dir(os.path.join(self.root, p['OutputFolder']))
+        self.OutputFolder = self.create_dir(os.path.join(self.OutDir, self.ProjectName))
         self.Reference = os.path.join(self.InputFolder, p['RefDir'])
         self.RunoffDir = os.path.join(self.InputFolder, p['RunoffDir'])
         self.RoutingDir = os.path.join(self.InputFolder, p['RoutingDir'])
+        self.ClimateFolder = os.path.join(self.InputFolder, p['ClimateDir'])
         self.DiagDir = os.path.join(self.InputFolder, p['DiagDir'])
         self.AccWatDir = os.path.join(self.InputFolder, p['AccWatDir'])
         self.HydActDir = os.path.join(self.InputFolder, p['HydActDir'])
@@ -57,7 +60,6 @@ class ConfigReader:
         self.StartYear = int(p['StartYear'])
         self.EndYear = int(p['EndYear'])
         self.nmonths = (self.EndYear - self.StartYear + 1) * 12
-        self.pet = p['pet']
         self.OutputFormat = int(p['OutputFormat'])
         self.OutputUnit = int(p['OutputUnit'])
         self.OutputInYear = int(p['OutputInYear'])
@@ -70,6 +72,9 @@ class ConfigReader:
         self.CalculateHydropowerPotential = int(p['CalculateHydropowerPotential'])
         self.CalculateHydropowerActual = int(p['CalculateHydropowerActual'])
 
+        # pet
+        self.pet_module = pt['pet_module'].lower()
+
         # runoff
         self.runoff_module = ro['runoff_module'].lower()
 
@@ -77,17 +82,7 @@ class ConfigReader:
 
             ro_mod = ro['Hejazi']
             self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['model_dir'])
-            self.SpinUp = int(ro_mod['SpinUp'])
-
-            ro_clm = ro_mod['Climate']
-            self.ClimateFolder = os.path.join(self.ro_model_dir, ro_clm['climate_dir'])
-            self.OutputNameStr = ro_clm['ClimateScenario']
-            self.PrecipitationFile = os.path.join(self.ClimateFolder, ro_clm['PrecipitationFile'])
-            self.PrecipVarName = ro_clm['PrecipVarName']
-            self.TemperatureFile = os.path.join(self.ClimateFolder, ro_clm['TemperatureFile'])
-            self.TempVarName = ro_clm['TempVarName']
-            self.DailyTemperatureRangeFile = os.path.join(self.ClimateFolder, ro_clm['DailyTemperatureRangeFile'])
-            self.DTRVarName = ro_clm['DTRVarName']
+            self.SpinUp = int(ro_mod['SpinUp']) * 12
 
             # channel storage file full path name with extension if running future
             self.ChStorageFile = None
@@ -99,10 +94,10 @@ class ConfigReader:
 
             if self.HistFlag == 'False':
                 try:
-                    self.ChStorageFile = ro_clm['ChStorageFile']
-                    self.ChStorageVarName = ro_clm['ChStorageVarName']
-                    self.SavFile = ro_clm['SavFile']
-                    self.SavVarName = ro_clm['SavVarName']
+                    self.ChStorageFile = ro_mod['ChStorageFile']
+                    self.ChStorageVarName = ro_mod['ChStorageVarName']
+                    self.SavFile = ro_mod['SavFile']
+                    self.SavVarName = ro_mod['SavVarName']
 
                 except KeyError:
                     print("Error: ChStorageFile and ChStorageVarName are not defined for Future Mode.")
@@ -112,16 +107,10 @@ class ConfigReader:
 
             ro_mod = ro['abcd']
             self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['model_dir'])
-            self.ro_out_dir = os.path.join(self.ro_model_dir, ro_mod['output_dir'])
+            self.ro_out_dir = self.create_dir(os.path.join(self.OutputFolder, ro_mod['output_dir']))
+            self.calib_file = os.path.join(self.ro_model_dir, ro_mod['calib_file'])
             self.SpinUp = int(ro_mod['SpinUp'])
             self.ro_jobs = int(ro_mod['jobs'])
-
-            ro_clm = ro_mod['Climate']
-            self.ClimateFolder = os.path.join(self.ro_model_dir, ro_clm['climate_dir'])
-            self.hist_dir = os.path.join(self.ClimateFolder, ro_clm['hist_dir'])
-            self.hist_var = ro_clm['hist_var']
-            self.calib_dir = os.path.join(self.ClimateFolder, ro_clm['calib_dir'])
-            self.calib_var = ro_clm['calib_var']
 
         else:
             print("ERROR: Runoff module '{0}' not found.".format(self.runoff_module))
@@ -140,6 +129,18 @@ class ConfigReader:
             print("ERROR: Routing module '{0}' not found.".format(self.routing_module))
             print("Please check spelling and try again.")
             sys.exit()
+
+        # create model configuration string (pet_runoff_routing)
+        self.mod_cfg = '{0}_{1}_{2}'.format(self.pet_module, self.runoff_module, self.routing_module)
+
+        # climate
+        self.OutputNameStr = clm['climate_scenario']
+        self.PrecipitationFile = os.path.join(self.ClimateFolder, clm['PrecipitationFile'])
+        self.PrecipVarName = clm['PrecipVarName']
+        self.TemperatureFile = os.path.join(self.ClimateFolder, clm['TemperatureFile'])
+        self.TempVarName = clm['TempVarName']
+        self.DailyTemperatureRangeFile = os.path.join(self.ClimateFolder, clm['DailyTemperatureRangeFile'])
+        self.DTRVarName = clm['DTRVarName']
 
         # reference
         self.Area = os.path.join(self.Reference, r['Area'])
@@ -220,11 +221,13 @@ class ConfigReader:
         else:
             return yr
 
-    def ck_path(self, pth):
+    def create_dir(self, pth):
         """
         Check to see if the target path is exists.
         """
-        pass
+        if os.path.isdir(pth) is False:
+            os.mkdir(pth)
+        return pth
 
     def log_info(self):
 
@@ -242,11 +245,11 @@ class ConfigReader:
 
         else:
             print('Running:  Future Mode')
-            print('Historic Soil Moisture File: {}'.format(self.SavFile))
-            print('Historic Channel Storage File: {}'.format(self.ChStorageFile))
-
-        if self.SpinUp > 0:
-            print('Spin-up     :Initialize the model using the first {} years'.format(self.SpinUp))
+            try:
+                print('Historic Soil Moisture File: {}'.format(self.SavFile))
+                print('Historic Channel Storage File: {}'.format(self.ChStorageFile))
+            except AttributeError:
+                pass
 
         if self.PerformDiagnostics:
             print('Diagnostics will be performed using the data file: {}'.format(self.VICDataFile))
