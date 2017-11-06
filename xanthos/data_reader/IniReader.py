@@ -172,9 +172,11 @@ class ConfigReader:
         # plots
         if self.CreateTimeSeriesPlot:
             self.TimeSeriesScale = int(t['Scale'])
+            self.TimeSeriesMapID = 999
 
             try:
                 l = int(t['MapID'])
+                self.TimeSeriesMapID = l
 
             except:
                 l = map(int, t['MapID'])  # list
