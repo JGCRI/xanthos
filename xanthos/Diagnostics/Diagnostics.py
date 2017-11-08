@@ -30,6 +30,8 @@ from xanthos.data_reader.DataLoad import load_const_griddata as loadfile
 
 
 def Diagnostics(settings, Q, Avg_ChFlow, GridConstants):
+
+
     area = GridConstants['Area']
 
     if settings.PerformDiagnostics:
@@ -49,6 +51,7 @@ def Diagnostics(settings, Q, Avg_ChFlow, GridConstants):
             ei = VICyears.index(settings.EndYear) + 1
         except:
             ei = 30
+
         qq = np.sum(VIC[:, si:ei], axis=1) / (ei - si)
         plotname = 'VIC_' + str(VICyears[si]) + '-' + str(VICyears[ei - 1])
 

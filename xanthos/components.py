@@ -23,7 +23,7 @@ from xanthos.hydropower.potential import HydropowerPotential
 from xanthos.hydropower.actual import HydropowerActual
 
 import xanthos.pet.hargreaves as pet_mod
-import xanthos.routing.simple as routing_mod
+import xanthos.routing.mrtm as routing_mod
 
 
 class Components:
@@ -227,8 +227,8 @@ class Components:
 
         Runoff takes a feedback of soil moisture content (sav_prev).  This is updated for each iteration of a month.
         """
-        if self.s.runoff_module == 'hejazi':
-            import xanthos.runoff.hejazi as runoff_mod
+        if self.s.runoff_module == 'gwam':
+            import xanthos.runoff.gwam as runoff_mod
 
             rg = runoff_mod.runoffgen(self.pet_t, self.P, self.T, self.D, self.s, self.Sm, self.X, self.Y, self.mm, self.DR, self.sav_prev)
             self.PET[:, nm], self.AET[:, nm], self.Q[:, nm], self.Sav[:, nm] = rg
@@ -249,7 +249,7 @@ class Components:
         Calculate routing.  Routing takes a simulated runoff (Q) from the runoff output and
         previous channel storage (chs_prev) from previous channel storage.
         """
-        if self.s.routing_module == 'simple':
+        if self.s.routing_module == 'mrtm':
             # 3 hour time step for simplified solver
             self.deltat_routing = 3 * 3600
 
