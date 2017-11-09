@@ -1,15 +1,14 @@
-'''
+"""
 Created on Feb 16, 2016
 @author: lixi729
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-'''
+"""
+
 import numpy as np
 
-
-# __all__ = ['sub2ind', 'ind2sub']
 
 # get the size of a 2D array
 def Size(l):
@@ -36,9 +35,12 @@ def SizeC(l):
 
 # Convert subscripts to linear indices
 def sub2ind(arraySize, rowSub, colSub):
+    """
+    Convert subscripts to linear indices.
+    """
     linearInd = []
     if len(rowSub) != len(colSub):
-        print 'def sub2ind at Rearranging: length of rowSub is not equal to length of colSub!'
+        print('def sub2ind at Rearranging: length of rowSub is not equal to length of colSub!')
     else:
         arr = tuple(arraySize)
         for i in range(0, len(rowSub)):
@@ -49,7 +51,10 @@ def sub2ind(arraySize, rowSub, colSub):
 
 # Convert linear indices to subscripts
 def ind2sub(arraySize, index):
-    ''' index is a list or 1d array'''
+    """
+    Convert linear indices to subscripts.
+    Index is a list or 1d array
+    """
     linearInd = np.zeros((len(index), 2), dtype=int)
     arr = tuple(arraySize)
     for i in range(0, len(index)):

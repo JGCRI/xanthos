@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 
-def TimeSeriesPlot(settings, Q, Avg_ChFlow, GridConstants):
+def TimeSeriesPlot(settings, Q, Avg_ChFlow, ref):
 
     if settings.CreateTimeSeriesPlot:
 
@@ -51,32 +51,32 @@ def TimeSeriesPlot(settings, Q, Avg_ChFlow, GridConstants):
 
         if settings.TimeSeriesScale == 1:
             scalestr = 'Basin'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
 
         elif settings.TimeSeriesScale == 2:
             scalestr = 'Country'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
 
         elif settings.TimeSeriesScale == 3:
             scalestr = 'GCAMRegion'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
         else:
             scalestr = 'Basin'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
             scalestr = 'Country'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
             scalestr = 'GCAMRegion'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
 
     else:
         return
 
 
-def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x):
+def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x):
 
-    q = Aggregation_Map(settings, GridConstants[scalestr + 'IDs'], Q)
-    ac = Aggregation_Map(settings, GridConstants[scalestr + 'IDs'], Avg_ChFlow)
-    Names = np.insert(GridConstants[scalestr + 'Names'], 0, 'Global')
+    q = Aggregation_Map(settings, ref[scalestr + 'IDs'], Q)
+    ac = Aggregation_Map(settings, ref[scalestr + 'IDs'], Avg_ChFlow)
+    Names = np.insert(ref[scalestr + 'Names'], 0, 'Global')
 
     Folder = os.path.join(settings.OutputFolder, 'TimeSeriesPlot/{}'.format(scalestr))
 

@@ -29,24 +29,6 @@ def hargreaves_gwam_mrtm(config):
     # instantiate hydro class
     c = Components(config)
 
-    # load climate data
-    c.load_climate()
-
-    # load reference data
-    c.load_reference()
-
-    # PET calculation related
-    c.setup_pet()
-
-    # MSMC related data
-    c.setup_msmc()
-
-    # Flow related data
-    c.setup_flow()
-
-    # allocation
-    c.setup_alloc()
-
     # spin up
     c.simulation(num_steps=config.SpinUp,
                  pet=True,
@@ -106,24 +88,6 @@ def hargreaves_abcd_mrtm(config):
 
     # instantiate hydro class
     c = Components(config)
-
-    # load climate data
-    c.load_climate()
-
-    # load reference data
-    c.load_reference()
-
-    # PET calculation related
-    c.setup_pet()
-
-    # MSMC related data
-    c.setup_msmc()
-
-    # Flow related data
-    c.setup_flow()
-
-    # allocation
-    c.setup_alloc()
 
     # run model
     c.simulation(num_steps=config.nmonths,
