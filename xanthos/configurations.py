@@ -13,13 +13,13 @@ Copyright (c) 2017, Battelle Memorial Institute
 from xanthos.components import Components
 
 
-def hargreaves_hejazi_simple(config):
+def hargreaves_gwam_mrtm(config):
     """
     Model configuration for the following:
 
     PET:                Hargreaves
-    RUNOFF:             Hejazi
-    ROUTING:            Simple
+    RUNOFF:             Global Water Assessment Model (GWAM)
+    ROUTING:            Modified River Transport Model (MRTM)
 
 
     :param config:      Configuration object generated from user-defined config.ini file
@@ -28,24 +28,6 @@ def hargreaves_hejazi_simple(config):
 
     # instantiate hydro class
     c = Components(config)
-
-    # load climate data
-    c.load_climate()
-
-    # load reference data
-    c.load_reference()
-
-    # PET calculation related
-    c.setup_pet()
-
-    # MSMC related data
-    c.setup_msmc()
-
-    # Flow related data
-    c.setup_flow()
-
-    # allocation
-    c.setup_alloc()
 
     # spin up
     c.simulation(num_steps=config.SpinUp,
@@ -89,13 +71,13 @@ def hargreaves_hejazi_simple(config):
     return c
 
 
-def hargreaves_abcd_simple(config):
+def hargreaves_abcd_mrtm(config):
     """
     Model configuration for the following:
 
     PET:                Hargreaves
     RUNOFF:             ABCD
-    ROUTING:            Simple
+    ROUTING:            Modified River Transport Model (MRTM)
 
 
     Spin-up is built in to the ABCD model and does not need to be calculated separately.
@@ -106,24 +88,6 @@ def hargreaves_abcd_simple(config):
 
     # instantiate hydro class
     c = Components(config)
-
-    # load climate data
-    c.load_climate()
-
-    # load reference data
-    c.load_reference()
-
-    # PET calculation related
-    c.setup_pet()
-
-    # MSMC related data
-    c.setup_msmc()
-
-    # Flow related data
-    c.setup_flow()
-
-    # allocation
-    c.setup_alloc()
 
     # run model
     c.simulation(num_steps=config.nmonths,

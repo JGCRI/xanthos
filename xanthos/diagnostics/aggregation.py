@@ -16,27 +16,28 @@ Copyright (c) 2017, Battelle Memorial Institute
 import numpy as np
 
 
-def Aggregation(settings, GridConstants, q):
+def Aggregation(settings, ref, q):
+
     Aggregation = {}
 
     if settings.AggregateRunoffBasin > 0 or settings.AggregateRunoffCountry > 0 or settings.AggregateRunoffGCAMRegion > 0:
 
         if settings.AggregateRunoffBasin > 0:  # Basin
             print("Aggregation by Basin")
-            Aggregation['Basin_runoff'] = Aggregation_Map(settings, GridConstants['BasinIDs'],
-                                                          GridConstants['BasinNames'], q, "Basin_runoff")        
+            Aggregation['Basin_runoff'] = Aggregation_Map(settings, ref.basin_ids,
+                                                          ref.basin_names, q, "Basin_runoff")
             print "Basin_runoff: unit is ", settings.OutputUnitStr
 
         if settings.AggregateRunoffCountry > 0:  # Country
             print("Aggregation by Country")
-            Aggregation['Country_runoff'] = Aggregation_Map(settings, GridConstants['CountryIDs'],
-                                                            GridConstants['CountryNames'], q, "Country_runoff")
+            Aggregation['Country_runoff'] = Aggregation_Map(settings, ref.country_ids, ref.country_names, q,
+                                                            "Country_runoff")
             print "Country_runoff: unit is ", settings.OutputUnitStr
 
         if settings.AggregateRunoffGCAMRegion > 0:  # GCAMRegion
             print("Aggregation by GCAM Region")
-            Aggregation['Region_runoff'] = Aggregation_Map(settings, GridConstants['GCAMRegionIDs'],
-                                                           GridConstants['GCAMRegionNames'], q, "GCAMRegion_runoff")
+            Aggregation['Region_runoff'] = Aggregation_Map(settings, ref.region_ids, ref.region_names, q,
+                                                           "GCAMRegion_runoff")
             print "Country_runoff: unit is ", settings.OutputUnitStr
 
     return Aggregation

@@ -21,11 +21,11 @@ import numpy as np
 import pandas as pd
 
 
-def AccessibleWater(settings, GridConstants, runoff):
+def AccessibleWater(settings, ref, runoff):
     """
     Calculate accessible water per basin.
     """
-    bdf = GridConstants['BasinNames']
+    bdf = ref.basin_names
 
     # read in reservoir capacity at basin level
     rdf = pd.read_csv(settings.ResCapacityFile, header=None, names=['res_capacity'])
@@ -37,14 +37,14 @@ def AccessibleWater(settings, GridConstants, runoff):
     # runoff: mm/month -> km3/year
     ny = int(settings.nmonths / 12)
     q = np.zeros((settings.ncell, ny), dtype=float)
-    conversion = GridConstants['Area'] / 1e6  # mm -> km3
+    conversion = ref.area / 1e6  # mm -> km3
 
     for i in range(ny):
         q[:, i] = np.sum(runoff[:, i * 12:(i + 1) * 12], axis=1) * conversion
 
     # Basin Aggregation
     NM = settings.ncell
-    Map = GridConstants['BasinIDs']
+    Map = ref.basin_ids
     NB = max(Map)
     Map_runoff = np.zeros((NB, ny), dtype=float)
 

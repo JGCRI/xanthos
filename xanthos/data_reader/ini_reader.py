@@ -1,4 +1,4 @@
-'''
+"""
 Read in settings from configuration file *.ini
 Created on Oct 4, 2016
 
@@ -11,7 +11,7 @@ License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
 
-'''
+"""
 
 import os
 import sys
@@ -78,11 +78,14 @@ class ConfigReader:
         # runoff
         self.runoff_module = ro['runoff_module'].lower()
 
-        if self.runoff_module == 'hejazi':
+        if self.runoff_module == 'gwam':
 
-            ro_mod = ro['Hejazi']
+            ro_mod = ro['GWAM']
             self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['model_dir'])
             self.SpinUp = int(ro_mod['SpinUp']) * 12
+            self.MaxSoilMois = os.path.join(self.ro_model_dir, ro_mod['MaxSoilMois'])
+            self.LakesMSM = os.path.join(self.ro_model_dir, ro_mod['LakesMSM'])
+            self.AdditWaterMSM = os.path.join(self.ro_model_dir, ro_mod['AdditWaterMSM'])
 
             # channel storage file full path name with extension if running future
             self.ChStorageFile = None
@@ -120,10 +123,12 @@ class ConfigReader:
         # routing
         self.routing_module = rt['routing_module'].lower()
 
-        if self.routing_module == 'simple':
-            rt_mod = rt['simple']
+        if self.routing_module == 'mrtm':
+            rt_mod = rt['MRTM']
             self.rt_model_dir = os.path.join(self.RoutingDir, rt_mod['model_dir'])
-            self.ChVeloc = os.path.join(self.rt_model_dir, rt_mod['ChVeloc'])
+            self.strm_veloc = os.path.join(self.rt_model_dir, rt_mod['ChVeloc'])
+            self.FlowDis = os.path.join(self.rt_model_dir, rt_mod['FlowDis'])
+            self.FlowDir = os.path.join(self.rt_model_dir, rt_mod['FlowDir'])
 
         else:
             print("ERROR: Routing module '{0}' not found.".format(self.routing_module))
@@ -145,17 +150,13 @@ class ConfigReader:
         # reference
         self.Area = os.path.join(self.Reference, r['Area'])
         self.Coord = os.path.join(self.Reference, r['Coord'])
-        self.FlowDis = os.path.join(self.Reference, r['FlowDis'])
-        self.FlowDir = os.path.join(self.Reference, r['FlowDir'])
         self.BasinIDs = os.path.join(self.Reference, r['BasinIDs'])
         self.BasinNames = os.path.join(self.Reference, r['BasinNames'])
         self.GCAMRegionIDs = os.path.join(self.Reference, r['GCAMRegionIDs'])
         self.GCAMRegionNames = os.path.join(self.Reference, r['GCAMRegionNames'])
         self.CountryIDs = os.path.join(self.Reference, r['CountryIDs'])
         self.CountryNames = os.path.join(self.Reference, r['CountryNames'])
-        self.MaxSoilMois = os.path.join(self.Reference, r['MaxSoilMois'])
-        self.LakesMSM = os.path.join(self.Reference, r['LakesMSM'])
-        self.AdditWaterMSM = os.path.join(self.Reference, r['AdditWaterMSM'])
+
         self.CellArea = None
         self.ChSlope = None
         self.DrainArea = None

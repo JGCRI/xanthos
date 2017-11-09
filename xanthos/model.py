@@ -12,8 +12,8 @@ Copyright (c) 2017, Battelle Memorial Institute
 
 import os
 import sys
-from xanthos.data_reader.IniReader import ConfigReader
-from xanthos.Utils.Logging import Logger
+from xanthos.data_reader.ini_reader import ConfigReader
+from xanthos.utils.logging import Logger
 import xanthos.configurations as mods
 
 

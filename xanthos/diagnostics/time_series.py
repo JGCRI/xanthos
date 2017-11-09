@@ -13,16 +13,19 @@ Generate Time series plots
 
 '''
 
-import os, datetime
+import os
+import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 
-def TimeSeriesPlot(settings, Q, Avg_ChFlow, GridConstants):
+def TimeSeriesPlot(settings, Q, Avg_ChFlow, ref):
+
     if settings.CreateTimeSeriesPlot:
 
-        Folder = settings.OutputFolder + 'TimeSeriesPlot/'
+        Folder = os.path.join(settings.OutputFolder, 'TimeSeriesPlot')
+
         if not os.path.exists(Folder):
             os.makedirs(Folder)
 
@@ -48,33 +51,35 @@ def TimeSeriesPlot(settings, Q, Avg_ChFlow, GridConstants):
 
         if settings.TimeSeriesScale == 1:
             scalestr = 'Basin'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
 
         elif settings.TimeSeriesScale == 2:
             scalestr = 'Country'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
 
         elif settings.TimeSeriesScale == 3:
             scalestr = 'GCAMRegion'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
         else:
             scalestr = 'Basin'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
             scalestr = 'Country'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
             scalestr = 'GCAMRegion'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x)
+            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
 
     else:
         return
 
 
-def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr, TimeUnit, LengthUnit, x):
-    q = Aggregation_Map(settings, GridConstants[scalestr + 'IDs'], Q)
-    ac = Aggregation_Map(settings, GridConstants[scalestr + 'IDs'], Avg_ChFlow)
-    Names = np.insert(GridConstants[scalestr + 'Names'], 0, 'Global')
+def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x):
 
-    Folder = settings.OutputFolder + 'TimeSeriesPlot/' + scalestr + '/'
+    q = Aggregation_Map(settings, ref[scalestr + 'IDs'], Q)
+    ac = Aggregation_Map(settings, ref[scalestr + 'IDs'], Avg_ChFlow)
+    Names = np.insert(ref[scalestr + 'Names'], 0, 'Global')
+
+    Folder = os.path.join(settings.OutputFolder, 'TimeSeriesPlot/{}'.format(scalestr))
+
     if not os.path.exists(Folder):
         os.makedirs(Folder)
 
@@ -82,23 +87,32 @@ def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr,
     ac = np.insert(ac, 0, np.sum(ac, axis=0), axis=0)  # add global
 
     try:
+
         l = len(settings.TimeSeriesMapID)
+
         for i in settings.TimeSeriesMapID:
-            outputname = Folder + str(i) + '_' + Names[i]
+
+            outputname = os.path.join(Folder, '{0}{1}_{2}'.format(scalestr, i, Names[i]))
+
             Plot_TS(q[i, :], outputname, 'runoff', TimeUnit, LengthUnit, x)
             Plot_TS(ac[i, :], outputname, 'streamflow', TimeUnit, LengthUnit, x)
             print "Scale: " + scalestr + ", Create plots for " + str(i) + '_' + Names[i]
 
     except:
+
         if settings.TimeSeriesMapID == 999:
             for i in range(0, q.shape[0]):
-                outputname = Folder + str(i) + '_' + Names[i]
+
+                outputname = os.path.join(Folder, '{0}{1}_{2}'.format(scalestr, i, Names[i]))
+
                 Plot_TS(q[i, :], outputname, 'runoff', TimeUnit, LengthUnit, x)
                 Plot_TS(ac[i, :], outputname, 'streamflow', TimeUnit, LengthUnit, x)
             print "Scale: " + scalestr + ", Create plots for all"
         else:
             i = settings.TimeSeriesMapID
-            outputname = Folder + str(i) + '_' + Names[i]
+
+            outputname = os.path.join(Folder, '{0}{1}_{2}'.format(scalestr, i, Names[i]))
+
             Plot_TS(q[i, :], outputname, 'runoff', TimeUnit, LengthUnit, x)
             Plot_TS(ac[i, :], outputname, 'streamflow', TimeUnit, LengthUnit, x)
             print "Scale: " + scalestr + ", Create plots for " + str(i) + '_' + Names[i]
@@ -107,6 +121,7 @@ def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, GridConstants, scalestr,
 
 
 def Aggregation_Map(settings, Map, runoff):
+
     NY = runoff.shape[1]
     NM = runoff.shape[0]
     NB = max(Map)
@@ -121,6 +136,7 @@ def Aggregation_Map(settings, Map, runoff):
 
 
 def Plot_TS(data, outputname, qstr, TimeUnit, LengthUnit, X):
+
     years = mdates.YearLocator()  # every year
     months = mdates.MonthLocator()  # every month
     yearsFmt = mdates.DateFormatter('%Y')
@@ -137,5 +153,5 @@ def Plot_TS(data, outputname, qstr, TimeUnit, LengthUnit, X):
     plt.xlabel('Time (' + TimeUnit + ')', fontsize=12)
     plt.ylabel(qstr + ' ($' + LengthUnit + '$/' + TimeUnit + ')', fontsize=12)
     fig.autofmt_xdate()
-    fig.savefig(outputname + '_' + qstr + '.png', dpi=300)
+    fig.savefig('{0}_{1}.png'.format(outputname, qstr), dpi=300)
     plt.close(fig)
