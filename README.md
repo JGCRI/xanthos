@@ -4,9 +4,9 @@ Xanthos is an open-source hydrologic model, written in Python, designed to quant
 # Contact Us
 For questions, technical supporting and user contribution, please contact:
 
-Li, Xinya <Xinya.Li@pnnl.gov>
-
 Vernon, Chris R <Chris.Vernon@pnnl.gov>
+
+Li, Xinya <Xinya.Li@pnnl.gov>
 
 Link, Robert P <Robert.Link@pnnl.gov>
 
@@ -17,6 +17,17 @@ Hejazi, Mohamad I <Mohamad.Hejazi@pnnl.gov>
 This repository uses the Git Large File Storage (LFS) extension (see https://git-lfs.github.com/ for details).  Please run the following command before cloning if you do not already have Git LFS installed:
 `git lfs install`
 
+# Get Started (Xanthos 2.0)
+The following step will get Xanthos ready to use:
+1.  This repository uses the Git Large File Storage (LFS) extension (see https://git-lfs.github.com/ for details).  Please run the following command before cloning if you do not already have Git LFS installed:
+`git lfs install`
+2.  Clone Xanthos into your desired location `git clone https://github.com/JGCRI/xanthos.git`
+3.  From the directory you cloned Xanthos into run `python setup.py install` .  This will install Xanthos as a Python package on your machine and install of the needed dependencies.
+4.  Setup your configuration file (.ini).  Examples are located in the "example" directory.
+5.  Run Xanthos using your configuration file as the only argument!  See the "example/example.py" script as a reference.
+
+
+## The following documentation is for Xanthos 1.0 - updated documentation for Xanthos 2.0 coming soon!
 # Introduction
 Xanthos is an open-source hydrologic model written in Python<sup>1</sup>, designed to quantify and analyse global water availability. Xanthos was developed at the Joint Global Change Research Institute of the Pacific Northwest National Laboratory (http://www.globalchange.umd.edu). The main objective of the model is to quantify changes in future freshwater availability under various climate change regimes, and to serve as the freshwater supply component of the Global Change Assessment Model (GCAM) [1-3]. The model has been used in previous publications to explore different climate and socioeconomic scenarios over the 21st century and assess the influence and implications of the different scenarios on regional and global water availability [4-5].
 
