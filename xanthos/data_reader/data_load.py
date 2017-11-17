@@ -235,7 +235,7 @@ def load_const_griddata(fn, headerNum=0, key=" "):
         if not os.path.isfile(fn):
             raise IOError("Error: File does not exist:", fn)
 
-        datagrp = spio.netcdf.netcdf_file(fn, 'r')
+        datagrp = spio.netcdf.netcdf_file(fn, 'r', mmap=False)
 
         # copy() added to handle numpy 'ValueError:assignment destination is read-only' related to non-contiguous memory
         try:
