@@ -62,3 +62,26 @@ class Xanthos:
             eval('mods.{0}(self.config)'.format(self.config.mod_cfg))
 
             print("End of {0}".format(self.config.ProjectName))
+
+
+if __name__ == "__main__":
+
+    # run from terminal
+    args = sys.argv[1:]
+
+    if len(args) > 1:
+        print('USAGE:  One argument should be passed. Full path file name with extension for config file.')
+        print('Exiting...')
+        raise IOError()
+
+    ini = args[0]
+
+    if os.path.isfile is False:
+        print('ERROR:  Config file not found.')
+        print('You entered:  {0}'.format(ini))
+        print('Please enter a full path file name with extension to config file and retry.')
+        raise IOError()
+
+    xth = Xanthos(ini=ini)
+    xth.execute()
+    del xth

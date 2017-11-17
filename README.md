@@ -23,8 +23,9 @@ The following step will get Xanthos ready to use:
 `git lfs install`
 2.  Clone Xanthos into your desired location `git clone https://github.com/JGCRI/xanthos.git`
 3.  From the directory you cloned Xanthos into run `python setup.py install` .  This will install Xanthos as a Python package on your machine and install of the needed dependencies.
-4.  Setup your configuration file (.ini).  Examples are located in the "example" directory.
-5.  Run Xanthos using your configuration file as the only argument!  See the "example/example.py" script as a reference.
+4.  Setup your configuration file (.ini).  Examples are located in the "example" directory.  Be sure to change the root directory to the directory that holds your data (use the 'xanthos/example' directory as an example).
+5. If running Xanthos from an IDE:  Be sure to include the path to your config file.  See the "xanthos/example/example.py" script as a reference.
+6. If running Xanthos from terminal:  Run model.py found in xanthos/xanthos/model.py passing the full path to the config file as the only argument. (e.g., `python model.py /users/ladmin/repos/github/xanthos/example/config.ini`)
 
 
 ## The following documentation is for Xanthos 1.0 - updated documentation for Xanthos 2.0 coming soon!

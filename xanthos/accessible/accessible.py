@@ -20,6 +20,8 @@ import os
 import numpy as np
 import pandas as pd
 
+import xanthos.data_writer as wtr
+
 
 def AccessibleWater(settings, ref, runoff):
     """

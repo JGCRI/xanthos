@@ -14,7 +14,6 @@ Copyright (c) 2017, Battelle Memorial Institute
 """
 
 import os
-import sys
 from scipy import io as spio
 import numpy as np
 
@@ -164,8 +163,7 @@ def load_gcm_var(fn, varname):
     """
 
     if not os.path.isfile(fn):
-        print("Error: File does not exist:  {}".format(fn))
-        sys.exit()
+        raise IOError("File does not exist:  {}".format(fn))
 
     temp = spio.loadmat(fn)
     data = temp[varname]
@@ -186,16 +184,13 @@ def check_climate_data(data, n_cells, n_months, text):
     err_mth = "Error: Inconsistent {0} data grid size. Expecting size: {1}. Received size: {2}".format(text, n_months, data.shape[1])
 
     if not data.shape[0] == n_cells:
-        print(err_cell)
-        sys.exit(1)
+        raise RuntimeError(err_cell)
 
     if not data.shape[1] == n_months:
-        print(err_mth)
-        sys.exit(1)
+        raise RuntimeError(err_mth)
 
     if not data.shape[1] % 12 == 0:
-        print("Error: Number of months in climate data can not be converted into integral years.")
-        sys.exit(1)
+        raise RuntimeError("Error: Number of months in climate data can not be converted into integral years.")
 
     return data
 
@@ -217,8 +212,7 @@ def load_const_griddata(fn, headerNum=0, key=" "):
     elif fn.endswith('.txt'):
 
         if not os.path.isfile(fn):
-            print("Error: File does not exist:", fn)
-            sys.exit()
+            raise IOError("Error: File does not exist:", fn)
 
         try:
             data = GetArrayTXT(fn, headerNum)
@@ -231,8 +225,7 @@ def load_const_griddata(fn, headerNum=0, key=" "):
     elif fn.endswith('.csv'):
 
         if not os.path.isfile(fn):
-            print("Error: File does not exist:", fn)
-            sys.exit()
+            raise IOError("Error: File does not exist:", fn)
 
         data = GetArrayCSV(fn, headerNum)
 
@@ -240,8 +233,7 @@ def load_const_griddata(fn, headerNum=0, key=" "):
     elif fn.endswith('.nc'):
 
         if not os.path.isfile(fn):
-            print("Error: File does not exist:", fn)
-            sys.exit()
+            raise IOError("Error: File does not exist:", fn)
 
         datagrp = spio.netcdf.netcdf_file(fn, 'r')
 

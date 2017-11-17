@@ -46,9 +46,10 @@ class Components:
         self.import_core()
 
         # climate data
-        self.precip = fetch.load_climate_data(self.s.PrecipitationFile, self.s.PrecipVarName, self.s.ncell, self.s.nmonths)
-        self.temp = fetch.load_climate_data(self.s.TemperatureFile, self.s.TempVarName, self.s.ncell, self.s.nmonths)
-        self.dtr = fetch.load_climate_data(self.s.DailyTemperatureRangeFile, self.s.DTRVarName, self.s.ncell, self.s.nmonths, neg_to_zero=True)
+        if self.s.climate:
+            self.precip = fetch.load_climate_data(self.s.PrecipitationFile, self.s.PrecipVarName, self.s.ncell, self.s.nmonths)
+            self.temp = fetch.load_climate_data(self.s.TemperatureFile, self.s.TempVarName, self.s.ncell, self.s.nmonths)
+            self.dtr = fetch.load_climate_data(self.s.DailyTemperatureRangeFile, self.s.DTRVarName, self.s.ncell, self.s.nmonths, neg_to_zero=True)
 
         # reference data
         self.ref = fetch.LoadReferenceData(self.s)
@@ -66,9 +67,10 @@ class Components:
             self.mth_temp_pet = None
             self.mth_dtr_pet = None
             self.pet_t = None
-            self.pet_out = None
+            self.pet_out = np.zeros_like(self.precip)
 
         elif self.s.pet_module == 'penman-monteith':
+            self.pet_out = np.zeros_like(self.precip)
             pass
 
         # runoff
@@ -79,8 +81,6 @@ class Components:
 
         elif self.s.runoff_module == 'abcd':
             pass
-
-        self.prep_runoff()
 
         # routing
         if self.s.routing_module == 'mrtm':
@@ -93,8 +93,6 @@ class Components:
             self.um = None
             self.routing_timestep_hours = 3 * 3600
             self.chs_prev = None
-
-        self.prep_routing()
 
         # outputs
         self.PET = np.zeros(shape=(self.s.ncell, self.s.nmonths))
@@ -115,6 +113,10 @@ class Components:
         # outputs
         self.q = None
         self.ac = None
+
+        # prep modules
+        self.prep_runoff()
+        self.prep_routing()
 
     def import_core(self):
         """
@@ -150,33 +152,36 @@ class Components:
             self.P = np.copy(self.precip)  # keep nan in P
             self.T = np.nan_to_num(self.temp)  # nan to zero
             self.D = np.nan_to_num(self.dtr)  # nan to zero
-            self.pet_out = np.zeros_like(self.precip)
 
         else:
             self.P = np.copy(self.precip[:, nm])  # keep nan in P
             self.T = np.nan_to_num(self.temp[:, nm])  # nan to zero
             self.D = np.nan_to_num(self.dtr[:, nm])  # nan to zero
-            self.pet_out = None
 
     def prep_pet(self, nm):
         """
         Prepare PET for processing.
 
-        @:param nm:             time-step number
+        @:param nm:                     time-step number
 
-        @:return mth_solar_dec:             solar declination for the target step
-        @:return mth_dr:                    inverse relative distance Earth-Sun for the target step
-        @:return mth_days:                        number of days in the target month
-        @:return temp_pet:      PET for the target month
-        @:return dtr_pet:       Daily temperature range for the target month
+        @:return mth_solar_dec:         solar declination for the target step
+        @:return mth_dr:                inverse relative distance Earth-Sun for the target step
+        @:return mth_days:              number of days in the target month
+        @:return temp_pet:              PET for the target month
+        @:return dtr_pet:               Daily temperature range for the target month
         """
-        self.mth_solar_dec = np.copy(self.solar_dec[nm])
-        self.mth_dr = np.copy(self.dr[nm])
-        self.mth_days = np.copy(self.yr_imth_dys[nm, 2])
-        self.mth_temp_pet = np.nan_to_num(self.temp[:, nm])
-        self.mth_dtr_pet = np.nan_to_num(self.dtr[:, nm])
+        if self.s.pet_module == 'hargreaves':
 
-    def calculate_pet(self):
+            self.mth_solar_dec = np.copy(self.solar_dec[nm])
+            self.mth_dr = np.copy(self.dr[nm])
+            self.mth_days = np.copy(self.yr_imth_dys[nm, 2])
+            self.mth_temp_pet = np.nan_to_num(self.temp[:, nm])
+            self.mth_dtr_pet = np.nan_to_num(self.dtr[:, nm])
+
+        elif self.s.pet_module == 'penman-monteith':
+            pass
+
+    def calculate_pet(self, nm=None):
         """
         Calculate monthly potential evapo-transpiration.
         """
@@ -203,6 +208,7 @@ class Components:
             # maximum soil moisture
             self.soil_moisture = np.copy(msmc[:, 2])
 
+            # load soil moisture file if running future
             if self.s.HistFlag == "True":
                 self.sm_prev = 0.5 * self.soil_moisture
 
@@ -210,7 +216,10 @@ class Components:
                 self.sm_prev = fetch.load_soil_data(self.s)
 
         elif self.s.runoff_module == 'abcd':
-            pass
+            self.P = np.copy(self.precip)  # keep nan in P
+            self.T = np.nan_to_num(self.temp)  # nan to zero
+            self.D = np.nan_to_num(self.dtr)  # nan to zero
+            self.pet_out = np.zeros_like(self.precip)
 
     def calculate_runoff(self, nm=None):
         """
@@ -220,7 +229,8 @@ class Components:
         """
         if self.s.runoff_module == 'gwam':
 
-            rg = runoff_mod.runoffgen(self.pet_t, self.P, self.T, self.D, self.s, self.soil_moisture, self.lat_radians,
+            rg = runoff_mod.runoffgen(self.pet_t, self.precip[:, nm], np.nan_to_num(self.temp[:, nm]),
+                                      np.nan_to_num(self.dtr[:, nm]), self.s, self.soil_moisture, self.lat_radians,
                                       self.mth_solar_dec, self.mth_days, self.mth_dr, self.sm_prev)
 
             self.PET[:, nm], self.AET[:, nm], self.Q[:, nm], self.Sav[:, nm] = rg
@@ -229,9 +239,9 @@ class Components:
 
             # run all basins at once in parallel
             rg = runoff_mod.abcd_execute(n_basins=235, basin_ids=self.ref.basin_ids,
-                                         pet=self.pet_out, precip=self.P, tmin=self.T, calib_file=self.s.calib_file,
-                                         out_dir=self.s.ro_out_dir, n_months=self.s.nmonths,
-                                         spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
+                                         pet=self.pet_out, precip=self.precip, tmin=np.nan_to_num(self.temp),
+                                         calib_file=self.s.calib_file, out_dir=self.s.ro_out_dir,
+                                         n_months=self.s.nmonths, spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
 
             self.PET, self.AET, self.Q, self.Sav = rg
 
@@ -250,6 +260,10 @@ class Components:
             self.um = routing_mod.upstream_genmatrix(self.upid)
             self.chs_prev = fetch.load_chs_data(self.s)
 
+            # if user is providing a custom runoff file
+            if self.s.alt_runoff is not None:
+                self.Q = np.load(self.s.alt_runoff)
+
     def calculate_routing(self, nm):
         """
         Calculate routing.  Routing takes a simulated runoff (Q) from the runoff output and
@@ -258,13 +272,15 @@ class Components:
         if self.s.routing_module == 'mrtm':
 
             sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
-                                           self.Q[:, nm], self.ref.area, self.mth_days, self.routing_timestep_hours,
-                                           self.um)
+                                           self.Q[:, nm], self.ref.area, self.yr_imth_dys[nm, 2],
+                                           self.routing_timestep_hours, self.um)
 
             self.ChStorage[:, nm], self.Avg_ChFlow[:, nm], self.instream_flow = sr
 
-    def simulation(self, num_steps=None, pet=True, runoff=True, runoff_step='month',
-                   routing=True, routing_step='month', notify='simulation'):
+    def simulation(self, pet=True, pet_num_steps=0, pet_step='month',
+                   runoff=True, runoff_num_steps=0, runoff_step='month',
+                   routing=True, routing_num_steps=0, routing_step='month',
+                   notify='simulation'):
         """
         Run model simulation for a defined configuration.
 
@@ -272,68 +288,89 @@ class Components:
         :param pet:                 True if running PET, False if embedded in runoff model
         :param runoff:              True if running Runoff, False if not
         :param runoff_step:         The time unit as a string; if None the runoff model iterates internally, else 'month'
+        :param routing_num_steps:   The number of steps for to run the routing module; different on spin-up, same as runoff
+                                    when running normal.  Specified in months in the config file.
         :param routing:             True if running Routing, False if not
         :param routing_step:        The time unit as a string; if None the routing model iterates internally, else 'month'
         :param notify:              A string that is used to add to log print that describes whether the simulation is
                                     spin-up or regular
         """
         # pass simulation if there are no steps to process
-        if num_steps == 0:
+        if (pet_num_steps + runoff_num_steps + routing_num_steps) == 0:
             pass
 
         else:
 
-            if (runoff_step == 'month') and (routing_step == 'month'):
+            if (pet_step == 'month') and (runoff_step == 'month') and (routing_step == 'month'):
 
                 print("---{} in progress...".format(notify))
                 t0 = time.time()
 
-                for nm in range(num_steps):
+                if pet:
 
-                    if np.mod(nm, 12) == 0:
-                        print("Processing Year: {}".format(self.yr_imth_dys[nm, 0]))
+                    print("\tProcessing PET...")
+                    t = time.time()
 
-                    # set up climate data for processing
-                    self.prep_arrays(nm)
+                    for nm in range(pet_num_steps):
 
-                    # set up PET data for processing
-                    self.prep_pet(nm)
+                        # set up climate data for processing
+                        # self.prep_arrays(nm)
 
-                    # calculate pet
-                    if pet:
+                        # set up PET data for processing
+                        self.prep_pet(nm)
+
+                        # calculate pet
                         self.calculate_pet()
 
-                    # calculate runoff and generate monthly potential ET, actual ET, runoff, and soil moisture
-                    if runoff:
-                        self.calculate_runoff(nm)
+                    print("\tPET processed in {} seconds---".format(time.time() - t))
 
-                        # update soil moisture (sav) array for next step
-                        self.sm_prev = np.copy(self.Sav[:, nm])
+                if runoff:
 
-                    # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-                    if routing:
+                    print("\tProcessing Runoff...")
+                    t = time.time()
+
+                    for nm in range(runoff_num_steps):
+
+                        # calculate runoff and generate monthly potential ET, actual ET, runoff, and soil moisture
+                        if runoff:
+                            self.calculate_runoff(nm)
+
+                            # update soil moisture (sav) array for next step
+                            self.sm_prev = np.copy(self.Sav[:, nm])
+
+                    print("\tRunoff processed in {} seconds---".format(time.time() - t))
+
+                # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
+                if routing:
+
+                    print("\tProcessing Routing...")
+                    t = time.time()
+
+                    for nm in range(routing_num_steps):
 
                         self.calculate_routing(nm)
 
                         # update channel storage (chs) array for next step
                         self.chs_prev = np.copy(self.ChStorage[:, nm])
 
+                    print("\tRouting processed in {} seconds---".format(time.time() - t))
+
                 print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
-            elif (runoff_step is None) and (routing_step == 'month'):
+            elif (pet_step == 'month') and (runoff_step is None) and (routing_step == 'month'):
 
                 print("---{} in progress... ".format(notify))
                 t0 = time.time()
 
                 # set up climate data for processing
-                self.prep_arrays()
+                # self.prep_arrays()
 
                 # calculate PET
                 if pet:
-                    print("---Processing PET...")
+                    print("\tProcessing PET...")
                     t = time.time()
 
-                    for nm in range(num_steps):
+                    for nm in range(pet_num_steps):
 
                         # set up PET data for processing
                         self.prep_pet(nm)
@@ -344,24 +381,24 @@ class Components:
                         # archive pet month in array
                         self.pet_out[:, nm] = self.pet_t
 
-                    print("---PET processed in {} seconds---".format(time.time() - t))
+                    print("\tPET processed in {} seconds---".format(time.time() - t))
 
                 # calculate runoff for all basins all months
                 if runoff:
-                    print("---Processing Runoff...")
+                    print("\tProcessing Runoff...")
                     t = time.time()
 
                     self.calculate_runoff()
 
-                    print("---Runoff processed in {} seconds---".format(time.time() - t))
+                    print("\tRunoff processed in {} seconds---".format(time.time() - t))
 
                 # process routing
                 if routing:
 
-                    print("---Processing Routing...")
+                    print("\tProcessing Routing...")
                     t = time.time()
 
-                    for nm in range(self.s.nmonths):
+                    for nm in range(routing_num_steps):
 
                         # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
                         self.calculate_routing(nm)
@@ -369,7 +406,7 @@ class Components:
                         # update channel storage (chs) arrays for next step
                         self.chs_prev = np.copy(self.ChStorage[:, nm])
 
-                    print("---Routing processed in {} seconds---".format(time.time() - t))
+                    print("\tRouting processed in {} seconds---".format(time.time() - t))
 
                 print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 

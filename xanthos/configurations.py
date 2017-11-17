@@ -30,20 +30,26 @@ def hargreaves_gwam_mrtm(config):
     c = Components(config)
 
     # spin up
-    c.simulation(num_steps=config.SpinUp,
-                 pet=True,
+    c.simulation(pet=True,
+                 pet_num_steps=config.SpinUp,
+                 pet_step='month',
                  runoff=True,
+                 runoff_num_steps=config.SpinUp,
                  runoff_step='month',
                  routing=True,
+                 routing_num_steps=config.SpinUp,
                  routing_step='month',
                  notify='Spin Up')
 
     # run model
-    c.simulation(num_steps=config.nmonths,
-                 pet=True,
+    c.simulation(pet=True,
+                 pet_num_steps=config.nmonths,
+                 pet_step='month',
                  runoff=True,
+                 runoff_num_steps=config.nmonths,
                  runoff_step='month',
                  routing=True,
+                 routing_num_steps=config.nmonths,
                  routing_step='month',
                  notify='Simulation')
 
@@ -90,11 +96,13 @@ def hargreaves_abcd_mrtm(config):
     c = Components(config)
 
     # run model
-    c.simulation(num_steps=config.nmonths,
-                 pet=True,
+    c.simulation(pet=True,
+                 pet_num_steps=config.nmonths,
+                 pet_step='month',
                  runoff=True,
                  runoff_step=None,
                  routing=True,
+                 routing_num_steps=config.nmonths,
                  routing_step='month',
                  notify='Simulation')
 
@@ -120,3 +128,43 @@ def hargreaves_abcd_mrtm(config):
     c.plots()
 
     return c
+
+
+def none_none_mrtm(config):
+    """
+    Model configuration for the following:
+
+    PET:                None
+    RUNOFF:             None
+    ROUTING:            Modified River Transport Model (MRTM)
+
+
+    Providing a custom runoff (Q) array to only run the routing module.
+
+    :param config:      Configuration object generated from user-defined config.ini file
+    :return:            Object containing all return values.
+    """
+
+    # instantiate hydro class
+    c = Components(config)
+
+    # spin up
+    c.simulation(pet=False,
+                 runoff=False,
+                 routing=True,
+                 routing_num_steps=config.routing_spinup,
+                 routing_step='month',
+                 notify='Spin Up')
+    # run model
+    c.simulation(pet=False,
+                 runoff=False,
+                 routing=True,
+                 routing_num_steps=config.nmonths,
+                 routing_step='month',
+                 notify='Simulation')
+
+    # output simulation data
+    c.output_simulation()
+
+    # aggregate outputs
+    c.aggregate_outputs()
