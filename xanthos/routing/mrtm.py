@@ -168,8 +168,13 @@ def upstream(coord, downstream, settings):
         goodDownstream = downstream[upcells[goodnbr, nbr] - 1]
         isupstream[goodnbr, nbr] = np.equal(goodCoord, goodDownstream)
 
-        # Sort the neighbor cells so that the upstream ones come first.
-    permvec = np.argsort(-isupstream)  # Sort so that True values are first
+    # Sort the neighbor cells so that the upstream ones come first.
+    try:
+        permvec = np.argsort(-isupstream)  # Sort so that True values are first
+    except TypeError:
+        # for newer versions of NumPy
+        permvec = np.argsort(~isupstream)
+
     isupstream.sort()
     isupstream = isupstream[:, ::-1]
 
