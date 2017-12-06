@@ -398,12 +398,11 @@ class ABCD:
         self.simulate()
 
 
-def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, out_dir, n_months, spinup_factor=2, method='dist'):
+def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, spinup_factor=2, method='dist'):
     """
     Run the ABCD model for each basin.
 
     :param basin_num:       The number of the target basin
-    :param out_dir:         The full path output directory of the ABCD outputs
     :param n_months:        The number of months to process
     :param spinup_factor    How many times to tile the historic months by
     :param method:          Either 'dist' for distributed, or 'lump' for lumped processing
@@ -430,12 +429,9 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, out_dir, n_m
     # stack outputs
     vals = np.hstack([he.pet, he.ea, he.rsim, he.s])
 
-    # write output
-    np.save(os.path.join(out_dir, 'abcd_output_basin_{0}.npy'.format(basin_num)), vals)
-
     return vals
 
-def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, out_dir, n_months, spinup_factor=1, jobs=-1):
+def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup_factor=1, jobs=-1):
     """
     This model is made to run a basin at a time.  Running them in parallel greatly speeds things up.
     Outputs of each function are saved to an output directory.  The user can choose to output just
@@ -443,14 +439,14 @@ def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, out_dir, n_mon
 
     :param num_basins:          How many basin to run
     """
-    test = Parallel(n_jobs=jobs)(delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, out_dir, n_months, spinup_factor) for i in range(1, num_basins + 1, 1))
-    return(test)
+    rslts = Parallel(n_jobs=jobs)(delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, n_months, spinup_factor) for i in range(1, num_basins + 1, 1))
+    return(rslts)
 
-def abcd_outputs(pth, n_months, basin_ids, ncells):
+def abcd_outputs(rslts, n_months, basin_ids, ncells):
     """
     Load each saved array of outputs from the ABCD runs and stack them.
 
-    :param pth:     Full path to directory containing ABCD outputs.
+    :param rslts:   Python list containing ABCD outputs in order.
     :return         A NumPy array for coordinates (long, lat) and simulated runoff
                     with the shape (grid cells, value per month).
     """
@@ -459,10 +455,8 @@ def abcd_outputs(pth, n_months, basin_ids, ncells):
     _sav = np.zeros(shape=(ncells, n_months))
     _pet = np.zeros(shape=(ncells, n_months))
 
-    # get a full path list to all files in output dir
-
     # for each file, load it and then stack it
-    for idx, arr in enumerate(pth):
+    for idx, arr in enumerate(rslts):
         # get basin idx...
         basin_idx = np.where(basin_ids == idx + 1)
 
@@ -493,7 +487,7 @@ def abcd_outputs(pth, n_months, basin_ids, ncells):
     return _pet, _aet, _q, _sav
 
 
-def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, out_dir, n_months, spinup_factor, jobs):
+def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, spinup_factor, jobs):
     """
     Run the ABCD model.
     :return:
@@ -502,11 +496,11 @@ def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, out_dir, n_
     prm = np.load(calib_file)
 
     # run all basins at once in parallel
-    all_basins = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
-                  pet=pet, precip=precip, tmin=tmin, out_dir=out_dir,
-                  n_months=n_months, spinup_factor=spinup_factor, jobs=jobs)
+    all_bsns = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
+               pet=pet, precip=precip, tmin=tmin, n_months=n_months,
+               spinup_factor=spinup_factor, jobs=jobs)
 
     # build array to pass to router
-    _pet, _aet, _q, _sav = abcd_outputs(all_basins, n_months=n_months, basin_ids=basin_ids, ncells=67420)
+    _pet, _aet, _q, _sav = abcd_outputs(all_bsns, n_months=n_months, basin_ids=basin_ids, ncells=67420)
 
     return _pet, _aet, _q, _sav
