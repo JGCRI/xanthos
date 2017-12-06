@@ -433,6 +433,7 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, out_dir, n_m
     # write output
     np.save(os.path.join(out_dir, 'abcd_output_basin_{0}.npy'.format(basin_num)), vals)
 
+    return vals
 
 def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, out_dir, n_months, spinup_factor=1, jobs=-1):
     """
@@ -442,8 +443,8 @@ def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, out_dir, n_mon
 
     :param num_basins:          How many basin to run
     """
-    Parallel(n_jobs=jobs)(delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, out_dir, n_months, spinup_factor) for i in range(1, num_basins + 1, 1))
-
+    test = Parallel(n_jobs=jobs)(delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, out_dir, n_months, spinup_factor) for i in range(1, num_basins + 1, 1))
+    return(test)
 
 def abcd_outputs(pth, n_months, basin_ids, ncells):
     """
@@ -459,19 +460,11 @@ def abcd_outputs(pth, n_months, basin_ids, ncells):
     _pet = np.zeros(shape=(ncells, n_months))
 
     # get a full path list to all files in output dir
-    files = [os.path.join(pth, i) for i in os.listdir(pth) if os.path.splitext(i)[1] == '.npy']
 
     # for each file, load it and then stack it
-    for idx, f in enumerate(files):
-
-        # get basin id...
-        basin_id = int(os.path.splitext(f)[0].split('_')[-1])
-
+    for idx, arr in enumerate(pth):
         # get basin idx...
-        basin_idx = np.where(basin_ids == basin_id)
-
-        # if idx == 0:
-        arr = np.load(f)
+        basin_idx = np.where(basin_ids == idx + 1)
 
         start = 0
         end = start + n_months
@@ -509,11 +502,11 @@ def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, out_dir, n_
     prm = np.load(calib_file)
 
     # run all basins at once in parallel
-    abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
+    all_basins = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
                   pet=pet, precip=precip, tmin=tmin, out_dir=out_dir,
                   n_months=n_months, spinup_factor=spinup_factor, jobs=jobs)
 
     # build array to pass to router
-    _pet, _aet, _q, _sav = abcd_outputs(out_dir, n_months=n_months, basin_ids=basin_ids, ncells=67420)
+    _pet, _aet, _q, _sav = abcd_outputs(all_basins, n_months=n_months, basin_ids=basin_ids, ncells=67420)
 
     return _pet, _aet, _q, _sav
