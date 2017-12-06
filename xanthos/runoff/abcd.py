@@ -407,6 +407,7 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
     :param spinup_factor    How many times to tile the historic months by
     :param method:          Either 'dist' for distributed, or 'lump' for lumped processing
     :param verbose:         True if all ABCD parameters are to be exported, False if only coords and rsim (Default)
+    :return                 A NumPy array
     """
 
     # import ABCD parameters for the target basin
@@ -433,11 +434,12 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
 
 def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup_factor=1, jobs=-1):
     """
-    This model is made to run a basin at a time.  Running them in parallel greatly speeds things up.
-    Outputs of each function are saved to an output directory.  The user can choose to output just
-    the coordinates and simulated runoff, or the whole suite of outputs from the ABCD model.
+    This model is made to run a basin at a time.  Running them in parallel
+    greatly speeds things up. The user can choose to output just the coordinates
+    and simulated runoff, or the whole suite of outputs from the ABCD model.
 
     :param num_basins:          How many basin to run
+    :return:                    A list of NumPy arrays
     """
     rslts = Parallel(n_jobs=jobs)(delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, n_months, spinup_factor) for i in range(1, num_basins + 1, 1))
     return(rslts)
