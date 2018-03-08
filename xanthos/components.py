@@ -240,8 +240,8 @@ class Components:
             # run all basins at once in parallel
             rg = runoff_mod.abcd_execute(n_basins=235, basin_ids=self.ref.basin_ids,
                                          pet=self.pet_out, precip=self.precip, tmin=np.nan_to_num(self.temp),
-                                         calib_file=self.s.calib_file, out_dir=self.s.ro_out_dir,
-                                         n_months=self.s.nmonths, spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
+                                         calib_file=self.s.calib_file, n_months=self.s.nmonths,
+                                         spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
 
             self.PET, self.AET, self.Q, self.Sav = rg
 

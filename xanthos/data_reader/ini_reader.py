@@ -168,7 +168,6 @@ class ConfigReader:
 
                 ro_mod = ro['abcd']
                 self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['model_dir'])
-                self.ro_out_dir = self.create_dir(os.path.join(self.OutputFolder, ro_mod['output_dir']))
                 self.calib_file = os.path.join(self.ro_model_dir, ro_mod['calib_file'])
                 self.SpinUp = int(ro_mod['SpinUp'])
                 self.ro_jobs = int(ro_mod['jobs'])
