@@ -43,7 +43,7 @@ class HydropowerActual:
         self.rule_curves = np.load(settings.rule_curves)  # rule curves for all 1593 dams
 
         # assign from inputs
-        self.filename_hydro = os.path.join(settings.OutputFolder,"Act_hydro_by_GCAM_region_EJ_{}.csv".format(settings.ProjectName))
+        self.filename_hydro = os.path.join(settings.OutputFolder,"actual_hydro_by_gcam_region_ej_{}.csv".format(settings.ProjectName))
         self.start_date = settings.hact_start_date  # Get start date for simulation "M/YYYY"
         self.loc_refs = self.grid_data[["ID", "long", "lati"]]  # Get latitiude and longitude for all grid squares
         self.grid_ids = self.res_data.ix[:, 0:2].apply(self.get_grid_id, 1)  # Get grid indices for all dams
@@ -212,4 +212,8 @@ class HydropowerActual:
         """
         Write results to CSV.
         """
-        pd.DataFrame.to_csv(self.hydro_gcam_regions_EJ, self.filename_hydro)
+#        df = pd.DataFrame(self.hydro_gcam_regions_EJ)
+#        cols = ['region_{}'.format(i) for i in df.columns]
+#        cols.insert(0, 'year')
+#        df.columns = cols
+        pd.DataFrame.to_csv(self.hydro_gcam_regions_EJ.T, self.filename_hydro)

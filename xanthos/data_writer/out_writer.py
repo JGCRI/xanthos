@@ -17,6 +17,7 @@ OutputInYear:  = 0(default, per month); =1(per year, the output will combine 12-
 
 import os
 import numpy as np
+import pandas as pd
 from scipy import io as spio
 
 
@@ -56,8 +57,8 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
 
         del pet, aet, q, sav, ac
 
-        Settings.OutputNameStr = "_".join(Settings.OutputNameStr.split("_")[0:-2]) \
-                                 + "_" + str(Settings.StartYear) + "_" + str(Settings.EndYear)
+#        Settings.OutputNameStr = "_".join(Settings.OutputNameStr.split("_")[0:-2]) \
+#                                 + "_" + str(Settings.StartYear) + "_" + str(Settings.EndYear)
 
         print "Output data annually"
 
@@ -72,14 +73,14 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
             Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
 
         if Settings.OutputInYear == 1:
-            Settings.OutputUnitStr = "km^3/year"
+            Settings.OutputUnitStr = "km3peryear"
         else:
-            Settings.OutputUnitStr = "km^3/month"
+            Settings.OutputUnitStr = "km3permonth"
     else:
         if Settings.OutputInYear == 1:
-            Settings.OutputUnitStr = "mm/year"
+            Settings.OutputUnitStr = "mmperyear"
         else:
-            Settings.OutputUnitStr = "mm/month"
+            Settings.OutputUnitStr = "mmpermonth"
 
     print "Unit is ", Settings.OutputUnitStr
 
@@ -95,21 +96,25 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
         print "The following two files are saved as initialization data sets (latest month) for future mode:"
         print "ChStorage: monthly output, unit is m^3/month, dimension is", ChStorage.shape
         Settings.OutputNameStr = ChStorageNameStr
-        SaveData(Settings, 'ChStorage_hist', ChStorage, flag)
+#        SaveData(Settings, 'ChStorage_hist', ChStorage, flag)
 
         print "Soil column moisture: monthly output, unit is mm/month, dimension is", SO.shape
         Settings.OutputNameStr = ChStorageNameStr
-        SaveData(Settings, 'Sav_hist', SO, flag)
+#        SaveData(Settings, 'Sav_hist', SO, flag)
 
     return Q, Avg_ChFlow
 
 
-def SaveData(Settings, varstr, data, flag):
-    filename = os.path.join(Settings.OutputFolder, '{}_{}'.format(varstr, Settings.OutputNameStr))
+def SaveData(settings, var, data, flag):
+
+#    filename = os.path.join(settings.OutputFolder, '{}_{}'.format(var, settings.OutputNameStr))
+
+    filename = os.path.join(settings.OutputFolder, '{}_{}_{}'.format(var, settings.OutputUnitStr, '_'.join(settings.ProjectName.split(' '))))
+
     if flag == 0:
-        SaveNetCDF(filename, data, Settings, varstr)
+        SaveNetCDF(filename, data, settings, var)
     else:
-        SaveCSV(filename, data)
+        SaveCSV(filename, data, settings)
 
 
 def SaveMAT(filename, data, varstr):
@@ -117,10 +122,42 @@ def SaveMAT(filename, data, varstr):
     spio.savemat(filename, {varstr: data})
 
 
-def SaveCSV(filename, data):
-    filename = filename + ".csv"
-    with open(filename, 'w') as outfile:
-        np.savetxt(outfile, data, delimiter=',')
+def SaveCSV(filename, data, settings):
+
+    # convert to data frame to set header and basin number in file
+    df = pd.DataFrame(data)
+
+    # add in index as basin or grid cell number
+    df.insert(loc=0, column='id', value=df.index.copy()+1)
+
+    filename += ".csv"
+
+    if settings.OutputInYear == 1:
+        cols = ','.join(['{}'.format(i) for i in range(settings.StartYear, settings.EndYear + 1, 1)])
+    else:
+        l = []
+        for i in range(settings.StarYear, settings.EndYear + 1, 1):
+            for m in range(1, 13):
+                if m < 10:
+                    mth = '0{}'.format(m)
+                else:
+                    mth = m
+                l.append('{}{}'.format(i, mth))
+        cols = ','.join(l)
+
+    # set header
+    hdr = 'id,{}'.format(cols)
+
+    try:
+        df.columns = hdr.split(',')
+    except ValueError:
+        print filename
+        print df.shape
+        print df.head(2)
+        print settings.OutputInYear
+        raise
+
+    df.to_csv(filename, index=False)
 
 
 def SaveNetCDF(filename, data, Settings, varstr):

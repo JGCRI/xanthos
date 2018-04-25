@@ -17,6 +17,11 @@ import os
 from configobj import ConfigObj
 
 
+class ValidationException(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
+
+
 class ConfigReader:
 
     def __init__(self, ini):
@@ -28,13 +33,14 @@ class ConfigReader:
         # project dirs
         self.root = p['RootDir']
         self.ProjectName = p['ProjectName']
+        self.OutputNameStr = p['ProjectName']
         self.InputFolder = os.path.join(self.root, p['InputFolder'])
         self.OutDir = self.create_dir(os.path.join(self.root, p['OutputFolder']))
         self.OutputFolder = self.create_dir(os.path.join(self.OutDir, self.ProjectName))
 
         # see if modules are in config file
         try:
-            r = c['Reference']
+            r = True
             self.Reference = os.path.join(self.InputFolder, p['RefDir'])
         except KeyError:
             r = False
@@ -56,12 +62,6 @@ class ConfigReader:
             self.RoutingDir = os.path.join(self.InputFolder, p['RoutingDir'])
         except KeyError:
             rt = False
-
-        try:
-            clm = c['Climate']
-            self.ClimateFolder = os.path.join(self.InputFolder, p['ClimateDir'])
-        except KeyError:
-            clm = False
 
         try:
             d = c['Diagnostics']
@@ -112,28 +112,60 @@ class ConfigReader:
         self.CalculateHydropowerPotential = int(p['CalculateHydropowerPotential'])
         self.CalculateHydropowerActual = int(p['CalculateHydropowerActual'])
 
-        # pet
+        # PET config
         if pt is not False:
             self.pet_module = pt['pet_module'].lower()
 
             if self.pet_module == 'hargreaves':
                 pass
 
-            elif self.pet_module == 'penman-monteith':
-                pass
+            elif self.pet_module == 'pm':
+                self.pet_dir = os.path.join(self.PET, 'penman_monteith')
 
+                # climate data
+                self.pm_tas = os.path.join(self.pet_dir, pt['pm_tas'])
+                self.pm_tmin = os.path.join(self.pet_dir, pt['pm_tmin'])
+                self.pm_rhs = os.path.join(self.pet_dir, pt['pm_rhs'])
+                self.pm_rlds = os.path.join(self.pet_dir, pt['pm_rlds'])
+                self.pm_rsds = os.path.join(self.pet_dir, pt['pm_rsds'])
+                self.pm_wind = os.path.join(self.pet_dir, pt['pm_wind'])
+
+                # land cover data
+                self.pm_lct = os.path.join(self.pet_dir, pt['pm_lct'])
+                self.pm_nlcs = int(pt['pm_nlcs'])
+                self.pm_water_idx = int(pt['pm_water_idx'])
+                self.pm_snow_idx = int(pt['pm_snow_idx'])
+                self.pm_lc_years = [int(i) for i in pt['pm_lc_years']]
+
+                # built-in data
+                self.pm_params = os.path.join(self.pet_dir, 'gcam_ET_para.csv')
+                self.pm_alpha = os.path.join(self.pet_dir, 'gcam_albedo.csv')
+                self.pm_lai = os.path.join(self.pet_dir, 'gcam_lai.csv')
+                self.pm_laimin = os.path.join(self.pet_dir, 'gcam_laimin.csv')
+                self.pm_laimax = os.path.join(self.pet_dir, 'gcam_laimax.csv')
+                self.pm_elev = os.path.join(self.pet_dir, 'elev.npy')
+
+            # use your own PET dataset
             elif self.pet_module == 'none':
-                pass
+                try:
+                    self.pet_file = pt['pet_file']
+                except KeyError:
+                    msg = "USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module."
+                    raise(msg)
 
             else:
                 msg = "ERROR: PET module '{0}' not found. Please check spelling and try again.".format(self.pet_module)
-                raise RuntimeError(msg)
+                raise ValidationException(msg)
         else:
             self.pet_module = 'none'
 
-        print 'MODULE!!!!: ', self.pet_module
+            try:
+                self.pet_file = pt['pet_file']
+            except KeyError:
+                msg = "USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module."
+                raise(msg)
 
-        # runoff
+        # Runoff config
         if ro is not False:
             self.runoff_module = ro['runoff_module'].lower()
 
@@ -162,7 +194,37 @@ class ConfigReader:
                         self.SavVarName = ro_mod['SavVarName']
 
                     except KeyError:
-                        raise RuntimeError("Error: ChStorageFile and ChStorageVarName are not defined for Future Mode.")
+                        raise ValidationException("Error: ChStorageFile and ChStorageVarName are not defined for Future Mode.")
+
+                try:
+                    self.PrecipitationFile = os.path.join(self.ro_model_dir, ro_mod['PrecipitationFile'])
+                except KeyError:
+                    raise('File path not provided for the PrecipitationFile variable in the GCAM runoff section of the config file.')
+
+                try:
+                    self.PrecipVarName = ro_mod['PrecipVarName']
+                except KeyError:
+                    self.PrecipVarName = None
+
+                try:
+                    self.TemperatureFile = os.path.join(self.ro_model_dir, ro_mod['TemperatureFile'])
+                except KeyError:
+                    raise('File path not provided for the TemperatureFile variable in the GCAM runoff section of the config file.')
+
+                try:
+                    self.TempVarName = ro_mod['TempVarName']
+                except KeyError:
+                    self.TempVarName = None
+
+                try:
+                    self.DailyTemperatureRangeFile = os.path.join(self.ro_model_dir, ro_mod['DailyTemperatureRangeFile'])
+                except KeyError:
+                    raise('File path not provided for the DailyTemperatureRangeFile variable in the GCAM runoff section of the config file.')
+
+                try:
+                    self.DTRVarName = ro_mod['DTRVarName']
+                except KeyError:
+                    self.DTRVarName = None
 
             elif self.runoff_module == 'abcd':
 
@@ -172,11 +234,32 @@ class ConfigReader:
                 self.SpinUp = int(ro_mod['SpinUp'])
                 self.ro_jobs = int(ro_mod['jobs'])
 
+                try:
+                    self.PrecipitationFile = ro_mod['PrecipitationFile']
+                except KeyError:
+                    raise('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+
+
+                try:
+                    self.PrecipVarName = ro_mod['PrecipVarName']
+                except KeyError:
+                    self.PrecipVarName = None
+
+                try:
+                    self.TempMinFile = ro_mod['TempMinFile']
+                except KeyError:
+                    raise('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
+
+                try:
+                    self.TempMinVarName = ro_mod['TempMinVarName']
+                except KeyError:
+                    self.TempMinVarName = None
+
             elif self.runoff_module == 'none':
                 pass
 
             else:
-                raise RuntimeError("ERROR: Runoff module '{0}' not found. Please check spelling and try again.".format(self.runoff_module))
+                raise ValidationException("ERROR: Runoff module '{0}' not found. Please check spelling and try again.".format(self.runoff_module))
         else:
             self.runoff_module = 'none'
 
@@ -187,9 +270,11 @@ class ConfigReader:
             if self.routing_module == 'mrtm':
                 rt_mod = rt['MRTM']
                 self.rt_model_dir = os.path.join(self.RoutingDir, rt_mod['model_dir'])
-                self.strm_veloc = os.path.join(self.rt_model_dir, rt_mod['ChVeloc'])
-                self.FlowDis = os.path.join(self.rt_model_dir, rt_mod['FlowDis'])
-                self.FlowDir = os.path.join(self.rt_model_dir, rt_mod['FlowDir'])
+
+                # load built-in files [ channel velocity, flow distance, flow direction ]
+                self.strm_veloc = os.path.join(self.rt_model_dir, 'velocity_half_degree.npy')
+                self.FlowDis = os.path.join(self.rt_model_dir, 'DRT_half_FDISTANCE_globe.txt')
+                self.FlowDir = os.path.join(self.rt_model_dir, 'DRT_half_FDR_globe_bystr50.txt')
 
                 try:
                     self.routing_spinup = int(rt_mod['routing_spinup'])
@@ -205,7 +290,7 @@ class ConfigReader:
                 pass
 
             else:
-                raise RuntimeError("ERROR: Routing module '{0}' not found. Please check spelling and try again.".format(self.routing_module))
+                raise ValidationException("ERROR: Routing module '{0}' not found. Please check spelling and try again.".format(self.routing_module))
 
         else:
             self.routing_module = 'none'
@@ -214,40 +299,25 @@ class ConfigReader:
         self.mod_cfg = '{0}_{1}_{2}'.format(self.pet_module, self.runoff_module, self.routing_module)
 
         if self.mod_cfg == 'none_none_none':
-            raise RuntimeError('No PFT, Runoff, or Routing model selected.')
-
-        # climate
-        if clm is not False:
-            self.climate = True
-            self.OutputNameStr = clm['climate_scenario']
-            self.PrecipitationFile = os.path.join(self.ClimateFolder, clm['PrecipitationFile'])
-            self.PrecipVarName = clm['PrecipVarName']
-            self.TemperatureFile = os.path.join(self.ClimateFolder, clm['TemperatureFile'])
-            self.TempVarName = clm['TempVarName']
-            self.DailyTemperatureRangeFile = os.path.join(self.ClimateFolder, clm['DailyTemperatureRangeFile'])
-            self.DTRVarName = clm['DTRVarName']
-        else:
-            self.climate = False
-            self.OutputNameStr = self.ProjectName.replace(' ', '_').replace(',', '_').replace(';', '_')
-            print('WARNING:  No climate data selected for use.')
+            raise ValidationException('No PFT, Runoff, or Routing model selected.')
 
         # reference
         if r is not False:
-            self.Area = os.path.join(self.Reference, r['Area'])
-            self.Coord = os.path.join(self.Reference, r['Coord'])
-            self.BasinIDs = os.path.join(self.Reference, r['BasinIDs'])
-            self.BasinNames = os.path.join(self.Reference, r['BasinNames'])
-            self.GCAMRegionIDs = os.path.join(self.Reference, r['GCAMRegionIDs'])
-            self.GCAMRegionNames = os.path.join(self.Reference, r['GCAMRegionNames'])
-            self.CountryIDs = os.path.join(self.Reference, r['CountryIDs'])
-            self.CountryNames = os.path.join(self.Reference, r['CountryNames'])
+            self.Area = os.path.join(self.Reference, 'Grid_Areas_ID.csv')
+            self.Coord = os.path.join(self.Reference, 'coordinates.csv')
+            self.BasinIDs = os.path.join(self.Reference, 'basin.csv')
+            self.BasinNames = os.path.join(self.Reference, 'BasinNames235.txt')
+            self.GCAMRegionIDs = os.path.join(self.Reference, 'region32_grids.csv')
+            self.GCAMRegionNames = os.path.join(self.Reference, 'Rgn32Names.csv')
+            self.CountryIDs = os.path.join(self.Reference, 'country.csv')
+            self.CountryNames = os.path.join(self.Reference, 'country-names.csv')
         else:
             print('WARNING:  No reference data selected for use.')
 
-        self.CellArea = None
-        self.ChSlope = None
-        self.DrainArea = None
-        self.RiversMSM = None
+        # self.CellArea = None
+        # self.ChSlope = None
+        # self.DrainArea = None
+        # self.RiversMSM = None
 
         # diagnostics
         if d is not False:
@@ -343,11 +413,6 @@ class ConfigReader:
         print('OutputFolder: {}'.format(self.OutputFolder))
         print('StartYear - End Year        : {0}-{1}'.format(self.StartYear, self.EndYear))
         print('Number of Months            : {}'.format(self.nmonths))
-
-        if self.climate:
-            print('Precipitation File          : {}'.format(self.PrecipitationFile))
-            print('Temperature File            : {}'.format(self.TemperatureFile))
-            print('Daily Temperature Range File: {}'.format(self.DailyTemperatureRangeFile))
 
         if self.HistFlag.lower() in ['true', 't', 'yes', 'y', '1']:
             print('Running: Historic Mode')

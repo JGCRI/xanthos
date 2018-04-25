@@ -79,7 +79,8 @@ def AccessibleWater(settings, ref, runoff):
     ac = accessible_water(q_gcam, bflow, edf, rdf.as_matrix())
 
     # create accessible water output dataframe at GCAM year time step
-    filename = os.path.join(settings.OutputFolder, 'Accessible_Water_{}'.format(settings.OutputNameStr))
+#    filename = os.path.join(settings.OutputFolder, 'Accessible_Water_{}'.format(settings.OutputNameStr))
+    filename = os.path.join(settings.OutputFolder, 'accessible_water_km3peryr_{}.csv'.format(settings.OutputNameStr))
     genGCAMOutput(filename, ac, bdf, settings)
 
 
@@ -140,12 +141,17 @@ def accessible_water(qtot, base, efr, res):
 def genGCAMOutput(filename, data, bdf, settings):
     # Create data frame containing basin_id, basin_name, and accessible water by year.
     years = map(str, range(settings.GCAM_StartYear, settings.GCAM_EndYear + 1, settings.GCAM_YearStep))
-    headerline = "ID,Name," + ",".join([year for year in years])
+    hdr = "id,name," + ",".join([year for year in years])
 
     maxID = len(bdf)
     MapId = np.arange(1, maxID + 1, 1, dtype=int).astype(str)
     newdata = np.insert(data.astype(str), 0, bdf, axis=1)
     Result = np.insert(newdata.astype(str), 0, MapId, axis=1)
 
-    with open(filename + '.csv', 'w') as outfile:
-        np.savetxt(outfile, Result, delimiter=',', header=headerline, fmt='%s')
+    df = pd.DataFrame(Result)
+    df.columns = hdr.split(',')
+    df.to_csv(filename, index=False)
+
+
+#    with open(filename + '.csv', 'w') as outfile:
+#        np.savetxt(outfile, Result, delimiter=',', header=headerline, fmt='%s')

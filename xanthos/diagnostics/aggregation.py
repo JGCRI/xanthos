@@ -14,10 +14,11 @@ Copyright (c) 2017, Battelle Memorial Institute
 '''
 
 import numpy as np
+import os
+import pandas as pd
 
 
 def Aggregation(settings, ref, q):
-
     Aggregation = {}
 
     if settings.AggregateRunoffBasin > 0 or settings.AggregateRunoffCountry > 0 or settings.AggregateRunoffGCAMRegion > 0:
@@ -38,7 +39,7 @@ def Aggregation(settings, ref, q):
             print("Aggregation by GCAM Region")
             Aggregation['Region_runoff'] = Aggregation_Map(settings, ref.region_ids, ref.region_names, q,
                                                            "GCAMRegion_runoff")
-            print "Country_runoff: unit is ", settings.OutputUnitStr
+            print("Country_runoff: unit is ", settings.OutputUnitStr)
 
     return Aggregation
 
@@ -66,22 +67,52 @@ def Aggregation_Map(settings, Map, Names, runoff, varstr):
     MapId = np.arange(1, maxID + 1, 1, dtype=int).astype(str)
     newdata = np.insert(Map_runoff.astype(str), 0, Names, axis=1)
     Result = np.insert(newdata.astype(str), 0, MapId, axis=1)
-    filename = settings.OutputFolder + varstr + "_" + str(maxID) + "_" + settings.OutputNameStr
-    writecsvAggregation(filename, Result, settings)
+
+    filename = settings.OutputFolder + '/' + varstr + "_" + str(maxID) + "_" + settings.OutputNameStr + '.csv'
+
+    writecsvAggregation(filename, Result, settings, varstr)
 
     return Map_runoff
 
 
-def writecsvAggregation(filename, data, Settings):
-    years = map(str, range(Settings.StartYear, Settings.EndYear + 1))
-    if Settings.OutputInYear == 1:
-        headerline = "ID, Name," + ",".join([year for year in years]) + ", Unit (" + Settings.OutputUnitStr + ")"
-    else:
-        MonthStr = np.chararray((len(years) * 12,), itemsize=6)
-        for y in years:
-            N = years.index(y)
-            MonthStr[N * 12:(N + 1) * 12] = [str(y) + str(i).zfill(2) for i in range(1, 13)]
-        headerline = "ID, Name," + ",".join([k for k in MonthStr]) + ", Unit (" + Settings.OutputUnitStr + ")"
+def writecsvAggregation(filename, data, settings, var):
+    filename = os.path.join(settings.OutputFolder,
+                            '{}_{}_{}'.format(var, settings.OutputUnitStr, '_'.join(settings.ProjectName.split(' '))))
 
-    with open(filename + '.csv', 'w') as outfile:
-        np.savetxt(outfile, data, delimiter=',', header=headerline, fmt='%s')
+    # convert to data frame to set header and basin number in file
+    df = pd.DataFrame(data)
+
+    filename += ".csv"
+
+    if settings.OutputInYear == 1:
+        cols = ','.join(['{}'.format(i) for i in range(settings.StartYear, settings.EndYear + 1, 1)])
+    else:
+        l = []
+        for i in range(settings.StarYear, settings.EndYear + 1, 1):
+            for m in range(1, 13):
+                if m < 10:
+                    mth = '0{}'.format(m)
+                else:
+                    mth = m
+                l.append('{}{}'.format(i, mth))
+        cols = ','.join(l)
+
+    # set header
+    hdr = 'id,name,{}'.format(cols)
+    df.columns = hdr.split(',')
+
+    df.to_csv(filename, index=False)
+
+#    years = map(str, range(Settings.StartYear, Settings.EndYear + 1))
+#
+#    if Settings.OutputInYear == 1:
+#        headerline = "ID, Name," + ",".join([year for year in years]) + ", Unit (" + Settings.OutputUnitStr + ")"
+#    else:
+#        MonthStr = np.chararray((len(years) * 12,), itemsize=6)
+#        for y in years:
+#            N = years.index(y)
+#            MonthStr[N * 12:(N + 1) * 12] = [str(y) + str(i).zfill(2) for i in range(1, 13)]
+#        headerline = "ID, Name," + ",".join([k for k in MonthStr]) + ", Unit (" + Settings.OutputUnitStr + ")"
+#
+#    with open(filename, 'w') as outfile:
+#        np.savetxt(outfile, data, delimiter=',', header=headerline, fmt='%s')

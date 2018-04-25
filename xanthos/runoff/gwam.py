@@ -16,7 +16,7 @@ Copyright (c) 2017, Battelle Memorial Institute
 import numpy as np
 
 
-def runoffgen(PET, P, T, D, settings, Sm, X, Y, M, dr, chstor, indexing=999):
+def runoffgen(PET, P, settings, Sm, chstor, indexing=999):
     '''
     Inputs:
 
