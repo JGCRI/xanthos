@@ -1,16 +1,11 @@
 """
 Read in settings from configuration file *.ini
-Created on Oct 4, 2016
 
-@author: lixi729
-@email: xinya.li@pnl.gov
-@Project: Xanthos V1.0
-
+@author: Xinya Li (xinya.li@pnl.gov) and Chris Vernon (chris.vernon@pnnl.gov)
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-
 """
 
 import os
@@ -91,10 +86,16 @@ class ConfigReader:
         except KeyError:
             hp = False
 
+        try:
+            cal = c['Calibrate']
+        except KeyError:
+            cal = False
+
         # project level settings
         self.ncell = 67420
         self.ngridrow = 360
         self.ngridcol = 720
+        self.n_basins = int(p['n_basins'])
         self.OutputUnitStr = None
         self.HistFlag = p['HistFlag']
         self.StartYear = int(p['StartYear'])
@@ -111,6 +112,7 @@ class ConfigReader:
         self.CalculateAccessibleWater = int(p['CalculateAccessibleWater'])
         self.CalculateHydropowerPotential = int(p['CalculateHydropowerPotential'])
         self.CalculateHydropowerActual = int(p['CalculateHydropowerActual'])
+        self.calibrate = int(p['Calibrate'])
 
         # PET config
         if pt is not False:
@@ -150,8 +152,7 @@ class ConfigReader:
                 try:
                     self.pet_file = pt['pet_file']
                 except KeyError:
-                    msg = "USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module."
-                    raise(msg)
+                    raise("USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module.")
 
             else:
                 msg = "ERROR: PET module '{0}' not found. Please check spelling and try again.".format(self.pet_module)
@@ -162,8 +163,7 @@ class ConfigReader:
             try:
                 self.pet_file = pt['pet_file']
             except KeyError:
-                msg = "USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module."
-                raise(msg)
+                raise("USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module.")
 
         # Runoff config
         if ro is not False:
@@ -314,11 +314,6 @@ class ConfigReader:
         else:
             print('WARNING:  No reference data selected for use.')
 
-        # self.CellArea = None
-        # self.ChSlope = None
-        # self.DrainArea = None
-        # self.RiversMSM = None
-
         # diagnostics
         if d is not False:
             if self.PerformDiagnostics:
@@ -356,12 +351,12 @@ class ConfigReader:
                 self.Env_FlowPercent = float(a['Env_FlowPercent'])
 
                 if (self.StartYear > self.GCAM_StartYear) or (self.EndYear < self.GCAM_EndYear):
-                    raise RuntimeError("Accessible water range of GCAM years are outside the range of years in climate data.")
+                    raise ValidationException("Accessible water range of GCAM years are outside the range of years in climate data.")
 
         # hydropower potential
         if hp is not False:
             if self.CalculateHydropowerPotential:
-                self.hpot_start_date = hp['hpot_start_date']
+                self.hpot_start_date = '1/1950' #hp['hpot_start_date']
                 self.q_ex = float(hp['q_ex'])
                 self.ef = float(hp['ef'])
                 self.GridData = os.path.join(self.HydActDir, ha['GridData'])
@@ -375,6 +370,12 @@ class ConfigReader:
                 self.rule_curves = os.path.join(self.HydActDir, ha['rule_curves'])
                 self.GridData = os.path.join(self.HydActDir, ha['GridData'])
                 self.DrainArea = os.path.join(self.HydActDir, ha['DrainArea'])
+
+        # calibration mode
+        if cal is not False:
+            if self.calibrate:
+                self.set_calibrate = int(cal['set_calibrate'])
+                self.cal_observed = cal['observed']
 
     def ck_year(self, yr):
         """
