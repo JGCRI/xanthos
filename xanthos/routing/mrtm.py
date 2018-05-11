@@ -27,7 +27,7 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
 
     Outputs:
     S:     channel storage, unit m3
-    Favg:  monthly average channel flow, unit mm/month
+    Favg:  monthly average channel flow, unit m3/s
     F:     instantaneous channel flow, unit m3/s
     '''
 
@@ -42,7 +42,7 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
     tauinv = ChV / L
     dtinv = 1. / dt
 
-    erlateral = q * area / 1e6 * 10 ** 9 / (nday * 24 * 3600)  # q -> erlateral: mm/month to m^3/s
+    erlateral = (q * area) / (1e6 * 10**9) / (nday * 24 * 3600)  # q -> erlateral: mm/month to m^3/s
 
     for t in range(nt):
 
@@ -66,21 +66,21 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
             # (some of them will have changed due to the changes above.
             Sxn = np.logical_not(Sx)
             dSdt[Sxn] = (UM.dot(F))[Sxn] + erlateral[Sxn]
-            S[Sxn] = S[Sxn] + dSdt[Sxn] * dt
+            S[Sxn] += dSdt[Sxn] * dt
 
             # NB: in theory we should iterate this procedure until there are no
             # further cells with excess flow, but there is no guarantee that
             # the iteration process will converge.
         else:
             # No excess flow, so use the forward-Euler formula for all cells
-            S = S + dSdt * dt
+            S += (dSdt * dt)
 
-        Favg = Favg + F
+        Favg += F
 
-    Favg = Favg / nt
+    Favg /= nt
 
     # Convert m^3/s to mm/month same as q
-    Favg = Favg * (nday * 24 * 3600) / area / 1e3
+    #Favg *= ((nday * 24 * 3600) / area / 1e3)
 
     return S, Favg, F
 
