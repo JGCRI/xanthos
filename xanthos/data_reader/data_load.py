@@ -191,6 +191,10 @@ class LoadData:
             self.wbmd = self.load_data(self.s.WBMDataFile, 0, 'q')
             self.wbmc = self.load_data(self.s.WBMCDataFile, 0, "q")
 
+        if self.s.calibrate:
+            # use basin-level flow as target for calibration; select only columns for basin number and runoff
+            self.cal_obs = self.load_data(self.s.cal_observed, 0)[:, [0, 3]]
+
     def load_soil_data(self):
         """
         Load soil moisture file into array if in future mode, else stage zeros array.
@@ -523,13 +527,13 @@ def check_climate_data(data, n_cells, n_months, text):
     err_mth = "Error: Inconsistent {0} data grid size. Expecting size: {1}. Received size: {2}".format(text, n_months, data.shape[1])
 
     if not data.shape[0] == n_cells:
-        raise RuntimeError(err_cell)
+        raise ValidationException(err_cell)
 
     if not data.shape[1] == n_months:
-        raise RuntimeError(err_mth)
+        raise ValidationException(err_mth)
 
     if not data.shape[1] % 12 == 0:
-        raise RuntimeError("Error: Number of months in climate data can not be converted into integral years.")
+        raise ValidationException("Error: Number of months in climate data can not be converted into integral years.")
 
     return data
 
