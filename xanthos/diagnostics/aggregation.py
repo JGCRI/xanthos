@@ -68,14 +68,12 @@ def Aggregation_Map(settings, Map, Names, runoff, varstr):
     newdata = np.insert(Map_runoff.astype(str), 0, Names, axis=1)
     Result = np.insert(newdata.astype(str), 0, MapId, axis=1)
 
-    filename = settings.OutputFolder + '/' + varstr + "_" + str(maxID) + "_" + settings.OutputNameStr + '.csv'
-
-    writecsvAggregation(filename, Result, settings, varstr)
+    writecsvAggregation(Result, settings, varstr)
 
     return Map_runoff
 
 
-def writecsvAggregation(filename, data, settings, var):
+def writecsvAggregation(data, settings, var):
     filename = os.path.join(settings.OutputFolder,
                             '{}_{}_{}'.format(var, settings.OutputUnitStr, '_'.join(settings.ProjectName.split(' '))))
 
@@ -88,7 +86,7 @@ def writecsvAggregation(filename, data, settings, var):
         cols = ','.join(['{}'.format(i) for i in range(settings.StartYear, settings.EndYear + 1, 1)])
     else:
         l = []
-        for i in range(settings.StarYear, settings.EndYear + 1, 1):
+        for i in range(settings.StartYear, settings.EndYear + 1, 1):
             for m in range(1, 13):
                 if m < 10:
                     mth = '0{}'.format(m)
@@ -102,17 +100,3 @@ def writecsvAggregation(filename, data, settings, var):
     df.columns = hdr.split(',')
 
     df.to_csv(filename, index=False)
-
-#    years = map(str, range(Settings.StartYear, Settings.EndYear + 1))
-#
-#    if Settings.OutputInYear == 1:
-#        headerline = "ID, Name," + ",".join([year for year in years]) + ", Unit (" + Settings.OutputUnitStr + ")"
-#    else:
-#        MonthStr = np.chararray((len(years) * 12,), itemsize=6)
-#        for y in years:
-#            N = years.index(y)
-#            MonthStr[N * 12:(N + 1) * 12] = [str(y) + str(i).zfill(2) for i in range(1, 13)]
-#        headerline = "ID, Name," + ",".join([k for k in MonthStr]) + ", Unit (" + Settings.OutputUnitStr + ")"
-#
-#    with open(filename, 'w') as outfile:
-#        np.savetxt(outfile, data, delimiter=',', header=headerline, fmt='%s')
