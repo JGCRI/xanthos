@@ -1,8 +1,6 @@
 import calendar
 import numpy as np
-import os
 import sys
-import time
 
 
 class VersionError(Exception):
@@ -436,7 +434,7 @@ def run_pmpet(data, ncells, nlcs, start_yr, end_yr, water_idx, snow_idx, land_co
         # get start year and end year for time slice
         st_yr, ed_yr = set_years(y, end_yr, process_nyrs)
 
-        print("\n\nProcessing Years:  {} to {}".format(st_yr, ed_yr))
+        print("\t\tProcessing Years:  {} to {}".format(st_yr, ed_yr))
 
         # set the number of months for the time slice
         yx = ed_yr - st_yr
