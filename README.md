@@ -32,8 +32,8 @@ With the ability to simulate historical and future global water availability on 
 
 # How To
 ## Run Xanthos from an IDE
-```from xanthos.model import Xanthos
-
+```
+from xanthos.model import Xanthos
 
 def run(ini):
 
@@ -52,6 +52,7 @@ if __name__ == "__main__":
     ini = '<dirpath>/pm_abcd_mrtm.ini'
 
     # run the model
-    xth = run(ini)```
+    xth = run(ini)
+```
 
 ## Run Xanthos from the terminal
