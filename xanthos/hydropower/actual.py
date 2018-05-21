@@ -43,7 +43,7 @@ class HydropowerActual:
         self.rule_curves = np.load(settings.rule_curves)  # rule curves for all 1593 dams
 
         # assign from inputs
-        self.filename_hydro = os.path.join(settings.OutputFolder,"actual_hydro_by_gcam_region_ej_{}.csv".format(settings.ProjectName))
+        self.filename_hydro = os.path.join(settings.OutputFolder, "actual_hydro_by_gcam_region_EJperyr_{}.csv".format(settings.ProjectName))
         self.start_date = settings.hact_start_date  # Get start date for simulation "M/YYYY"
         self.loc_refs = self.grid_data[["ID", "long", "lati"]]  # Get latitiude and longitude for all grid squares
         self.grid_ids = self.res_data.ix[:, 0:2].apply(self.get_grid_id, 1)  # Get grid indices for all dams
@@ -87,7 +87,7 @@ class HydropowerActual:
         """
         Gets value from within an array closest to a value.
         """
-        idx = (np.abs(array - value)).argmin()
+        idx = (np.abs(array - value)).idxmin() # idxmin instead of argmin
         return array[idx]
 
     @staticmethod
@@ -95,7 +95,7 @@ class HydropowerActual:
         """
         Gets index of an array closest to a value.
         """
-        return (np.abs(array - value)).argmin()
+        return (np.abs(array - value)).idxmin()
 
     def get_grid_id(self, longlat):
         """
@@ -216,4 +216,7 @@ class HydropowerActual:
 #        cols = ['region_{}'.format(i) for i in df.columns]
 #        cols.insert(0, 'year')
 #        df.columns = cols
-        pd.DataFrame.to_csv(self.hydro_gcam_regions_EJ.T, self.filename_hydro)
+        odf = self.hydro_gcam_regions_EJ.T
+        odf.reset_index(inplace=True)
+        odf.rename({'index': 'region'}, axis='columns', inplace=True)
+        pd.DataFrame.to_csv(odf, self.filename_hydro, index=False)

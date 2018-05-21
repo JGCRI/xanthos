@@ -79,9 +79,6 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
 
     Favg /= nt
 
-    # Convert m^3/s to mm/month same as q
-    #Favg *= ((nday * 24 * 3600) / area / 1e3)
-
     return S, Favg, F
 
 

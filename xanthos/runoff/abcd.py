@@ -37,14 +37,12 @@ class ABCD:
     @:return m      Float from 0-1
     """
 
-    def __init__(self, pars, pet, precip, tmin, process_steps, spinup_factor, method='dist'):
+    def __init__(self, pars, pet, precip, tmin, process_steps, spinup_steps, method='dist'):
 
         # set processing method and steps
         self.method = method
         self.steps = process_steps
-        self.spinup_factor = spinup_factor
-        self.spinup_steps = process_steps * spinup_factor
-        # self.spinup_years = 40
+        self.spinup_steps = spinup_steps
 
         # assign attributes
         self.a = pars[0]
@@ -67,10 +65,9 @@ class ABCD:
         # temperature minimum as input
         self.tmin = tmin.T[0:self.steps, :]
 
-        # set start points
-        self.pet0 = np.tile(self.pet, (self.spinup_factor, 1))
-        self.p0 = np.tile(self.p, (self.spinup_factor, 1))
-        self.tmin0 = np.tile(self.tmin, (self.spinup_factor, 1))
+        self.pet0 = self.pet[0:self.spinup_steps, :].copy()
+        self.p0 = self.p[0:self.spinup_steps, :].copy()
+        self.tmin0 = self.tmin[0:self.spinup_steps, :].copy()
 
         # populate param arrays
         self.snm = None
@@ -238,8 +235,8 @@ class ABCD:
             dec_idx = [-1, -13, -25]
 
         except IndexError:
-            print('Spin-up factor must produce at least 10 years spin-up.')
-            print('Your factor ({0}) when multiplied by the total years ({1}) yeids a spin-up of {2} years.'.format(self.spinup_factor, self.steps/12, self.spinup_steps/12))
+            print('Spin-up steps must produce at least 10 years spin-up.')
+            print('Your spin-up only consist of {} months'.format(self.spinup_steps))
             print('Please reconfigure and try again.')
             raise
 
@@ -294,7 +291,7 @@ class ABCD:
         self.simulate()
 
 
-def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, spinup_factor=2, method='dist'):
+def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, spinup_steps, method='dist'):
     """
     Run the ABCD model for each basin.
 
@@ -306,7 +303,7 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
     :return                 A NumPy array
     """
 
-    print("\n\nProcessing spin-up and simulation for basin {}".format(basin_num))
+    print("\t\tProcessing spin-up and simulation for basin {}".format(basin_num))
 
     # import ABCD parameters for the target basin
     pars = pars_abcdm[basin_num-1]
@@ -320,7 +317,7 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
     _tmin = tmin[basin_idx]
 
     # instantiate the model
-    he = ABCD(pars, _pet, _precip, _tmin, n_months, spinup_factor, method=method)
+    he = ABCD(pars, _pet, _precip, _tmin, n_months, spinup_steps, method=method)
 
     # run it
     he.emulate()
@@ -331,7 +328,7 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
     return vals
 
 
-def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup_factor=1, jobs=-1):
+def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps, jobs=-1):
     """
     This model is made to run a basin at a time.  Running them in parallel
     greatly speeds things up. The user can choose to output just the coordinates
@@ -340,7 +337,7 @@ def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spin
     :param num_basins:          How many basin to run
     :return:                    A list of NumPy arrays
     """
-    rslts = Parallel(n_jobs=jobs)(delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, n_months, spinup_factor) for i in range(1, num_basins + 1, 1))
+    rslts = Parallel(n_jobs=jobs)(delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps) for i in range(1, num_basins + 1, 1))
     return(rslts)
 
 
@@ -389,7 +386,7 @@ def abcd_outputs(rslts, n_months, basin_ids, ncells):
     return _pet, _aet, _q, _sav
 
 
-def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, spinup_factor, jobs):
+def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, spinup_steps, jobs):
     """
     Run the ABCD model.
     :return:
@@ -399,8 +396,7 @@ def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, s
 
     # run all basins at once in parallel
     all_bsns = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
-               pet=pet, precip=precip, tmin=tmin, n_months=n_months,
-               spinup_factor=spinup_factor, jobs=jobs)
+               pet=pet, precip=precip, tmin=tmin, n_months=n_months, spinup_steps=spinup_steps, jobs=jobs)
 
     # build array to pass to router
     _pet, _aet, _q, _sav = abcd_outputs(all_bsns, n_months=n_months, basin_ids=basin_ids, ncells=67420)

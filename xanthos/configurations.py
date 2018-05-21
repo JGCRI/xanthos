@@ -246,7 +246,7 @@ def pm_abcd_mrtm(config):
                  pet_step=None,
                  runoff=True,
                  runoff_step=None,
-                 routing=False,
+                 routing=True,
                  routing_num_steps=config.nmonths,
                  routing_step='month',
                  notify='Simulation')

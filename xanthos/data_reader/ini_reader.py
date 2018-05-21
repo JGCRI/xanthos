@@ -356,7 +356,7 @@ class ConfigReader:
         # hydropower potential
         if hp is not False:
             if self.CalculateHydropowerPotential:
-                self.hpot_start_date = '1/1950' #hp['hpot_start_date']
+                self.hpot_start_date = hp['hpot_start_date']
                 self.q_ex = float(hp['q_ex'])
                 self.ef = float(hp['ef'])
                 self.GridData = os.path.join(self.HydActDir, ha['GridData'])
@@ -382,7 +382,7 @@ class ConfigReader:
         Check to see if the target year is within the bounds of the data.
         """
         if (yr < self.StartYear) or (yr > self.EndYear):
-            raise RuntimeError("Accessible water year {0} is outside the range of years in the climate data.".format(yr))
+            raise ValidationException("Accessible water year {0} is outside the range of years in the climate data.".format(yr))
         else:
             return yr
 

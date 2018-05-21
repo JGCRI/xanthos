@@ -23,6 +23,7 @@ from diagnostics.time_series import TimeSeriesPlot
 from accessible.accessible import AccessibleWater
 from hydropower.potential import HydropowerPotential
 from hydropower.actual import HydropowerActual
+from calibrate.calibrate_abcd import calibrate
 
 from data_reader.data_load import LoadData
 
@@ -52,7 +53,8 @@ class Components:
 
         # index arrays
         self.yr_imth_dys = helper.set_month_arrays(self.s.nmonths, self.s.StartYear, self.s.EndYear)
-        self.map_index = umth.sub2ind([self.s.ngridrow, self.s.ngridcol], self.data.coords[:, 4].astype(int) - 1,
+        self.map_index = umth.sub2ind([self.s.ngridrow, self.s.ngridcol],
+                                      self.data.coords[:, 4].astype(int) - 1,
                                       self.data.coords[:, 3].astype(int) - 1)
 
         # pet
@@ -199,6 +201,11 @@ class Components:
         Calculate runoff.
 
         Runoff takes a feedback of soil moisture content (sm_prev).  This is updated for each iteration of a month.
+
+        :returns:               PET : Potential Evapotranspiration (mm/month)
+                                AET : Actual Evapotranspiration (mm/month)
+                                Q   : Runoff (mm/month)
+                                Sav : Soil Moisture content (mm/month)
         """
         if self.s.runoff_module == 'gwam':
 
@@ -208,10 +215,10 @@ class Components:
 
         elif self.s.runoff_module == 'abcd':
 
-            rg = runoff_mod.abcd_execute(n_basins=235, basin_ids=self.data.basin_ids,
+            rg = runoff_mod.abcd_execute(n_basins=self.s.n_basins, basin_ids=self.data.basin_ids,
                                          pet=pet, precip=self.data.precip, tmin=np.nan_to_num(self.data.tmin),
                                          calib_file=self.s.calib_file, n_months=self.s.nmonths,
-                                         spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
+                                         spinup_steps=self.s.SpinUp, jobs=self.s.ro_jobs)
 
             self.PET, self.AET, self.Q, self.Sav = rg
 
@@ -241,6 +248,10 @@ class Components:
         """
         Calculate routing.  Routing takes a simulated runoff (Q) from the runoff output and
         previous channel storage (chs_prev) from previous channel storage.
+
+        :returns:                   ChStorage     : Channel storage (m3)
+                                    Avg_ChFlow    : Average streamflow (m3/s)
+                                    instream_flow : Streamflow (m3/s)
         """
         if self.s.routing_module == 'mrtm':
             sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
@@ -267,178 +278,188 @@ class Components:
         :param notify:              A string that is used to add to log print that describes whether the simulation is
                                     spin-up or regular
         """
-        # pass simulation if there are no steps to process
-        if (pet_num_steps + runoff_num_steps + routing_num_steps) == 0:
-            pass
+        # default to calibration if selected
+        if self.s.calibrate == 1:
+            print("---Calibrating...")
+            self.calibrate()
 
         else:
+            # pass simulation if there are no steps to process
+            if (pet_num_steps + runoff_num_steps + routing_num_steps) == 0:
+                pass
 
-            # this one is used with the hargreaves-gwam-mrtm config
-            if (pet_step == 'month') and (runoff_step == 'month') and (routing_step == 'month'):
+            else:
 
-                print("---{} in progress...".format(notify))
-                t0 = time.time()
+                # this one is used with the hargreaves-gwam-mrtm config
+                if (pet_step == 'month') and (runoff_step == 'month') and (routing_step == 'month'):
 
-                if pet:
+                    print("---{} in progress...".format(notify))
+                    t0 = time.time()
 
-                    print("\tProcessing PET...")
-                    t = time.time()
+                    if pet:
 
-                    for nm in range(pet_num_steps):
-                        # set up climate data for processing
-                        self.prep_arrays(nm)
+                        print("\tProcessing PET...")
+                        t = time.time()
 
-                        # set up PET data for processing
-                        self.prep_pet(nm)
+                        for nm in range(pet_num_steps):
+                            # set up climate data for processing
+                            self.prep_arrays(nm)
 
-                        # calculate pet
+                            # set up PET data for processing
+                            self.prep_pet(nm)
+
+                            # calculate pet
+                            self.calculate_pet()
+
+                        print("\tPET processed in {} seconds---".format(time.time() - t))
+
+                    # for the case where the user provides a PET dataset
+                    else:
+                        # load user provided data
                         self.calculate_pet()
 
-                    print("\tPET processed in {} seconds---".format(time.time() - t))
+                    if runoff:
 
-                # for the case where the user provides a PET dataset
-                else:
-                    # load user provided data
-                    self.calculate_pet()
+                        print("\tProcessing Runoff...")
+                        t = time.time()
 
-                if runoff:
+                        for nm in range(runoff_num_steps):
 
-                    print("\tProcessing Runoff...")
-                    t = time.time()
+                            # calculate runoff and generate monthly potential ET, actual ET, runoff, and soil moisture
+                            if runoff:
+                                self.calculate_runoff(nm)
 
-                    for nm in range(runoff_num_steps):
+                                # update soil moisture (sav) array for next step
+                                self.sm_prev = np.copy(self.Sav[:, nm])
 
-                        # calculate runoff and generate monthly potential ET, actual ET, runoff, and soil moisture
-                        if runoff:
-                            self.calculate_runoff(nm)
+                        print("\tRunoff processed in {} seconds---".format(time.time() - t))
 
-                            # update soil moisture (sav) array for next step
-                            self.sm_prev = np.copy(self.Sav[:, nm])
+                    # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
+                    if routing:
 
-                    print("\tRunoff processed in {} seconds---".format(time.time() - t))
+                        print("\tProcessing Routing...")
+                        t = time.time()
 
-                # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-                if routing:
+                        for nm in range(routing_num_steps):
+                            self.calculate_routing(nm)
 
-                    print("\tProcessing Routing...")
-                    t = time.time()
+                            # update channel storage (chs) array for next step
+                            self.chs_prev = np.copy(self.ChStorage[:, nm])
 
-                    for nm in range(routing_num_steps):
-                        self.calculate_routing(nm)
+                        print("\tRouting processed in {} seconds---".format(time.time() - t))
 
-                        # update channel storage (chs) array for next step
-                        self.chs_prev = np.copy(self.ChStorage[:, nm])
+                    print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
-                    print("\tRouting processed in {} seconds---".format(time.time() - t))
+                # used for the hargreaves-abcd-mrtm config
+                elif (pet_step == 'month') and (runoff_step is None) and (routing_step == 'month'):
 
-                print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
+                    print("---{} in progress... ".format(notify))
+                    t0 = time.time()
 
-            # used for the hargreaves-abcd-mrtm config
-            elif (pet_step == 'month') and (runoff_step is None) and (routing_step == 'month'):
+                    # set up climate data for processing
+                    # self.prep_arrays()
 
-                print("---{} in progress... ".format(notify))
-                t0 = time.time()
+                    # calculate PET
+                    if pet:
+                        print("\tProcessing PET...")
+                        t = time.time()
 
-                # set up climate data for processing
-                # self.prep_arrays()
+                        for nm in range(pet_num_steps):
+                            # set up PET data for processing
+                            self.prep_pet(nm)
 
-                # calculate PET
-                if pet:
-                    print("\tProcessing PET...")
-                    t = time.time()
+                            # calculate pet
+                            self.calculate_pet()
 
-                    for nm in range(pet_num_steps):
-                        # set up PET data for processing
-                        self.prep_pet(nm)
+                            # archive pet month in array
+                            self.pet_out[:, nm] = self.pet_t
+
+                        print("\tPET processed in {} seconds---".format(time.time() - t))
+
+                    # for the case where the user provides a PET dataset
+                    else:
+                        # load user provided data
+                        pet_out = self.calculate_pet()
+
+                    # calculate runoff for all basins all months
+                    if runoff:
+                        print("\tProcessing Runoff...")
+                        t = time.time()
+
+                        self.calculate_runoff(pet=pet_out)
+
+                        print("\tRunoff processed in {} seconds---".format(time.time() - t))
+
+                    # process routing
+                    if routing:
+
+                        print("\tProcessing Routing...")
+                        t = time.time()
+
+                        for nm in range(routing_num_steps):
+                            # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
+                            self.calculate_routing(nm)
+
+                            # update channel storage (chs) arrays for next step
+                            self.chs_prev = np.copy(self.ChStorage[:, nm])
+
+                        print("\tRouting processed in {} seconds---".format(time.time() - t))
+
+                    print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
+
+                # used for the penman-monteith - abcd - mrtm config
+                elif (pet_step is None) and (runoff_step is None) and (routing_step == 'month'):
+
+                    print("---{} in progress... ".format(notify))
+                    t0 = time.time()
+
+                    # calculate PET
+                    if pet:
+                        print("\tProcessing PET...")
+                        t = time.time()
 
                         # calculate pet
-                        self.calculate_pet()
+                        pet_out = self.calculate_pet()
 
-                        # archive pet month in array
-                        self.pet_out[:, nm] = self.pet_t
+                        print("\tPET processed in {} seconds---".format(time.time() - t))
 
-                    print("\tPET processed in {} seconds---".format(time.time() - t))
+                    # for the case where the user provides a PET dataset
+                    else:
+                        # load user provided data
+                        pet_out = self.calculate_pet()
 
-                # for the case where the user provides a PET dataset
-                else:
-                    # load user provided data
-                    pet_out = self.calculate_pet()
+                    # calculate runoff for all basins all months
+                    if runoff:
+                        print("\tProcessing Runoff...")
+                        t = time.time()
 
-                # calculate runoff for all basins all months
-                if runoff:
-                    print("\tProcessing Runoff...")
-                    t = time.time()
+                        self.calculate_runoff(pet=pet_out)
 
-                    self.calculate_runoff(pet=pet_out)
+                        print("\tRunoff processed in {} seconds---".format(time.time() - t))
 
-                    print("\tRunoff processed in {} seconds---".format(time.time() - t))
 
-                # process routing
-                if routing:
+                    # process routing
+                    if routing:
 
-                    print("\tProcessing Routing...")
-                    t = time.time()
+                        print("\tProcessing Routing...")
+                        t = time.time()
 
-                    for nm in range(routing_num_steps):
-                        # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-                        self.calculate_routing(nm)
+                        # process spin up for channel storage from historic period
+                        for nm in range(0, self.s.SpinUp, 1):
+                            self.calculate_routing(nm)
+                            # update channel storage (chs) arrays for next step
+                            self.chs_prev = np.copy(self.ChStorage[:, nm])
 
-                        # update channel storage (chs) arrays for next step
-                        self.chs_prev = np.copy(self.ChStorage[:, nm])
+                        for nm in range(routing_num_steps):
+                            # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
+                            self.calculate_routing(nm)
 
-                    print("\tRouting processed in {} seconds---".format(time.time() - t))
+                            # update channel storage (chs) arrays for next step
+                            self.chs_prev = np.copy(self.ChStorage[:, nm])
 
-                print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
+                        print("\tRouting processed in {} seconds---".format(time.time() - t))
 
-            # used for the penman-monteith - abcd - mrtm config
-            elif (pet_step == None) and (runoff_step is None) and (routing_step == 'month'):
-
-                print("---{} in progress... ".format(notify))
-                t0 = time.time()
-
-                # set up climate data for processing
-                # self.prep_arrays()
-
-                # calculate PET
-                if pet:
-                    print("\tProcessing PET...")
-                    t = time.time()
-
-                    # calculate pet
-                    pet_out = self.calculate_pet()
-
-                    print("\tPET processed in {} seconds---".format(time.time() - t))
-
-                # for the case where the user provides a PET dataset
-                else:
-                    # load user provided data
-                    pet_out = self.calculate_pet()
-
-                # calculate runoff for all basins all months
-                if runoff:
-                    print("\tProcessing Runoff...")
-                    t = time.time()
-
-                    self.calculate_runoff(pet=pet_out)
-
-                    print("\tRunoff processed in {} seconds---".format(time.time() - t))
-
-                # process routing
-                if routing:
-
-                    print("\tProcessing Routing...")
-                    t = time.time()
-
-                    for nm in range(routing_num_steps):
-                        # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-                        self.calculate_routing(nm)
-
-                        # update channel storage (chs) arrays for next step
-                        self.chs_prev = np.copy(self.ChStorage[:, nm])
-
-                    print("\tRouting processed in {} seconds---".format(time.time() - t))
-
-                print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
+                    print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
     def accessible_water(self):
         """
@@ -490,9 +511,9 @@ class Components:
 
     def output_simulation(self):
         """
-        Output simulation results.
+        Output simulation results.  This step both converts the data to the user specified format and
         """
-        print "---Output simulation results:"
+        print("---Output simulation results:")
         t0 = time.time()
 
         self.q, self.ac = OUTWriter(self.s, self.data.area, self.PET, self.AET, self.Q, self.Sav, self.ChStorage,
@@ -523,3 +544,19 @@ class Components:
             TimeSeriesPlot(self.s, self.q, self.ac, self.data)
 
             print("---Plots has finished successfully: %s seconds ------" % (time.time() - t0))
+
+    def calibrate(self):
+        """
+        Run calibration to generate parameters for the ABCD model
+        """
+        # calculate pet
+        pet_out = self.calculate_pet()
+
+        # if calibrating to runoff observed data
+        if self.s.set_calibrate == 0:
+            print("---Running calibration:")
+
+            calibrate(self.data.basin_ids, self.data.area, self.data.precip, pet_out, self.data.cal_obs,
+                      self.data.tmin, self.s.nmonths, self.s.SpinUp, self.s.n_basins, self.s.ro_jobs)
+
+
