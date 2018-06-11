@@ -23,7 +23,7 @@ from diagnostics.time_series import TimeSeriesPlot
 from accessible.accessible import AccessibleWater
 from hydropower.potential import HydropowerPotential
 from hydropower.actual import HydropowerActual
-from calibrate.calibrate_abcd import calibrate
+from calibrate.calibrate_abcd import Calibrate
 
 from data_reader.data_load import LoadData
 
@@ -62,7 +62,7 @@ class Components:
             self.mth_temp_pet = None
             self.mth_dtr_pet = None
             self.pet_t = None
-            self.pet_out = None # np.zeros_like(self.precip)
+            self.pet_out = None
             sft = helper.calc_sinusoidal_factor(self.yr_imth_dys)
             self.solar_dec = sft[0]
             self.dr = sft[1]
@@ -110,9 +110,6 @@ class Components:
         # outputs
         self.q = None
         self.ac = None
-
-        # prep modules
-        self.prep_routing()
 
     def import_core(self):
         """
@@ -183,18 +180,16 @@ class Components:
         """
         if self.s.pet_module == 'hargreaves':
 
-            pet_out = pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data.lat_radians,
+            return pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data.lat_radians,
                                             self.mth_solar_dec, self.mth_dr, self.mth_days)
 
         elif self.s.pet_module == 'pm':
 
-            pet_out = pet_mod.run_pmpet(self.data, self.s.ncell, self.s.pm_nlcs, self.s.StartYear, self.s.EndYear,
+            return pet_mod.run_pmpet(self.data, self.s.ncell, self.s.pm_nlcs, self.s.StartYear, self.s.EndYear,
                                         self.s.pm_water_idx, self.s.pm_snow_idx, self.s.pm_lc_years)
 
         elif self.s.pet_module == 'none':
-            pet_out = self.data.pet_out
-
-        return pet_out
+            return self.data.pet_out
 
     def calculate_runoff(self, nm=None, pet=None):
         """
@@ -218,33 +213,17 @@ class Components:
             rg = runoff_mod.abcd_execute(n_basins=self.s.n_basins, basin_ids=self.data.basin_ids,
                                          pet=pet, precip=self.data.precip, tmin=np.nan_to_num(self.data.tmin),
                                          calib_file=self.s.calib_file, n_months=self.s.nmonths,
-                                         spinup_steps=self.s.SpinUp, jobs=self.s.ro_jobs)
+                                         spinup_steps=self.s.runoff_spinup, jobs=self.s.ro_jobs)
 
             self.PET, self.AET, self.Q, self.Sav = rg
 
-    def prep_routing(self):
-        """
-        Prepare routing arrays.
-        """
-        if self.s.routing_module == 'mrtm':
-
-            self.flow_dist = fetch.load_routing_data(self.s.FlowDis, self.s.ngridrow, self.s.ngridcol,
-                                                     self.map_index, rep_val=1000)
-            self.flow_dir = fetch.load_routing_data(self.s.FlowDir, self.s.ngridrow, self.s.ngridcol,
-                                                    self.map_index)
-            self.instream_flow = np.zeros((self.s.ncell,), dtype=float)
-            self.str_velocity = fetch.load_routing_data(self.s.strm_veloc, self.s.ngridrow, self.s.ngridcol,
-                                                        self.map_index, rep_val=0)
-            self.dsid = routing_mod.downstream(self.data.coords, self.flow_dir, self.s)
-            self.upid = routing_mod.upstream(self.data.coords, self.dsid, self.s)
-            self.um = routing_mod.upstream_genmatrix(self.upid)
-            self.chs_prev = fetch.load_chs_data(self.s)
+        else:
 
             # if user is providing a custom runoff file
             if self.s.alt_runoff is not None:
                 self.Q = np.load(self.s.alt_runoff)
 
-    def calculate_routing(self, nm):
+    def calculate_routing(self, runoff):
         """
         Calculate routing.  Routing takes a simulated runoff (Q) from the runoff output and
         previous channel storage (chs_prev) from previous channel storage.
@@ -254,11 +233,51 @@ class Components:
                                     instream_flow : Streamflow (m3/s)
         """
         if self.s.routing_module == 'mrtm':
-            sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
-                                           self.Q[:, nm], self.data.area, self.yr_imth_dys[nm, 2],
-                                           self.routing_timestep_hours, self.um)
 
-            self.ChStorage[:, nm], self.Avg_ChFlow[:, nm], self.instream_flow = sr
+            print"loading routing data..."
+            self.flow_dist = fetch.load_routing_data(self.s.FlowDis, self.s.ngridrow, self.s.ngridcol,
+                                                     self.map_index, rep_val=1000)
+            self.flow_dir = fetch.load_routing_data(self.s.FlowDir, self.s.ngridrow, self.s.ngridcol, self.map_index)
+            self.instream_flow = np.zeros((self.s.ncell,), dtype=float)
+            self.str_velocity = fetch.load_routing_data(self.s.strm_veloc, self.s.ngridrow, self.s.ngridcol,
+                                                        self.map_index, rep_val=0)
+            self.dsid = routing_mod.downstream(self.data.coords, self.flow_dir, self.s)
+            self.upid = routing_mod.upstream(self.data.coords, self.dsid, self.s)
+            self.um = routing_mod.upstream_genmatrix(self.upid)
+            self.chs_prev = fetch.load_chs_data(self.s)
+
+            print "running routing spin-up..."
+            # process spin up for channel storage from historic period
+            for nm in range(0, self.s.routing_spinup, 1):
+
+                sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
+                                               runoff[:, nm], self.data.area, self.yr_imth_dys[nm, 2],
+                                               self.routing_timestep_hours, self.um)
+
+                self.ChStorage[:, nm], self.Avg_ChFlow[:, nm], self.instream_flow = sr
+
+                # update channel storage (chs) arrays for next step
+                self.chs_prev = np.copy(self.ChStorage[:, nm])
+
+            print "running routing simulation..."
+            for nm in range(self.s.nmonths):
+                # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
+                sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
+                                               runoff[:, nm], self.data.area, self.yr_imth_dys[nm, 2],
+                                               self.routing_timestep_hours, self.um)
+
+                self.ChStorage[:, nm], self.Avg_ChFlow[:, nm], self.instream_flow = sr
+
+                # update channel storage (chs) arrays for next step
+                self.chs_prev = np.copy(self.ChStorage[:, nm])
+
+            return self.Avg_ChFlow
+
+            # sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
+            #                                runoff[:, nm], self.data.area, self.yr_imth_dys[nm, 2],
+            #                                self.routing_timestep_hours, self.um)
+            #
+            # self.ChStorage[:, nm], self.Avg_ChFlow[:, nm], self.instream_flow = sr
 
     def simulation(self, pet=True, pet_num_steps=0, pet_step='month',
                    runoff=True, runoff_num_steps=0, runoff_step='month',
@@ -278,9 +297,9 @@ class Components:
         :param notify:              A string that is used to add to log print that describes whether the simulation is
                                     spin-up or regular
         """
+
         # default to calibration if selected
         if self.s.calibrate == 1:
-            print("---Calibrating...")
             self.calibrate()
 
         else:
@@ -292,6 +311,8 @@ class Components:
 
                 # this one is used with the hargreaves-gwam-mrtm config
                 if (pet_step == 'month') and (runoff_step == 'month') and (routing_step == 'month'):
+
+                    print("TEST 1")
 
                     print("---{} in progress...".format(notify))
                     t0 = time.time()
@@ -353,6 +374,8 @@ class Components:
                 # used for the hargreaves-abcd-mrtm config
                 elif (pet_step == 'month') and (runoff_step is None) and (routing_step == 'month'):
 
+                    print("TEST 2")
+
                     print("---{} in progress... ".format(notify))
                     t0 = time.time()
 
@@ -407,8 +430,14 @@ class Components:
 
                     print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
-                # used for the penman-monteith - abcd - mrtm config
+                # --------------------------------------------------
+                # USED FOR THE FOLLOWING CONFIGURATIONS:
+                #
+                # pm-abcd-mrtm
+                # --------------------------------------------------
                 elif (pet_step is None) and (runoff_step is None) and (routing_step == 'month'):
+
+                    print("TEST 3")
 
                     print("---{} in progress... ".format(notify))
                     t0 = time.time()
@@ -437,7 +466,6 @@ class Components:
 
                         print("\tRunoff processed in {} seconds---".format(time.time() - t))
 
-
                     # process routing
                     if routing:
 
@@ -445,17 +473,7 @@ class Components:
                         t = time.time()
 
                         # process spin up for channel storage from historic period
-                        for nm in range(0, self.s.SpinUp, 1):
-                            self.calculate_routing(nm)
-                            # update channel storage (chs) arrays for next step
-                            self.chs_prev = np.copy(self.ChStorage[:, nm])
-
-                        for nm in range(routing_num_steps):
-                            # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-                            self.calculate_routing(nm)
-
-                            # update channel storage (chs) arrays for next step
-                            self.chs_prev = np.copy(self.ChStorage[:, nm])
+                        self.calculate_routing(self.Q)
 
                         print("\tRouting processed in {} seconds---".format(time.time() - t))
 
@@ -552,11 +570,26 @@ class Components:
         # calculate pet
         pet_out = self.calculate_pet()
 
-        # if calibrating to runoff observed data
-        if self.s.set_calibrate == 0:
-            print("---Running calibration:")
+        print("---Running calibration:")
 
-            calibrate(self.data.basin_ids, self.data.area, self.data.precip, pet_out, self.data.cal_obs,
-                      self.data.tmin, self.s.nmonths, self.s.SpinUp, self.s.n_basins, self.s.ro_jobs)
+        cal = Calibrate(basin_num=100,
+                        set_calibrate=self.s.set_calibrate,
+                        obs_unit=self.s.obs_unit,
+                        basin_ids=self.data.basin_ids,
+                        basin_areas=self.data.area,
+                        precip=self.data.precip,
+                        pet=pet_out,
+                        obs=self.data.cal_obs,
+                        tmin=self.data.tmin,
+                        n_months=self.s.nmonths,
+                        runoff_spinup=self.s.runoff_spinup,
+                        n_basins=self.s.n_basins,
+                        n_jobs=self.s.ro_jobs,
+                        router_func=self.calculate_routing,
+                        out_dir=self.s.OutputFolder)
+
+        cal.calibrate_basin()
+
+
 
 

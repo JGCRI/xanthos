@@ -31,13 +31,13 @@ def hargreaves_gwam_mrtm(config, spinup=True):
 
     # spin up
     c.simulation(pet=True,
-                 pet_num_steps=config.SpinUp,
+                 pet_num_steps=config.runoff_spinup,
                  pet_step='month',
                  runoff=True,
-                 runoff_num_steps=config.SpinUp,
+                 runoff_num_steps=config.runoff_spinup,
                  runoff_step='month',
                  routing=True,
-                 routing_num_steps=config.SpinUp,
+                 routing_num_steps=config.routing_spinup,
                  routing_step='month',
                  notify='Spin Up')
 
@@ -190,8 +190,7 @@ def none_abcd_mrtm(config):
 
     # run model
     c.simulation(pet=False,
-                 pet_num_steps=config.nmonths,
-                 pet_step='month',
+                 pet_step=None,
                  runoff=True,
                  runoff_step=None,
                  routing=False,
@@ -227,7 +226,7 @@ def pm_abcd_mrtm(config):
     """
     Model configuration for the following:
 
-    PET:                None - input provided by user
+    PET:                Penman-Monteith
     RUNOFF:             ABCD
     ROUTING:            Modified River Transport Model (MRTM)
 

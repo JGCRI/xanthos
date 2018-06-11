@@ -173,7 +173,7 @@ class ConfigReader:
 
                 ro_mod = ro['GWAM']
                 self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['model_dir'])
-                self.SpinUp = int(ro_mod['SpinUp']) * 12
+                self.runoff_spinup = int(ro_mod['runoff_spinup']) * 12
                 self.MaxSoilMois = os.path.join(self.ro_model_dir, ro_mod['MaxSoilMois'])
                 self.LakesMSM = os.path.join(self.ro_model_dir, ro_mod['LakesMSM'])
                 self.AdditWaterMSM = os.path.join(self.ro_model_dir, ro_mod['AdditWaterMSM'])
@@ -231,7 +231,7 @@ class ConfigReader:
                 ro_mod = ro['abcd']
                 self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['model_dir'])
                 self.calib_file = os.path.join(self.ro_model_dir, ro_mod['calib_file'])
-                self.SpinUp = int(ro_mod['SpinUp'])
+                self.runoff_spinup = int(ro_mod['runoff_spinup'])
                 self.ro_jobs = int(ro_mod['jobs'])
 
                 try:
@@ -268,13 +268,13 @@ class ConfigReader:
             self.routing_module = rt['routing_module'].lower()
 
             if self.routing_module == 'mrtm':
-                rt_mod = rt['MRTM']
+                rt_mod = rt[self.routing_module]
                 self.rt_model_dir = os.path.join(self.RoutingDir, rt_mod['model_dir'])
 
                 # load built-in files [ channel velocity, flow distance, flow direction ]
-                self.strm_veloc = os.path.join(self.rt_model_dir, 'velocity_half_degree.npy')
-                self.FlowDis = os.path.join(self.rt_model_dir, 'DRT_half_FDISTANCE_globe.txt')
-                self.FlowDir = os.path.join(self.rt_model_dir, 'DRT_half_FDR_globe_bystr50.txt')
+                self.strm_veloc = os.path.join(self.rt_model_dir, rt_mod['channel_velocity'])
+                self.FlowDis = os.path.join(self.rt_model_dir, rt_mod['flow_distance'])
+                self.FlowDir = os.path.join(self.rt_model_dir, rt_mod['flow_direction'])
 
                 try:
                     self.routing_spinup = int(rt_mod['routing_spinup'])
@@ -376,6 +376,7 @@ class ConfigReader:
             if self.calibrate:
                 self.set_calibrate = int(cal['set_calibrate'])
                 self.cal_observed = cal['observed']
+                self.obs_unit = cal['obs_unit']
 
     def ck_year(self, yr):
         """
