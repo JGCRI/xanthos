@@ -19,7 +19,8 @@ def run(ini):
 if __name__ == "__main__":
 
     # full path to parameterized config file
-    ini = '/Users/d3y010/repos/github/xanthos/example/pm_abcd_mrtm.ini'
+    # ini = '/Users/d3y010/repos/github/xanthos/example/pm_abcd_mrtm.ini'
+    ini = '/Users/d3y010/repos/github/xanthos/example/hargreaves_abcd_mrtm_hist.ini'
 
     # run the model
     xth = run(ini)

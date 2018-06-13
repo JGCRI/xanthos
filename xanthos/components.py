@@ -32,7 +32,7 @@ class Components:
     """
     Components for use in model configurations.
 
-    @author   Chris R. Vernon , lixi729
+    @author   Chris R. Vernon , Xinya Li
     @email:   chris.vernon@pnnl.gov; xinya.li@pnl.gov
     @Project: Xanthos 2.0
 
@@ -180,13 +180,13 @@ class Components:
         """
         if self.s.pet_module == 'hargreaves':
 
-            return pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data.lat_radians,
-                                            self.mth_solar_dec, self.mth_dr, self.mth_days)
+            return pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data.lat_radians, self.mth_solar_dec,
+                                         self.mth_dr, self.mth_days)
 
         elif self.s.pet_module == 'pm':
 
             return pet_mod.run_pmpet(self.data, self.s.ncell, self.s.pm_nlcs, self.s.StartYear, self.s.EndYear,
-                                        self.s.pm_water_idx, self.s.pm_snow_idx, self.s.pm_lc_years)
+                                     self.s.pm_water_idx, self.s.pm_snow_idx, self.s.pm_lc_years)
 
         elif self.s.pet_module == 'none':
             return self.data.pet_out
@@ -234,7 +234,7 @@ class Components:
         """
         if self.s.routing_module == 'mrtm':
 
-            print"loading routing data..."
+            # load routing data
             self.flow_dist = fetch.load_routing_data(self.s.FlowDis, self.s.ngridrow, self.s.ngridcol,
                                                      self.map_index, rep_val=1000)
             self.flow_dir = fetch.load_routing_data(self.s.FlowDir, self.s.ngridrow, self.s.ngridcol, self.map_index)
@@ -246,7 +246,6 @@ class Components:
             self.um = routing_mod.upstream_genmatrix(self.upid)
             self.chs_prev = fetch.load_chs_data(self.s)
 
-            print "running routing spin-up..."
             # process spin up for channel storage from historic period
             for nm in range(0, self.s.routing_spinup, 1):
 
@@ -259,7 +258,7 @@ class Components:
                 # update channel storage (chs) arrays for next step
                 self.chs_prev = np.copy(self.ChStorage[:, nm])
 
-            print "running routing simulation..."
+            # run routing simumlation
             for nm in range(self.s.nmonths):
                 # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
                 sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
@@ -272,12 +271,6 @@ class Components:
                 self.chs_prev = np.copy(self.ChStorage[:, nm])
 
             return self.Avg_ChFlow
-
-            # sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
-            #                                runoff[:, nm], self.data.area, self.yr_imth_dys[nm, 2],
-            #                                self.routing_timestep_hours, self.um)
-            #
-            # self.ChStorage[:, nm], self.Avg_ChFlow[:, nm], self.instream_flow = sr
 
     def simulation(self, pet=True, pet_num_steps=0, pet_step='month',
                    runoff=True, runoff_num_steps=0, runoff_step='month',
@@ -309,10 +302,12 @@ class Components:
 
             else:
 
-                # this one is used with the hargreaves-gwam-mrtm config
+                # --------------------------------------------------
+                # USED FOR THE FOLLOWING CONFIGURATIONS:
+                #
+                # hargreaves-gwam-mrtm
+                # --------------------------------------------------
                 if (pet_step == 'month') and (runoff_step == 'month') and (routing_step == 'month'):
-
-                    print("TEST 1")
 
                     print("---{} in progress...".format(notify))
                     t0 = time.time()
@@ -361,41 +356,38 @@ class Components:
                         print("\tProcessing Routing...")
                         t = time.time()
 
-                        for nm in range(routing_num_steps):
-                            self.calculate_routing(nm)
-
-                            # update channel storage (chs) array for next step
-                            self.chs_prev = np.copy(self.ChStorage[:, nm])
+                        # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
+                        self.calculate_routing(self.Q)
 
                         print("\tRouting processed in {} seconds---".format(time.time() - t))
 
                     print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
-                # used for the hargreaves-abcd-mrtm config
+                # --------------------------------------------------
+                # USED FOR THE FOLLOWING CONFIGURATIONS:
+                #
+                # hargreaves-abcd-mrtm
+                # --------------------------------------------------
                 elif (pet_step == 'month') and (runoff_step is None) and (routing_step == 'month'):
-
-                    print("TEST 2")
 
                     print("---{} in progress... ".format(notify))
                     t0 = time.time()
-
-                    # set up climate data for processing
-                    # self.prep_arrays()
 
                     # calculate PET
                     if pet:
                         print("\tProcessing PET...")
                         t = time.time()
+                        pet_out = np.zeros_like(self.data.precip)
 
                         for nm in range(pet_num_steps):
                             # set up PET data for processing
                             self.prep_pet(nm)
 
                             # calculate pet
-                            self.calculate_pet()
+                            pet_out[:, nm] = self.calculate_pet()
 
                             # archive pet month in array
-                            self.pet_out[:, nm] = self.pet_t
+                            # self.pet_out[:, nm] = self.pet_t
 
                         print("\tPET processed in {} seconds---".format(time.time() - t))
 
@@ -419,12 +411,8 @@ class Components:
                         print("\tProcessing Routing...")
                         t = time.time()
 
-                        for nm in range(routing_num_steps):
-                            # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-                            self.calculate_routing(nm)
-
-                            # update channel storage (chs) arrays for next step
-                            self.chs_prev = np.copy(self.ChStorage[:, nm])
+                        # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
+                        self.calculate_routing(self.Q)
 
                         print("\tRouting processed in {} seconds---".format(time.time() - t))
 
@@ -436,8 +424,6 @@ class Components:
                 # pm-abcd-mrtm
                 # --------------------------------------------------
                 elif (pet_step is None) and (runoff_step is None) and (routing_step == 'month'):
-
-                    print("TEST 3")
 
                     print("---{} in progress... ".format(notify))
                     t0 = time.time()

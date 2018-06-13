@@ -119,10 +119,31 @@ class ConfigReader:
             self.pet_module = pt['pet_module'].lower()
 
             if self.pet_module == 'hargreaves':
-                pass
+                self.pet_dir = os.path.join(self.PET, pt['pet_dir'])
+
+                # climate data
+                try:
+                    self.TemperatureFile = os.path.join(self.pet_dir, pt['TemperatureFile'])
+                except KeyError:
+                    raise('File path not provided for the TemperatureFile variable in the PET section of the config file.')
+
+                try:
+                    self.TempVarName = pt['TempVarName']
+                except KeyError:
+                    self.TempVarName = None
+
+                try:
+                    self.DailyTemperatureRangeFile = os.path.join(self.pet_dir, pt['DailyTemperatureRangeFile'])
+                except KeyError:
+                    raise('File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.')
+
+                try:
+                    self.DTRVarName = pt['DTRVarName']
+                except KeyError:
+                    self.DTRVarName = None
 
             elif self.pet_module == 'pm':
-                self.pet_dir = os.path.join(self.PET, 'penman_monteith')
+                self.pet_dir = os.path.join(self.PET, pt['pet_dir'])
 
                 # climate data
                 self.pm_tas = os.path.join(self.pet_dir, pt['pm_tas'])

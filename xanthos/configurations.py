@@ -96,12 +96,12 @@ def hargreaves_abcd_mrtm(config):
     c = Components(config)
 
     # run model
-    c.simulation(pet=False,
+    c.simulation(pet=True,
                  pet_num_steps=config.nmonths,
                  pet_step='month',
                  runoff=True,
                  runoff_step=None,
-                 routing=False,
+                 routing=True,
                  routing_num_steps=config.nmonths,
                  routing_step='month',
                  notify='Simulation')
