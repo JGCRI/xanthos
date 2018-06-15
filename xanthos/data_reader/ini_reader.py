@@ -193,8 +193,10 @@ class ConfigReader:
             if self.runoff_module == 'gwam':
 
                 ro_mod = ro['GWAM']
-                self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['model_dir'])
-                self.runoff_spinup = int(ro_mod['runoff_spinup']) * 12
+                self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['runoff_dir'])
+                self.runoff_spinup = int(ro_mod['runoff_spinup'])
+
+                # built in files
                 self.MaxSoilMois = os.path.join(self.ro_model_dir, ro_mod['MaxSoilMois'])
                 self.LakesMSM = os.path.join(self.ro_model_dir, ro_mod['LakesMSM'])
                 self.AdditWaterMSM = os.path.join(self.ro_model_dir, ro_mod['AdditWaterMSM'])
@@ -250,7 +252,7 @@ class ConfigReader:
             elif self.runoff_module == 'abcd':
 
                 ro_mod = ro['abcd']
-                self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['model_dir'])
+                self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['runoff_dir'])
                 self.calib_file = os.path.join(self.ro_model_dir, ro_mod['calib_file'])
                 self.runoff_spinup = int(ro_mod['runoff_spinup'])
                 self.ro_jobs = int(ro_mod['jobs'])
@@ -290,7 +292,7 @@ class ConfigReader:
 
             if self.routing_module == 'mrtm':
                 rt_mod = rt[self.routing_module]
-                self.rt_model_dir = os.path.join(self.RoutingDir, rt_mod['model_dir'])
+                self.rt_model_dir = os.path.join(self.RoutingDir, rt_mod['routing_dir'])
 
                 # load built-in files [ channel velocity, flow distance, flow direction ]
                 self.strm_veloc = os.path.join(self.rt_model_dir, rt_mod['channel_velocity'])
@@ -397,7 +399,32 @@ class ConfigReader:
             if self.calibrate:
                 self.set_calibrate = int(cal['set_calibrate'])
                 self.cal_observed = cal['observed']
-                self.obs_unit = cal['obs_unit']
+                self.obs_unit = self.ck_obs_unit(self.set_calibrate, cal['obs_unit'])
+                self.calib_out_dir = self.create_dir(cal['calib_out_dir'])
+
+    @staticmethod
+    def ck_obs_unit(set_calib, unit):
+        """
+        Checks the defined unit of the calibration data input.
+        """
+        valid_runoff = ('km3_per_mth', 'mm_per_mth')
+        valid_streamflow = ('m3_per_sec')
+
+        if set_calib == 0:
+
+            if unit not in valid_runoff:
+                raise ValidationException("Calibration data input units '{}' for runoff data not in required units '{}'".format(unit, valid_runoff))
+
+            else:
+                return unit
+
+        elif set_calib == 1:
+
+            if unit not in valid_streamflow:
+                raise ValidationException("Calibration data input units '{}' for streamflow data not in required units '{}'".format(unit, valid_streamflow))
+
+            else:
+                return unit
 
     def ck_year(self, yr):
         """
@@ -421,7 +448,8 @@ class ConfigReader:
         else:
             return os.path.join(self.rt_model_dir, f)
 
-    def create_dir(self, pth):
+    @staticmethod
+    def create_dir(pth):
         """
         Check to see if the target path is exists.
         """
