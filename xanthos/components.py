@@ -16,6 +16,7 @@ import time
 import data_reader.data_load as fetch
 import utils.general as helper
 import utils.math as umth
+import calibrate.calibrate_abcd as calib_mod
 from data_writer.out_writer import OUTWriter
 from diagnostics.aggregation import Aggregation
 from diagnostics.diagnostics import Diagnostics
@@ -23,8 +24,6 @@ from diagnostics.time_series import TimeSeriesPlot
 from accessible.accessible import AccessibleWater
 from hydropower.potential import HydropowerPotential
 from hydropower.actual import HydropowerActual
-from calibrate.calibrate_abcd import Calibrate
-
 from data_reader.data_load import LoadData
 
 
@@ -386,9 +385,6 @@ class Components:
                             # calculate pet
                             pet_out[:, nm] = self.calculate_pet()
 
-                            # archive pet month in array
-                            # self.pet_out[:, nm] = self.pet_t
-
                         print("\tPET processed in {} seconds---".format(time.time() - t))
 
                     # for the case where the user provides a PET dataset
@@ -553,29 +549,13 @@ class Components:
         """
         Run calibration to generate parameters for the ABCD model
         """
-        # calculate pet
+        print("---Processing PET...")
+        t = time.time()
+
         pet_out = self.calculate_pet()
+
+        print("---PET processed in {} seconds---".format(time.time() - t))
 
         print("---Running calibration:")
 
-        cal = Calibrate(basin_num=100,
-                        set_calibrate=self.s.set_calibrate,
-                        obs_unit=self.s.obs_unit,
-                        basin_ids=self.data.basin_ids,
-                        basin_areas=self.data.area,
-                        precip=self.data.precip,
-                        pet=pet_out,
-                        obs=self.data.cal_obs,
-                        tmin=self.data.tmin,
-                        n_months=self.s.nmonths,
-                        runoff_spinup=self.s.runoff_spinup,
-                        n_basins=self.s.n_basins,
-                        n_jobs=self.s.ro_jobs,
-                        router_func=self.calculate_routing,
-                        out_dir=self.s.OutputFolder)
-
-        cal.calibrate_basin()
-
-
-
-
+        calib_mod.calibrate_all(settings=self.s, data=self.data, pet=pet_out, router_function=self.calculate_routing)
