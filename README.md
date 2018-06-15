@@ -46,7 +46,7 @@ calib_out_dir = <a local directory of your choosing>
 ```
 
 ## Set up example.py
-Change path to configuration file to your lo
+Change path to configuration file to your location and run!
 
 ```python
 from xanthos.model import Xanthos
