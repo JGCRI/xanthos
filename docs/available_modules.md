@@ -2,6 +2,10 @@
 This documentation details the parameters associated with each module available for use in Xanthos and how to represent them in the configuration file.
 
 ## Potential Evapotranspiration (PET)
+Config tag: ```ini
+[PET]
+```
+
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | pet_module | The reference name of the PET model to be used.  Currently supported:  pm (for Panman-Monteith), hargreaves (for Hargreaves), and none (for cases where the user will provide their own PET input file). | True |
@@ -9,6 +13,10 @@ This documentation details the parameters associated with each module available 
 
 
 ### Penman-Monetith
+Config tag: ```ini
+[penman-monteith]
+```
+
 | Variable | Description | Required |
 | ------- | ------- | ------- |
 | pet_dir | The directory name of the PET module chosen where its input files are stored | True |
@@ -26,6 +34,10 @@ This documentation details the parameters associated with each module available 
 
 
 ### Hargreaves
+Config tag: ```ini
+[hargreaves]
+```
+
 | Variable | Description | Required |
 | ------- | ------- | ------- |
 | pet_dir | The directory name of the PET module chosen where its input files are stored | True |
@@ -36,6 +48,10 @@ This documentation details the parameters associated with each module available 
 
 
 ## Runoff
+Config tag: ```ini
+[Runoff]
+```
+
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | runoff_module | The name of the runoff model to be used.  Currently supported:  abcd (for ABCD), gwam (for GWAM), and none (for cases where the user will provide their own runoff input file). | True |
@@ -43,6 +59,10 @@ This documentation details the parameters associated with each module available 
 | runoff_file | Only used if `runoff_module` is set to `none`.  This will be a full path file with extension to the input runoff data in mm/month.  Array must be 2-D, where (gridcell_idx, month_idx).  File must be saved as a NumPy array file (.npy). | False |
 
 ### ABCD
+Config tag: ```ini
+[abcd]
+```
+
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | runoff_dir | The directory name of the runoff module chosen where its input files are stored | True |
@@ -55,6 +75,10 @@ This documentation details the parameters associated with each module available 
 | PrecipVarName | If file is a NetCDF file, this is the variable name of precipitation. | False |
 
 ### GWAM
+Config tag: ```ini
+[gwam]
+```
+
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | runoff_dir | The directory name of the runoff module chosen where its input files are stored | True |
@@ -63,12 +87,41 @@ This documentation details the parameters associated with each module available 
 
 
 ## Routing
+Config tag: ```ini
+[Routing]
+```
+
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | routing_module | The reference name of the routing model to be used.  Currently supported:  mrtm (for MRTM), and none (for cases where the user does not which to run the routing module). | True |
 
 ### Modified River Transport Model (MRTM)
+Config tag: ```ini
+[mrtm]
+```
+
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | routing_dir | The directory name of the routing module chosen where its input files are stored | True |
 | routing_spinup | The number of months from the start of the data that will be used to spin-up the data as an integer. | True |
+
+# Optional Modules
+
+## Diagnostics
+Config tag: ```ini
+[Diagnostics]
+```
+
+This section was built to compare runoff outputs against that of other models.
+| Variable | Description | Required |
+| -------- | ----------- | -------- |
+| VICDataFile | File name with extension of the input yearly mean runoff in km3/yr from VIC.  Array must be 2-D, where (gridcell_idx, year_idx). File can be a NetCDF Classic file or a CSV file. | True |
+| WBMDataFile | File name with extension of the input yearly mean runoff in km3/yr from the WBM model.  Array must be 2-D, where (gridcell_idx, year_idx). File can be a NetCDF Classic file or a CSV file. | True |
+| WBMCDataFile | File name with extension of the input yearly mean runoff in km3/yr from the WBMc model.  Array must be 2-D, where (gridcell_idx, year_idx). File can be a NetCDF Classic file or a CSV file. | True |
+| UNHDataFile | File name with extension of the input yearly mean runoff in km3/yr from the UNH-GRDC model.  Array must be 2-D, where (gridcell_idx, year_idx). File can be a NetCDF Classic file or a CSV file. | True |
+| Scale | Integer to define the level of output:  0 = all; 1 = Basin; 2 = Country; 3 = Region | True |
+
+## Time Series Ploting
+Config tag: ```ini
+[TimeSeriesPlot]
+```
