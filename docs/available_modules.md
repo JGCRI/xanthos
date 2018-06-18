@@ -2,7 +2,8 @@
 This documentation details the parameters associated with each module available for use in Xanthos and how to represent them in the configuration file.
 
 ## Potential Evapotranspiration (PET)
-Config tag: ```ini
+Config tag:
+```ini
 [PET]
 ```
 
@@ -13,7 +14,8 @@ Config tag: ```ini
 
 
 ### Penman-Monetith
-Config tag: ```ini
+Config tag:
+```ini
 [penman-monteith]
 ```
 
@@ -34,7 +36,8 @@ Config tag: ```ini
 
 
 ### Hargreaves
-Config tag: ```ini
+Config tag:
+```ini
 [hargreaves]
 ```
 
@@ -48,7 +51,8 @@ Config tag: ```ini
 
 
 ## Runoff
-Config tag: ```ini
+Config tag:
+```ini
 [Runoff]
 ```
 
@@ -59,7 +63,8 @@ Config tag: ```ini
 | runoff_file | Only used if `runoff_module` is set to `none`.  This will be a full path file with extension to the input runoff data in mm/month.  Array must be 2-D, where (gridcell_idx, month_idx).  File must be saved as a NumPy array file (.npy). | False |
 
 ### ABCD
-Config tag: ```ini
+Config tag:
+```ini
 [abcd]
 ```
 
@@ -75,7 +80,8 @@ Config tag: ```ini
 | PrecipVarName | If file is a NetCDF file, this is the variable name of precipitation. | False |
 
 ### GWAM
-Config tag: ```ini
+Config tag:
+```ini
 [gwam]
 ```
 
@@ -87,7 +93,8 @@ Config tag: ```ini
 
 
 ## Routing
-Config tag: ```ini
+Config tag:
+```ini
 [Routing]
 ```
 
@@ -96,7 +103,8 @@ Config tag: ```ini
 | routing_module | The reference name of the routing model to be used.  Currently supported:  mrtm (for MRTM), and none (for cases where the user does not which to run the routing module). | True |
 
 ### Modified River Transport Model (MRTM)
-Config tag: ```ini
+Config tag:
+```ini
 [mrtm]
 ```
 
@@ -108,7 +116,8 @@ Config tag: ```ini
 # Optional Modules
 
 ## Diagnostics
-Config tag: ```ini
+Config tag:
+```ini
 [Diagnostics]
 ```
 
@@ -122,6 +131,7 @@ This section was built to compare runoff outputs against that of other models.
 | Scale | Integer to define the level of output:  0 = all; 1 = Basin; 2 = Country; 3 = Region | True |
 
 ## Time Series Ploting
-Config tag: ```ini
+Config tag:
+```ini
 [TimeSeriesPlot]
 ```
