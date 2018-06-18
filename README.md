@@ -71,3 +71,9 @@ if __name__ == "__main__":
     # run the model
     xth = run(ini)
 ```
+
+# Additional Support
+View the configuration options for each available module here:  https://github.com/JGCRI/xanthos/blob/version-two-setup/docs/available_modules.md
+
+View the calibration setup for the ABCD module here:  https://github.com/JGCRI/xanthos/blob/version-two-setup/docs/calibration_tutorial.md
+
