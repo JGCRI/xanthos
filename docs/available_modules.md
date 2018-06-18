@@ -160,3 +160,39 @@ Config tag:
 | MovingMeanWindow | The window size of the rolling mean as an integer. | True |
 | Env_FlowPercent | A fractional decimal from 0 to 1.0 to calculate environmental flow requirements per basin. | True |
 
+## Hydropower Potential
+Config tag:
+```ini
+[HydropowerPotential]
+```
+
+| Variable | Description | Required |
+| -------- | ----------- | -------- |
+| hpot_start_date | Start date in "M/YYYY" format. | True |
+| q_ex | Quantile of monthly flow above which additional power is unavailable; values from 0.0 to 1.0. | True |
+| ef | Plant efficiency; values from 0.0 to 1.0. | True |
+
+## Hydropower Actual
+Config tag:
+```ini
+[HydropowerActual]
+```
+
+| Variable | Description | Required |
+| -------- | ----------- | -------- |
+| hact_start_date | Start date in "M/YYYY" format. | True |
+
+
+## Calibration for the ABCD model
+Config tag:
+```ini
+[Calibrate]
+```
+
+| Variable | Description | Required |
+| -------- | ----------- | -------- |
+| set_calibrate | Integer; 0 = calibrate runoff against observed runoff for the ABCD model; 1 = calibrate ABCD runoff parameters against observed streamflow using outputs from the MRTM model. | True |
+| observed | Full path with filename and extension of observed runoff or streamflow dataset; Must be in `basin,year,month,value` CSV format with header. | True |
+| obs_unit | Observed runoff or streamflow units (runoff options:  km3_per_mth, mm_per_mth; streamflow options: m3_per_sec). | True |
+| calib_out_dir | Full path with to directory where output files for KGE and the ABCDM parameters will be saved. | True |
+
