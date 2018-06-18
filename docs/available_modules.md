@@ -122,6 +122,7 @@ Config tag:
 ```
 
 This section was built to compare runoff outputs against that of other models.
+
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | VICDataFile | File name with extension of the input yearly mean runoff in km3/yr from VIC.  Array must be 2-D, where (gridcell_idx, year_idx). File can be a NetCDF Classic file or a CSV file. | True |
@@ -130,8 +131,32 @@ This section was built to compare runoff outputs against that of other models.
 | UNHDataFile | File name with extension of the input yearly mean runoff in km3/yr from the UNH-GRDC model.  Array must be 2-D, where (gridcell_idx, year_idx). File can be a NetCDF Classic file or a CSV file. | True |
 | Scale | Integer to define the level of output:  0 = all; 1 = Basin; 2 = Country; 3 = Region | True |
 
-## Time Series Ploting
+## Time Series Plotting
 Config tag:
 ```ini
 [TimeSeriesPlot]
 ```
+
+Create time series plots of runoff.
+
+| Variable | Description | Required |
+| -------- | ----------- | -------- |
+| MapID | Define the level of plotting:  999 = plot all; 0 = only global total; 1 = only by basin id | True |
+
+## Accessible Water
+Config tag:
+```ini
+[AccessibleWater]
+```
+
+| Variable | Description | Required |
+| -------- | ----------- | -------- |
+| ResCapacityFile | File name with extension of the reservior storage capacity file as a CSV. | True |
+| BfiFile | File name with extension of the baseflow index (BFI) file as a CSV. | True |
+| HistEndYear | Four digit year YYYY for the historical end year. | True |
+| GCAM_StartYear | The start year YYYY of the Global Change Assessment Model (GCAM) to provide data for. | True |
+| GCAM_EndYear | The end year YYYY of GCAM to provide data for. | True |
+| GCAM_YearStep | The time step in years as an integer to process | True |
+| MovingMeanWindow | The window size of the rolling mean as an integer. | True |
+| Env_FlowPercent | A fractional decimal from 0 to 1.0 to calculate environmental flow requirements per basin. | True |
+
