@@ -88,7 +88,7 @@ Config tag:
 | InputFolder | Input directory name contained in the RootDir. | True |
 | OutputFolder | Output directory name contained in the RootDir. | True |
 | RefDir | Directory name where the reference data is contained in the input directory. | True |
-| pet_dor | Directory name where the root PET module directories are kept in the inputs directory. | True |
+| pet_dir | Directory name where the root PET module directories are kept in the inputs directory. | True |
 | RunoffDir | Directory name where the root runoff module directories are kept in the inputs directory. | True |
 | RoutingDir | Directory name where the root routing module directories are kept in the inputs directory. | True |
 | DiagDir | Directory name where the diagnostics directory is contained in the input directory. | True |
