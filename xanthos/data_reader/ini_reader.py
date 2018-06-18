@@ -119,46 +119,48 @@ class ConfigReader:
             self.pet_module = pt['pet_module'].lower()
 
             if self.pet_module == 'hargreaves':
+                pet_mod = pt['hargreaves']
                 self.pet_dir = os.path.join(self.PET, pt['pet_dir'])
 
                 # climate data
                 try:
-                    self.TemperatureFile = os.path.join(self.pet_dir, pt['TemperatureFile'])
+                    self.TemperatureFile = os.path.join(self.pet_dir, pet_mod['TemperatureFile'])
                 except KeyError:
                     raise('File path not provided for the TemperatureFile variable in the PET section of the config file.')
 
                 try:
-                    self.TempVarName = pt['TempVarName']
+                    self.TempVarName = pet_mod['TempVarName']
                 except KeyError:
                     self.TempVarName = None
 
                 try:
-                    self.DailyTemperatureRangeFile = os.path.join(self.pet_dir, pt['DailyTemperatureRangeFile'])
+                    self.DailyTemperatureRangeFile = os.path.join(self.pet_dir, pet_mod['DailyTemperatureRangeFile'])
                 except KeyError:
                     raise('File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.')
 
                 try:
-                    self.DTRVarName = pt['DTRVarName']
+                    self.DTRVarName = pet_mod['DTRVarName']
                 except KeyError:
                     self.DTRVarName = None
 
             elif self.pet_module == 'pm':
-                self.pet_dir = os.path.join(self.PET, pt['pet_dir'])
+                pet_mod = pt['penman-monteith']
+                self.pet_dir = os.path.join(self.PET, pet_mod['pet_dir'])
 
                 # climate data
-                self.pm_tas = os.path.join(self.pet_dir, pt['pm_tas'])
-                self.pm_tmin = os.path.join(self.pet_dir, pt['pm_tmin'])
-                self.pm_rhs = os.path.join(self.pet_dir, pt['pm_rhs'])
-                self.pm_rlds = os.path.join(self.pet_dir, pt['pm_rlds'])
-                self.pm_rsds = os.path.join(self.pet_dir, pt['pm_rsds'])
-                self.pm_wind = os.path.join(self.pet_dir, pt['pm_wind'])
+                self.pm_tas = os.path.join(self.pet_dir, pet_mod['pm_tas'])
+                self.pm_tmin = os.path.join(self.pet_dir, pet_mod['pm_tmin'])
+                self.pm_rhs = os.path.join(self.pet_dir, pet_mod['pm_rhs'])
+                self.pm_rlds = os.path.join(self.pet_dir, pet_mod['pm_rlds'])
+                self.pm_rsds = os.path.join(self.pet_dir, pet_mod['pm_rsds'])
+                self.pm_wind = os.path.join(self.pet_dir, pet_mod['pm_wind'])
 
                 # land cover data
-                self.pm_lct = os.path.join(self.pet_dir, pt['pm_lct'])
-                self.pm_nlcs = int(pt['pm_nlcs'])
-                self.pm_water_idx = int(pt['pm_water_idx'])
-                self.pm_snow_idx = int(pt['pm_snow_idx'])
-                self.pm_lc_years = [int(i) for i in pt['pm_lc_years']]
+                self.pm_lct = os.path.join(self.pet_dir, pet_mod['pm_lct'])
+                self.pm_nlcs = int(pet_mod['pm_nlcs'])
+                self.pm_water_idx = int(pet_mod['pm_water_idx'])
+                self.pm_snow_idx = int(pet_mod['pm_snow_idx'])
+                self.pm_lc_years = [int(i) for i in pet_mod['pm_lc_years']]
 
                 # built-in data
                 self.pm_params = os.path.join(self.pet_dir, 'gcam_ET_para.csv')
@@ -382,17 +384,19 @@ class ConfigReader:
                 self.hpot_start_date = hp['hpot_start_date']
                 self.q_ex = float(hp['q_ex'])
                 self.ef = float(hp['ef'])
-                self.GridData = os.path.join(self.HydActDir, ha['GridData'])
+                self.GridData = os.path.join(self.HydActDir, 'gridData.csv')
 
         # hydropower actual
         if ha is not False:
             if self.CalculateHydropowerActual:
                 self.hact_start_date = ha['hact_start_date']
-                self.HydroDamData = os.path.join(self.HydActDir, ha['HydroDamData'])
-                self.MissingCap = os.path.join(self.HydActDir, ha['MissingCap'])
-                self.rule_curves = os.path.join(self.HydActDir, ha['rule_curves'])
-                self.GridData = os.path.join(self.HydActDir, ha['GridData'])
-                self.DrainArea = os.path.join(self.HydActDir, ha['DrainArea'])
+
+                # built in data
+                self.HydroDamData = os.path.join(self.HydActDir, 'resData_1593.csv')
+                self.MissingCap = os.path.join(self.HydActDir, 'simulated_cap_by_country.csv')
+                self.rule_curves = os.path.join(self.HydActDir, 'rule_curves_1593.npy')
+                self.GridData = os.path.join(self.HydActDir, 'gridData.csv')
+                self.DrainArea = os.path.join(self.HydActDir, 'DRT_half_SourceArea_globe_float.txt')
 
         # calibration mode
         if cal is not False:
