@@ -72,6 +72,43 @@ if __name__ == "__main__":
     xth = run(ini)
 ```
 
+# Required Project Level Configuration settings
+Config tag:
+```ini
+[Project]
+```
+
+| Variable | Description | Required |
+| ------- | ------- | ------- |
+| ProjectName | Name of the project that defines the name of the output directory; no spaces. | True |
+| RootDir | Full path to the directory containing the input and output directories for the project. | True |
+| InputFolder | Input directory name contained in the RootDir. | True |
+| OutputFolder | Output directory name contained in the RootDir. | True |
+| RefDir | Directory name where the reference data is contained in the input directory. | True |
+| pet_dor | Directory name where the root PET module directories are kept in the inputs directory. | True |
+| RunoffDir | Directory name where the root runoff module directories are kept in the inputs directory. | True |
+| RoutingDir | Directory name where the root routing module directories are kept in the inputs directory. | True |
+| DiagDir | Directory name where the diagnostics directory is contained in the input directory. | True |
+| AccWatDir | Directory name where the accessible water input file directory is contained. | True |
+| HydActDir | Directory name where the hydropower potential input file directory is contained. | True |
+| HistFlag | If True, channel storage and soil moisture files are saved; if False, channel storage and soil moisture files are loaded when using the GWAM runoff module. | True |
+| n_basin | The number of basins in the input data; integer. | True |
+| StartYear | Start year of the run as an integer in YYYY format. | True |
+| EndYear | End year of the run as an integer in YYYY format. | True |
+| OutputFormat | The format to save the outputs in; 0 = NetCDF Classic, 1 = CSV. | True |
+| OutputUnit | The unit to save the runoff outputs in; 0 = mm/time, 1 = km3/time, where time is either month or year. | True |
+| OutputInYear | 0 = output in month; 1 = aggregate into annual result. | True |
+| AggregateRunoffBasin | Create output file that has runoff aggregated by basin. 0 = False, 1 = True. | True |
+| AggregateRunoffCountry | Create output file that has runoff aggregated by country. 0 = False, 1 = True. | True |
+| AggregateRunoffGCAMRegion | Create output file that has runoff aggregated by GCAM region. 0 = False, 1 = True. | True |
+| PerformDiagnostics | 1 = perform diagnostics, 0 = pass. | True |
+| CreateTimeSeriesPlot | 1 = create plots, 0 = pass. | True |
+| CalculateAccessibleWater | 1 = calculate accessible water, 0 = pass. | True |
+| CalculateHydropowerPotential | 1 = calculate hydropower potential, 0 = pass. | True |
+| CalculateHydropowerActual | 1 = calculate hydropower actual, 0 = pass. | True |
+| Calibrate | 1 = run ABCD runoff calibration module, 0 = pass. | True |
+
+
 # Available Modules
 This documentation details the parameters associated with each module available for use in Xanthos and how to represent them in the configuration file.
 
@@ -269,4 +306,3 @@ Config tag:
 | observed | Full path with filename and extension of observed runoff or streamflow dataset; Must be in `basin,year,month,value` CSV format with header. | True |
 | obs_unit | Observed runoff or streamflow units (runoff options:  km3_per_mth, mm_per_mth; streamflow options: m3_per_sec). | True |
 | calib_out_dir | Full path with to directory where output files for KGE and the ABCDM parameters will be saved. | True |
-
