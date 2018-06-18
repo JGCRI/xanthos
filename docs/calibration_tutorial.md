@@ -10,7 +10,7 @@ Each row must have the corresponding data.
 #### STEP 2:  Set up your configuration file
 Turn on the calibration setting:  `Calibration = 1`.
 Add the `[Calibrate]` section to your config file if it is not already present.  The section should contain the following:
-```
+```ini
 [Calibrate]
 set_calibrate = <set to 0 for calibrating to observed runoff>
 observed = <full path with file name and extension to your observational data>
@@ -29,7 +29,7 @@ Each row must have the corresponding data.
 #### STEP 2:  Set up your configuration file
 Turn on the calibration setting:  `Calibration = 1`.
 Add the `[Calibrate]` section to your config file if it is not already present.  The section should contain the following:
-```
+```ini
 [Calibrate]
 set_calibrate = <set to 1 for calibrating to observed streamflow>
 observed = <full path with file name and extension to your observational data>
