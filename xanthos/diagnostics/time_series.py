@@ -44,7 +44,7 @@ def TimeSeriesPlot(settings, Q, Avg_ChFlow, ref):
             x['xmin'] = datetime.datetime(settings.StartYear - 1, 12, 1)
             x['xmax'] = datetime.datetime(settings.EndYear + 1, 1, 1)
 
-        if settings.OutputUnit == 1:  # convert the original unit mm to new unit km3
+        if settings.OutputUnit == 1:
             LengthUnit = 'km^3'
         else:
             LengthUnit = 'mm'
@@ -74,11 +74,21 @@ def TimeSeriesPlot(settings, Q, Avg_ChFlow, ref):
 
 def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x):
 
-    q = Aggregation_Map(settings, ref[scalestr + 'IDs'], Q)
-    ac = Aggregation_Map(settings, ref[scalestr + 'IDs'], Avg_ChFlow)
-    Names = np.insert(ref[scalestr + 'Names'], 0, 'Global')
+    if scalestr == 'Basin':
+        id_fle = ref.basin_ids
+        nm_fle = ref.basin_names
+    elif scalestr == 'Country':
+        id_fle = ref.country_ids
+        nm_fle = ref.country_names
+    elif scalestr == 'GCAMRegion':
+        id_fle = ref.region_ids
+        nm_fle = ref.region_names
 
-    Folder = os.path.join(settings.OutputFolder, 'TimeSeriesPlot/{}'.format(scalestr))
+    q = Aggregation_Map(id_fle, Q)
+    ac = Aggregation_Map(id_fle, Avg_ChFlow)
+    Names = np.insert(nm_fle, 0, 'Global')
+
+    Folder = os.path.join(settings.OutputFolder, 'TimeSeriesPlot', '{}'.format(scalestr))
 
     if not os.path.exists(Folder):
         os.makedirs(Folder)
@@ -95,8 +105,8 @@ def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit,
             outputname = os.path.join(Folder, '{0}{1}_{2}'.format(scalestr, i, Names[i]))
 
             Plot_TS(q[i, :], outputname, 'runoff', TimeUnit, LengthUnit, x)
-            Plot_TS(ac[i, :], outputname, 'streamflow', TimeUnit, LengthUnit, x)
-            print "Scale: " + scalestr + ", Create plots for " + str(i) + '_' + Names[i]
+            Plot_TS(ac[i, :], outputname, 'streamflow', 'sec', 'm^3', x)
+            print("Scale: {}, Create plots for {}_{}".format(scalestr, i, Names[i]))
 
     except:
 
@@ -106,21 +116,21 @@ def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit,
                 outputname = os.path.join(Folder, '{0}{1}_{2}'.format(scalestr, i, Names[i]))
 
                 Plot_TS(q[i, :], outputname, 'runoff', TimeUnit, LengthUnit, x)
-                Plot_TS(ac[i, :], outputname, 'streamflow', TimeUnit, LengthUnit, x)
-            print "Scale: " + scalestr + ", Create plots for all"
+                Plot_TS(ac[i, :], outputname, 'streamflow', 'sec', 'm^3', x)
+            print("Scale: {}, Create plots for all".format(scalestr))
         else:
             i = settings.TimeSeriesMapID
 
             outputname = os.path.join(Folder, '{0}{1}_{2}'.format(scalestr, i, Names[i]))
 
             Plot_TS(q[i, :], outputname, 'runoff', TimeUnit, LengthUnit, x)
-            Plot_TS(ac[i, :], outputname, 'streamflow', TimeUnit, LengthUnit, x)
-            print "Scale: " + scalestr + ", Create plots for " + str(i) + '_' + Names[i]
+            Plot_TS(ac[i, :], outputname, 'streamflow', 'sec', 'm^3', x)
+            print("Scale: {}, Create plots for {}_{}".format(scalestr, i, Names[i]))
 
     return
 
 
-def Aggregation_Map(settings, Map, runoff):
+def Aggregation_Map(Map, runoff):
 
     NY = runoff.shape[1]
     NM = runoff.shape[0]
@@ -146,8 +156,10 @@ def Plot_TS(data, outputname, qstr, TimeUnit, LengthUnit, X):
     ax.plot(X['data'], data)
     ax.xaxis.set_major_locator(years)
     ax.xaxis.set_major_formatter(yearsFmt)
+
     if TimeUnit == 'month':
         ax.xaxis.set_minor_locator(months)
+
     ax.set_xlim(X['xmin'], X['xmax'])
     ax.grid(True)
     plt.xlabel('Time (' + TimeUnit + ')', fontsize=12)

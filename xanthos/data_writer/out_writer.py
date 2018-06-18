@@ -17,6 +17,7 @@ OutputInYear:  = 0(default, per month); =1(per year, the output will combine 12-
 
 import os
 import numpy as np
+import pandas as pd
 from scipy import io as spio
 
 
@@ -27,9 +28,9 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
 
     flag = Settings.OutputFormat
     if flag == 0:
-        print "Save in netcdf files"
+        print("Save in NetCDF files")
     else:
-        print "Save in csv files"
+        print("Save in CSV files")
 
     if Settings.OutputInYear == 1:
         ny = int(Settings.EndYear - Settings.StartYear + 1)
@@ -56,60 +57,62 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
 
         del pet, aet, q, sav, ac
 
-        Settings.OutputNameStr = "_".join(Settings.OutputNameStr.split("_")[0:-2]) \
-                                 + "_" + str(Settings.StartYear) + "_" + str(Settings.EndYear)
-
-        print "Output data annually"
+        print("Output data annually")
 
     if Settings.OutputUnit == 1:  # convert the original unit mm/month to new unit km3/month
         conversion = area / 1e6  # mm -> km3
 
         for j in range(PET.shape[1]):
-            PET[:, j] = PET[:, j] * conversion
-            AET[:, j] = AET[:, j] * conversion
-            Q[:, j] = Q[:, j] * conversion
-            SAV[:, j] = SAV[:, j] * conversion
-            Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
+            PET[:, j] *= conversion
+            AET[:, j] *= conversion
+            Q[:, j] *= conversion
+            SAV[:, j] *= conversion
+            #Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
 
         if Settings.OutputInYear == 1:
-            Settings.OutputUnitStr = "km^3/year"
+            Settings.OutputUnitStr = "km3peryear"
         else:
-            Settings.OutputUnitStr = "km^3/month"
+            Settings.OutputUnitStr = "km3permonth"
     else:
         if Settings.OutputInYear == 1:
-            Settings.OutputUnitStr = "mm/year"
+            Settings.OutputUnitStr = "mmperyear"
         else:
-            Settings.OutputUnitStr = "mm/month"
+            Settings.OutputUnitStr = "mmpermonth"
 
-    print "Unit is ", Settings.OutputUnitStr
+    print("Unit is {}".format(Settings.OutputUnitStr))
 
-    print "Output dimension is", PET.shape
+    print("Output dimension is {}".format(PET.shape))
 
     SaveData(Settings, 'pet', PET, flag)
     SaveData(Settings, 'aet', AET, flag)
     SaveData(Settings, 'q', Q, flag)
-    SaveData(Settings, 's', SAV, flag)
-    SaveData(Settings, 'Avg_ChFlow', Avg_ChFlow, flag)
+    SaveData(Settings, 'soilmoisture', SAV, flag)
+    SaveData(Settings, 'avgchflow', Avg_ChFlow, flag)
 
     if Settings.HistFlag == 'True':
-        print "The following two files are saved as initialization data sets (latest month) for future mode:"
-        print "ChStorage: monthly output, unit is m^3/month, dimension is", ChStorage.shape
+        print("The following two files are saved as initialization data sets (latest month) for future mode:")
+        print("ChStorage: monthly output, unit is m^3, dimension is {}".format(ChStorage.shape))
         Settings.OutputNameStr = ChStorageNameStr
-        SaveData(Settings, 'ChStorage_hist', ChStorage, flag)
 
-        print "Soil column moisture: monthly output, unit is mm/month, dimension is", SO.shape
+        print("Soil column moisture: monthly output, unit is mm/month, dimension is {}".format(SO.shape))
         Settings.OutputNameStr = ChStorageNameStr
-        SaveData(Settings, 'Sav_hist', SO, flag)
 
     return Q, Avg_ChFlow
 
 
-def SaveData(Settings, varstr, data, flag):
-    filename = os.path.join(Settings.OutputFolder, '{}_{}'.format(varstr, Settings.OutputNameStr))
-    if flag == 0:
-        SaveNetCDF(filename, data, Settings, varstr)
+def SaveData(settings, var, data, flag):
+
+    if var == 'avgchflow':
+        unit = 'm3persec'
     else:
-        SaveCSV(filename, data)
+        unit = settings.OutputUnitStr
+
+    filename = os.path.join(settings.OutputFolder, '{}_{}_{}'.format(var, unit, '_'.join(settings.ProjectName.split(' '))))
+
+    if flag == 0:
+        SaveNetCDF(filename, data, settings, var)
+    else:
+        SaveCSV(filename, data, settings)
 
 
 def SaveMAT(filename, data, varstr):
@@ -117,10 +120,38 @@ def SaveMAT(filename, data, varstr):
     spio.savemat(filename, {varstr: data})
 
 
-def SaveCSV(filename, data):
-    filename = filename + ".csv"
-    with open(filename, 'w') as outfile:
-        np.savetxt(outfile, data, delimiter=',')
+def SaveCSV(filename, data, settings):
+
+    # convert to data frame to set header and basin number in file
+    df = pd.DataFrame(data)
+
+    # add in index as basin or grid cell number
+    df.insert(loc=0, column='id', value=df.index.copy()+1)
+
+    filename += ".csv"
+
+    if settings.OutputInYear == 1:
+        cols = ','.join(['{}'.format(i) for i in range(settings.StartYear, settings.EndYear + 1, 1)])
+    else:
+        l = []
+        for i in range(settings.StartYear, settings.EndYear + 1, 1):
+            for m in range(1, 13):
+                if m < 10:
+                    mth = '0{}'.format(m)
+                else:
+                    mth = m
+                l.append('{}{}'.format(i, mth))
+        cols = ','.join(l)
+
+    # set header
+    hdr = 'id,{}'.format(cols)
+
+    try:
+        df.columns = hdr.split(',')
+    except ValueError:
+        raise
+
+    df.to_csv(filename, index=False)
 
 
 def SaveNetCDF(filename, data, Settings, varstr):
@@ -153,7 +184,7 @@ def SaveNetCDF(filename, data, Settings, varstr):
 
 def writecsvMap(filename, data, Settings):
     years = map(str, range(Settings.StartYear, Settings.EndYear + 1))
-    headerline = "ID," + ",".join([year for year in years]) + ", Unit (km^3/year)"
+    headerline = "id," + ",".join([year for year in years])
 
     with open(filename + '.csv', 'w') as outfile:
-        np.savetxt(outfile, data, delimiter=',', header=headerline, fmt='%s')
+        np.savetxt(outfile, data, delimiter=',', header=headerline, fmt='%s', comments='')

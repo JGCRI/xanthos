@@ -24,24 +24,24 @@ Perform diagnostics by comparing the estimates of average total annual runoff (k
 
 import numpy as np
 import os
-import matplotlib.pyplot as plt
-
-from xanthos.data_reader.data_load import load_const_griddata as loadfile
+import pandas as pd
 
 
-def Diagnostics(settings, Q, Avg_ChFlow, ref):
+# import matplotlib.pyplot as plt
 
 
+def Diagnostics(settings, Q, ref):
     area = ref.area
 
     if settings.PerformDiagnostics:
         # Prepare the data
         ny = int(settings.EndYear - settings.StartYear + 1)
+
         # convert the original unit mm/month to new unit km3/year
         q = np.sum(Q[:, :], axis=1) / ny * area / 1e6
-        # ac  = np.sum(Avg_ChFlow[:,:], axis=1)/ny * area/1e6
 
-        VIC = loadfile(settings.VICDataFile, 0, "q")  # 67420*30
+        VIC = ref.vic
+
         VICyears = range(1971, 2001)
         try:
             si = VICyears.index(settings.StartYear)
@@ -55,10 +55,10 @@ def Diagnostics(settings, Q, Avg_ChFlow, ref):
         qq = np.sum(VIC[:, si:ei], axis=1) / (ei - si)
         plotname = 'VIC_' + str(VICyears[si]) + '-' + str(VICyears[ei - 1])
 
-        UNH = loadfile(settings.UNHDataFile, 0, "q")  # 67420*1
+        UNH = ref.unh
 
-        temp1 = loadfile(settings.WBMDataFile, 0, "q")
-        temp2 = loadfile(settings.WBMCDataFile, 0, "q")
+        temp1 = ref.wbmd
+        temp2 = ref.wbmc
         wbm = np.zeros((settings.ncell), dtype=float)
         wbmc = np.zeros((settings.ncell), dtype=float)
         for i in range(temp1.shape[0]):
@@ -80,11 +80,12 @@ def Diagnostics(settings, Q, Avg_ChFlow, ref):
             qb = np.insert(qb, 0, np.sum(qb, axis=0), axis=0)  # add global
             BasinNames = np.insert(ref.basin_names, 0, 'Global')
 
-            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Basin_Scale"), qb, plotname, BasinNames)
+            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Basin_Scale_km3peryr.csv"), qb,
+                                plotname, BasinNames)
 
-            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Basin_Scale")
+            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Basin_Scale_km3peryr")
 
-            Plot_Diagnostics(qb[1:, :], outputname, 'Basin', plotname)
+            # Plot_Diagnostics(qb[1:, :], outputname, 'Basin', plotname)
 
             for i in range(qb.shape[0]):
                 if not (qb[i, 0] > 0 and qb[i, 1] > 0 and qb[i, 2] > 0 and qb[i, 3] > 0 and qb[i, 4] > 0):
@@ -101,22 +102,15 @@ def Diagnostics(settings, Q, Avg_ChFlow, ref):
             qc = np.insert(qc, 0, np.sum(qc, axis=0), axis=0)  # add global
             CountryNames = np.insert(ref.country_names, 0, 'Global')
 
-            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Country_Scale"), qc, plotname, CountryNames)
-            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Country_Scale")
+            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Country_Scale_km3peryr.csv"),
+                                qc, plotname, CountryNames)
+            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Country_Scale_km3peryr")
 
-            Plot_Diagnostics(qc[1:, :], outputname, 'Country', plotname)
+            # Plot_Diagnostics(qc[1:, :], outputname, 'Country', plotname)
 
             for i in range(qc.shape[0]):
                 if not (qc[i, 0] > 0 and qc[i, 1] > 0 and qc[i, 2] > 0 and qc[i, 3] > 0 and qc[i, 4] > 0):
                     qc[i, :] = 0
-
-                    # q1 = qc[np.nonzero(qc[:,0])[0][1:],0]
-                    # q2 = qc[np.nonzero(qc[:,1])[0][1:],1]
-                    # q3 = qc[np.nonzero(qc[:,2])[0][1:],2]
-                    # q4 = qc[np.nonzero(qc[:,3])[0][1:],3]
-                    # q5 = qc[np.nonzero(qc[:,4])[0][1:],4]
-
-                    # print "RMSE at the country scale:          ", np.sqrt(((q1 - q2) ** 2).mean()), np.sqrt(((q1 - q3) ** 2).mean()), np.sqrt(((q1 - q4) ** 2).mean()), np.sqrt(((q1 - q5) ** 2).mean())
 
         if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 3:
             # Region Based
@@ -129,10 +123,11 @@ def Diagnostics(settings, Q, Avg_ChFlow, ref):
             qr = np.insert(qr, 0, np.sum(qr, axis=0), axis=0)  # add global
             RegionNames = np.insert(ref.region_names, 0, 'Global')
 
-            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Region_Scale"), qr, plotname, RegionNames)
-            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Region_Scale")
+            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Region_Scale_km3peryr.csv"), qr,
+                                plotname, RegionNames)
+            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Region_Scale_km3peryr")
 
-            Plot_Diagnostics(qr[1:, :], outputname, 'Region', plotname)
+            # Plot_Diagnostics(qr[1:, :], outputname, 'Region', plotname)
 
             for i in range(qr.shape[0]):
                 if not (qr[i, 0] > 0 and qr[i, 1] > 0 and qr[i, 2] > 0 and qr[i, 3] > 0 and qr[i, 4] > 0):
@@ -154,11 +149,17 @@ def Aggregation_Diagnostics(settings, Map, runoff):
 
 
 def writecsvDiagnostics(filename, data, ComparisonDataName, Names):
-    headerline = "Name,This Study," + ComparisonDataName + ",WBM,WBMc,UNH_1986-1995,Unit(km^3/year)"
+    hdr = "name,xanthos," + ComparisonDataName + ",WBM,WBMc,UNH_1986-1995"
     newdata = np.insert(data.astype(str), 0, Names, axis=1)
 
-    with open(filename + '.csv', 'w') as outfile:
-        np.savetxt(outfile, newdata, delimiter=',', header=headerline, fmt='%s')
+    df = pd.DataFrame(newdata)
+    df.columns = hdr.split(',')
+
+    df.to_csv(filename, index=False)
+
+
+#    with open(filename + '.csv', 'w') as outfile:
+#        np.savetxt(outfile, newdata, delimiter=',', header=headerline, fmt='%s')
 
 
 def Plot_Diagnostics(data, outputname, titlestr, ComparisonDataName):
