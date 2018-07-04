@@ -16,7 +16,7 @@ Hejazi, Mohamad I <Mohamad.Hejazi@pnnl.gov>
 
 
 # Notice
-This repository uses the Git Large File Storage (LFS) extension (see https://git-lfs.github.com/ for details).  Please run the following command before cloning if you do not already have Git LFS installed:
+Xanthos runs only on Python 2.7.  This repository also uses the Git Large File Storage (LFS) extension (see https://git-lfs.github.com/ for details).  Please run the following command before cloning if you do not already have Git LFS installed:
 `git lfs install`.
 
 # Xanthos 2.0 - Upgrades
