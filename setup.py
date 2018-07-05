@@ -7,8 +7,23 @@ License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
 """
+import sys
 
-from setuptools import setup, find_packages
+
+class VersionError(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
+
+
+py_version = '{0}.{1}'.format(sys.version_info.major, sys.version_info.minor)
+if py_version != '2.7':
+    raise VersionError("Xanthos must be ran using Python 2.7.  You are using Python {0}.".format(py_version))
+
+
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    raise("Must have setuptools installed to run setup.py. Please install and try again.")
 
 
 def readme():
