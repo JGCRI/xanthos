@@ -473,6 +473,12 @@ class Components:
 
                     print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
+    # -------------------------------------------------------------------
+    # -------------------------------------------------------------------
+    # OPTIONAL POST-PROCESSING MODULE METHODS
+    # -------------------------------------------------------------------
+    # -------------------------------------------------------------------
+
     def accessible_water(self):
         """
         Run accessible water module
