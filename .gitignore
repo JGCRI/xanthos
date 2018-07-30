@@ -12,3 +12,9 @@ example/output
 
 # ignore .mat files
 *.mat
+
+# ignore build
+build
+dist
+xanthos.egg-info
+

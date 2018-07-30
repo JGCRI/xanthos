@@ -143,6 +143,15 @@ class ConfigReader:
                 except KeyError:
                     self.DTRVarName = None
 
+            elif self.pet_module == 'hs':
+                pet_mod = pt['hargreaves-samani']
+                self.pet_dir = os.path.join(self.PET, pet_mod['pet_dir'])
+
+                # climate data
+                self.hs_tas = os.path.join(self.pet_dir, pet_mod['hs_tas'])
+                self.hs_tmin = os.path.join(self.pet_dir, pet_mod['hs_tmin'])
+                self.hs_tmax = os.path.join(self.pet_dir, pet_mod['hs_tmax'])
+
             elif self.pet_module == 'pm':
                 pet_mod = pt['penman-monteith']
                 self.pet_dir = os.path.join(self.PET, pet_mod['pet_dir'])

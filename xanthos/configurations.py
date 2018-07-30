@@ -272,3 +272,55 @@ def pm_abcd_mrtm(config):
     c.plots()
 
     return c
+
+
+def hs_abcd_mrtm(config):
+    """
+    Model configuration for the following:
+
+    PET:                Hargreaves-Samani
+    RUNOFF:             ABCD
+    ROUTING:            Modified River Transport Model (MRTM)
+
+
+    Spin-up is built in to the ABCD model and does not need to be calculated separately.
+
+    :param config:      Configuration object generated from user-defined config.ini file
+    :return:            Object containing all return values.
+    """
+
+    # instantiate hydro class
+    c = Components(config)
+
+    # run model
+    c.simulation(pet=True,
+                 pet_step=None,
+                 runoff=True,
+                 runoff_step=None,
+                 routing=True,
+                 routing_num_steps=config.nmonths,
+                 routing_step='month',
+                 notify='Simulation')
+
+    # accessible water module
+    c.accessible_water()
+
+    # hydropower potential
+    c.hydropower_potential()
+
+    # hydropower actual
+    c.hydropower_actual()
+
+    # diagnostics
+    c.diagnostics()
+
+    # output simulation data
+    c.output_simulation()
+
+    # aggregate outputs
+    c.aggregate_outputs()
+
+    # create time series plots
+    c.plots()
+
+    return c

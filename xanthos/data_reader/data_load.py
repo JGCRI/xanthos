@@ -40,6 +40,12 @@ class LoadData:
             # monthly average of daily temperature range in degree c
             self.dtr = self.load_to_array(self.s.DailyTemperatureRangeFile, varname=self.s.DTRVarName, neg_to_zero=True)
 
+        elif self.s.pet_module == 'hs':
+
+            self.hs_tas = self.load_to_array(self.s.hs_tas)
+            self.hs_tmin = self.load_to_array(self.s.hs_tmin)
+            self.hs_tmax = self.load_to_array(self.s.hs_tmax)
+
         elif self.s.pet_module == 'pm':
 
             # latent heat of vaporization (J kg-1)

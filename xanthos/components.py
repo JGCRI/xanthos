@@ -66,6 +66,9 @@ class Components:
             self.solar_dec = sft[0]
             self.dr = sft[1]
 
+        elif self.s.pet_module == 'hs':
+            pass
+
         elif self.s.pet_module == 'pm':
             pass
 
@@ -122,6 +125,9 @@ class Components:
         if self.s.pet_module == 'hargreaves':
             import pet.hargreaves as pet_mod
 
+        elif self.s.pet_module == 'hs':
+            import pet.hargreaves_samani as pet_mod
+
         elif self.s.pet_module == 'pm':
             import pet.penman_monteith as pet_mod
 
@@ -170,6 +176,9 @@ class Components:
             self.mth_temp_pet = np.nan_to_num(self.data.temp[:, nm])
             self.mth_dtr_pet = np.nan_to_num(self.data.dtr[:, nm])
 
+        elif self.s.pet_module == 'hs':
+            pass
+
         elif self.s.pet_module == 'pm':
             pass
 
@@ -181,6 +190,9 @@ class Components:
 
             return pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data.lat_radians, self.mth_solar_dec,
                                          self.mth_dr, self.mth_days)
+        elif self.s.pet_module == 'hs':
+
+            return pet_mod.execute(self.data)
 
         elif self.s.pet_module == 'pm':
 
