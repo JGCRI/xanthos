@@ -150,6 +150,18 @@ Config tag:
 | pm_snow_idx | The number of the index (when starting at 0) of snow in the land cover data as an integer. | True |
 | pm_lc_years | Comma separated years (e.g., 2005, 2010, 2015) represented in the input land cover data. | True |
 
+### Hargreaves-Samani
+Config tag:
+```ini
+[hargreaves-samani]
+```
+
+| Variable | Description | Required |
+| ------- | ------- | ------- |
+| pet_dir | The directory name of the PET module chosen where its input files are stored | True |
+| hs_tas | File name and extension to input mean monthly daily mean surface air temperature file in degree Celsius.  Array must be 2-D, where (gridcell_idx, month_idx).  File must be saved as a NumPy array file (.npy). | True |
+| hs_tmin | File name and extension to input mean monthly daily minimum surface air temperature file in degree Celsius.  Array must be 2-D, where (gridcell_idx, month_idx).  File must be saved as a NumPy array file (.npy). | True |
+| hs_tmax | File name and extension to input mean monthly daily maximum surface air temperature file in degree Celsius.  Array must be 2-D, where (gridcell_idx, month_idx).  File must be saved as a NumPy array file (.npy). | True |
 
 ### Hargreaves
 Config tag:

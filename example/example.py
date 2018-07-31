@@ -1,8 +1,9 @@
 """
 Example script demonstrating how to call and run Xanthos.
 """
+import os
 
-from xanthos.model import Xanthos
+from xanthos import Xanthos
 
 
 def run(ini):
@@ -19,7 +20,7 @@ def run(ini):
 if __name__ == "__main__":
 
     # full path to parameterized config file
-    ini = '/Users/d3y010/repos/github/xanthos/example/pm_abcd_mrtm.ini'
+    ini = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pm_abcd_mrtm.ini')
 
     # run the model
     xth = run(ini)

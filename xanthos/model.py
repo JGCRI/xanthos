@@ -69,6 +69,9 @@ class Xanthos:
             elif self.config.mod_cfg == 'pm_abcd_mrtm':
                 mods.pm_abcd_mrtm(self.config)
 
+            elif self.config.mod_cfg == 'hs_abcd_mrtm':
+                mods.hs_abcd_mrtm(self.config)
+
             elif self.config.mod_cfg == 'none_gwam_mrtm':
                 mods.none_gwam_mrtm(self.config)
 
