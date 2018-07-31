@@ -192,7 +192,7 @@ class Components:
                                          self.mth_dr, self.mth_days)
         elif self.s.pet_module == 'hs':
 
-            return pet_mod.execute(self.data)
+            return pet_mod.execute(self.s, self.data)
 
         elif self.s.pet_module == 'pm':
 
