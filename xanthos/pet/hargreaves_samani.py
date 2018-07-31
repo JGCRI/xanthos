@@ -1,3 +1,15 @@
+"""
+Hargreaves-Samani PET
+
+@author   Yaling Liu
+@email:   cauliuyaling@gmail.com
+@Project: Xanthos 2.0
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+"""
+
 import calendar
 import numpy as np
 
@@ -56,18 +68,20 @@ def pet(lat, mth, t, tmax, tmin):
 
 def update_user(mth_idx, start_year, prev_yr=None):
 
+    msg = "\t\tProcessing Year: {}"
+
     yr_val = (mth_idx + 1) / 12.0
 
     if mth_idx == 0:
 
-        print("\t\tProcessing Year: {}".format(start_year))
+        print(msg.format(start_year))
         return start_year
 
     if yr_val.is_integer():
 
         yr = prev_yr + 1
 
-        print("\t\tProcessing Year: {}".format(yr))
+        print(msg.format(yr))
         return yr
 
     else:
