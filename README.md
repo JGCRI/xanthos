@@ -27,12 +27,12 @@ Figure:  Xanthos 2.0 performance when calibrated to the VIC model forced by WATC
 
 # Get Started (Xanthos 2)
 Set up Xanthos using the following steps:
-1.  This repository uses the Git Large File Storage (LFS) extension (see https://git-lfs.github.com/ for details).  Please run the following command before cloning if you do not already have Git LFS installed:
+1.  This repository uses the Git Large File Storage (LFS) extension (see https://git-lfs.github.com/ for details).  Please install GitLFS and run the following command before cloning if you do not already have Git LFS initialized:
 `git lfs install`.
 2.  Clone Xanthos into your desired location `git clone https://github.com/JGCRI/xanthos.git`.  Some Windows users have had better luck with `git lfs clone https://github.com/JGCRI/xanthos.git`
 3.  Make sure that `setuptools` is installed for your Python 2.7 version.  This is what will be used to support the installation of the Xanthos package.
-4.  From the directory you cloned Xanthos into run `python setup.py install` .  This will install Xanthos as a Python package on your machine and install of the needed dependencies.
-5.  Setup your configuration file (.ini).  Examples are located in the "example" directory.  Be sure to change the root directory to the directory that holds your data (use the 'xanthos/example' directory as an example).
+4.  From the directory you cloned Xanthos into run `python setup.py install` .  This will install Xanthos as a Python package on your machine and install of the needed dependencies.  If installing in an HPC environment, a community user advised that it is best to install the anaconda environment before running the installation command.  HPC environments may also require the use of the `--user` flag in the install command to avoid permissions errors.
+5.  Setup your configuration file (.ini).  Examples are located in the "example" directory.  Be sure to change the root directory to the directory that holds your data (use the `xanthos/example` directory as an example).
 6. If running Xanthos from an IDE:  Be sure to include the path to your config file.  See the "xanthos/example/example.py" script as a reference.
 7. If running Xanthos from terminal:  Run model.py found in xanthos/xanthos/model.py passing the full path to the config file as the only argument. (e.g., `python model.py <dirpath>/config.ini`).
 
