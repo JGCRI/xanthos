@@ -149,7 +149,7 @@ class ConfigReader:
         # -------------------------------------------------------------------
 
         # PET config
-        if pt is not False:
+        if pt:
             self.pet_module = pt['pet_module'].lower()
 
             if self.pet_module == 'hargreaves':
@@ -249,7 +249,7 @@ class ConfigReader:
         # CONFIGURE RUNOFF MODULE
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
-        if ro is not False:
+        if ro:
             self.runoff_module = ro['runoff_module'].lower()
 
             if self.runoff_module == 'gwam':
@@ -386,7 +386,7 @@ class ConfigReader:
         # CONFIGURE RUNOFF MODULE
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
-        if rt is not False:
+        if rt:
             self.routing_module = rt['routing_module'].lower()
 
             if self.routing_module == 'mrtm':
@@ -451,7 +451,7 @@ class ConfigReader:
         # REFERENCE DATA
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
-        if r is not False:
+        if r:
             self.Area = os.path.join(self.Reference, 'Grid_Areas_ID.csv')
             self.Coord = os.path.join(self.Reference, 'coordinates.csv')
             self.BasinIDs = os.path.join(self.Reference, 'basin.csv')
@@ -470,7 +470,7 @@ class ConfigReader:
         # -------------------------------------------------------------------
 
         # diagnostics
-        if d is not False:
+        if d:
             if self.PerformDiagnostics:
                 self.VICDataFile = os.path.join(self.DiagDir, d['VICDataFile'])
                 self.UNHDataFile = os.path.join(self.DiagDir, d['UNHDataFile'])
@@ -479,7 +479,7 @@ class ConfigReader:
                 self.DiagnosticScale = int(d['Scale'])
 
         # plots
-        if t is not False:
+        if t:
             if self.CreateTimeSeriesPlot:
                 self.TimeSeriesScale = int(t['Scale'])
                 self.TimeSeriesMapID = 999
@@ -494,7 +494,7 @@ class ConfigReader:
                     self.TimeSeriesMapID = l
 
         # accessible water
-        if a is not False:
+        if a:
             if self.CalculateAccessibleWater:
                 self.ResCapacityFile = os.path.join(self.AccWatDir, a['ResCapacityFile'])
                 self.BfiFile = os.path.join(self.AccWatDir, a['BfiFile'])
@@ -509,7 +509,7 @@ class ConfigReader:
                     raise ValidationException("Accessible water range of GCAM years are outside the range of years in climate data.")
 
         # hydropower potential
-        if hp is not False:
+        if hp:
             if self.CalculateHydropowerPotential:
                 self.hpot_start_date = hp['hpot_start_date']
                 self.q_ex = float(hp['q_ex'])
@@ -517,7 +517,7 @@ class ConfigReader:
                 self.GridData = os.path.join(self.HydActDir, 'gridData.csv')
 
         # hydropower actual
-        if ha is not False:
+        if ha:
             if self.CalculateHydropowerActual:
                 self.hact_start_date = ha['hact_start_date']
 
@@ -529,7 +529,7 @@ class ConfigReader:
                 self.DrainArea = os.path.join(self.HydActDir, 'DRT_half_SourceArea_globe_float.txt')
 
         # calibration mode
-        if cal is not False:
+        if cal:
             if self.calibrate:
                 self.set_calibrate = int(cal['set_calibrate'])
                 self.cal_observed = cal['observed']
@@ -539,7 +539,7 @@ class ConfigReader:
         # -*****************************************************************-
         # CONDITIONAL FOR NEW RUNOFF MODULE
         #
-        # if new_module is not False:
+        # if new_module:
         #     if self.calibrate:
         #         self.set_calibrate = int(cal['set_calibrate'])
         #         self.cal_observed = cal['observed']
