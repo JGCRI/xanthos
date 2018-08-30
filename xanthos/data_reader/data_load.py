@@ -267,6 +267,12 @@ class LoadData:
             temp = f.read().split('\n')
             return np.array([i.split(',') for i in temp])[:, 0]
 
+    def load_from_mem(self, arr, text):
+        """
+        Read an in-memory array
+        """
+        return self.validate(arr, text)
+
     def load_to_array(self, f, varname=None, neg_to_zero=False):
         """
         Loads and validates monthly input data.
@@ -311,6 +317,8 @@ class LoadData:
         if not arr.shape[1] == self.s.nmonths:
             raise ValidationException(err.format(text, self.s.nmonths, arr.shape[1]))
 
+        # TODO: Can this be removed? self.s.nmonths is divisible by 12 by default,
+        #       so the above check would also check this as well, right?
         if not arr.shape[1] % 12 == 0:
             raise ValidationException("Error: Number of months in data can not be converted into integral years.")
 
@@ -510,7 +518,6 @@ def load_gcm_var(fn, varname):
     """
     Loads climate data from the specified GCM
     """
-
     if not os.path.isfile(fn):
         raise IOError("File does not exist:  {}".format(fn))
 
@@ -548,7 +555,6 @@ def load_const_griddata(fn, headerNum=0, key=" "):
     """
     Load constant grid data stored in files defined in GRID_CONSTANTS.
     """
-
     # for MATLAB files
     if fn.endswith('.mat'):
         data = load_gcm_var(fn, key)
