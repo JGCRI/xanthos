@@ -93,12 +93,12 @@ class LoadData:
             self.laimin = np.genfromtxt(self.s.pm_laimin, delimiter=',')
 
             # convert missing values to 0
-            self.tair_load = np.nan_to_num(np.load(self.s.pm_tas))
-            self.TMIN_load = np.nan_to_num(np.load(self.s.pm_tmin))
-            self.rhs_load = np.nan_to_num(np.load(self.s.pm_rhs))
-            self.wind_load = np.nan_to_num(np.load(self.s.pm_wind))
-            self.rsds_load = np.nan_to_num(np.load(self.s.pm_rsds))
-            self.rlds_load = np.nan_to_num(np.load(self.s.pm_rlds))
+            self.tair_load = self.load_to_array(self.s.pm_tas, 'pm_tas', nan_to_num=True)
+            self.TMIN_load = self.load_to_array(self.s.pm_tmin, 'pm_tmin', nan_to_num=True)
+            self.rhs_load = self.load_to_array(self.s.pm_rhs, 'pm_rhs', nan_to_num=True)
+            self.wind_load = self.load_to_array(self.s.pm_wind, 'pm_wind', nan_to_num=True)
+            self.rsds_load = self.load_to_array(self.s.pm_rsds, 'pm_rsds', nan_to_num=True)
+            self.rlds_load = self.load_to_array(self.s.pm_rlds, 'pm_rlds', nan_to_num=True)
 
             # set previous air temp value leaving the first value at 0
             self.tairprev_load = np.zeros_like(self.tair_load)
@@ -255,8 +255,8 @@ class LoadData:
         Get an array of country names corresponding to GCAM countries
         """
         with open(self.s.CountryNames, 'r') as f:
-            temp = f.read().splitlines()
-            return np.array([i.split(',') for i in temp])[:, 1]
+            country = f.read().splitlines()
+            return np.array([i.split(',') for i in country])[:, 1]
 
     def get_region_names(self):
         """
@@ -264,16 +264,10 @@ class LoadData:
         """
         with open(self.s.GCAMRegionNames, 'r') as f:
             f.readline()
-            temp = f.read().split('\n')
-            return np.array([i.split(',') for i in temp])[:, 0]
+            region = f.read().split('\n')
+            return np.array([i.split(',') for i in region])[:, 0]
 
-    def load_from_mem(self, arr, text):
-        """
-        Read an in-memory array
-        """
-        return self.validate(arr, text)
-
-    def load_to_array(self, f, varname=None, neg_to_zero=False):
+    def load_to_array(self, f, varname=None, neg_to_zero=False, nan_to_num=False):
         """
         Loads and validates monthly input data.
 
@@ -284,16 +278,21 @@ class LoadData:
         @:param f:              file path with extension
         @:param var_name:       NetCDF variable name
         @:param neg_to_zero:    convert negative values to zero
-        @:param n_cells:        number of cells
-        @:param n_months:       number of months
+        @:param nan_to_num:     convert nan to zero and inf to finite numbers
 
         @:return:               array
         """
         # load data to array from file
-        arr = self.load_data(f, 0, varname)
+        if isinstance(f, np.ndarray):
+            arr = f
+        else:
+            arr = self.load_data(f, 0, varname)
 
         if neg_to_zero:
             arr[np.where(arr < 0)] = 0
+
+        if nan_to_num:
+            arr = np.nan_to_num(arr)
 
         if varname is None:
             varname = os.path.splitext(os.path.basename(f))[0]
@@ -404,16 +403,16 @@ class LoadReferenceData:
         # Corresponding to GCAM Region ID Map
         with open(settings.GCAMRegionNames, 'r') as f:
             f.readline()
-            temp = f.read().split('\n')
-            self.region_names = np.array([i.split(',') for i in temp])[:, 0]
+            region = f.read().split('\n')
+            self.region_names = np.array([i.split(',') for i in region])[:, 0]
 
         # Country ID Map : 67420 x 1 (249 countries: 1-249)
         self.country_ids = load_const_griddata(settings.CountryIDs, 1).astype(int)
 
         # Corresponding to Country ID Map, 0-248 index number and 249 Country Names: 2D String Array
         with open(settings.CountryNames, 'r') as f:
-            temp = f.read().splitlines()
-            self.country_names = np.array([i.split(',') for i in temp])[:, 1]
+            country = f.read().splitlines()
+            self.country_names = np.array([i.split(',') for i in country])[:, 1]
 
         if settings.runoff_module == 'gwam':
             # Max Soil Moisture Map (mm/month): 67420 x 1

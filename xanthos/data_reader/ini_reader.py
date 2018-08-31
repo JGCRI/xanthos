@@ -625,3 +625,7 @@ class ConfigReader:
             print('Diagnostics will be performed using the data file: {}'.format(self.VICDataFile))
         except AttributeError:
             pass
+
+    def update(self, args):
+        for k, v in args.items():
+            setattr(self, k, v)
