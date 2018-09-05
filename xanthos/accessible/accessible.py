@@ -76,7 +76,7 @@ def AccessibleWater(settings, ref, runoff):
         edf = settings.Env_FlowPercent * np.mean(Map_runoff[:, :(hey + 1)], axis=1)
 
     # calculate available water for each basin and year
-    ac = accessible_water(q_gcam, bflow, edf, rdf.values))
+    ac = accessible_water(q_gcam, bflow, edf, rdf.values)
 
     # create accessible water output dataframe at GCAM year time step
 #    filename = os.path.join(settings.OutputFolder, 'Accessible_Water_{}'.format(settings.OutputNameStr))
