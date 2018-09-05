@@ -51,6 +51,8 @@ class Xanthos:
     def execute(self, args={}):
         """
         Instantiate and write log file.
+
+        @:param args:   Dictionary of config parameters 
         """
         # stage data
         self.stage(args)

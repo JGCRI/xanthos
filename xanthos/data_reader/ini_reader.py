@@ -627,5 +627,10 @@ class ConfigReader:
             pass
 
     def update(self, args):
+        """
+        Overwrite configuration options
+
+        :@param args:   Dictionary of parameters, where the key is the parameter name
+        """
         for k, v in args.items():
             setattr(self, k, v)

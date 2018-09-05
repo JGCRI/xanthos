@@ -282,7 +282,7 @@ class LoadData:
 
         @:return:               array
         """
-        # load data to array from file
+        # load data to array from file, unless data is already an array
         if isinstance(f, np.ndarray):
             arr = f
         else:
