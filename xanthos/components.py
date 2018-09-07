@@ -209,7 +209,7 @@ class Components:
 
         elif self.s.pet_module == 'thornthwaite':
 
-            return pet_mod.execute(self.data.tair, self.s.ncell, self.data.lat_radians,
+            return pet_mod.execute(self.data.tair, self.data.lat_radians,
                                    self.s.StartYear, self.s.EndYear)
 
         elif self.s.pet_module == 'none':
