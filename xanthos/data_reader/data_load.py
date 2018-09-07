@@ -110,6 +110,9 @@ class LoadData:
             # static data
             self.elev = np.nan_to_num(np.load(self.s.pm_elev))
 
+        elif self.s.pet_module == 'thornthwaite':
+            self.tair = np.nan_to_num(np.load(self.s.trn_tas))
+
         elif self.s.pet_module == 'none':
 
             # load user supplied PET data

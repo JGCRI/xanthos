@@ -213,6 +213,14 @@ class ConfigReader:
                 self.pm_laimax = os.path.join(self.pet_dir, 'gcam_laimax.csv')
                 self.pm_elev = os.path.join(self.pet_dir, 'elev.npy')
 
+            elif self.pet_module == 'thornthwaite':
+                pet_mod = pt['thornthwaite']
+                self.pet_dir = os.path.join(self.PET, pet_mod['pet_dir'])
+
+                # climate data
+                self.trn_tas = os.path.join(self.pet_dir, pet_mod['trn_tas'])
+
+
             # -*****************************************************************-
             # CONDITIONAL FOR NEW PET MODULE
             #

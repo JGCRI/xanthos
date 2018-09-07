@@ -64,12 +64,14 @@ class Components:
             self.pet_out = None
             sft = helper.calc_sinusoidal_factor(self.yr_imth_dys)
             self.solar_dec = sft[0]
-            self.dr = sft[1]
 
         elif self.s.pet_module == 'hs':
             pass
 
         elif self.s.pet_module == 'pm':
+            pass
+
+        elif self.s.pet_module == 'thornthwaite':
             pass
 
         # runoff
@@ -131,6 +133,9 @@ class Components:
         elif self.s.pet_module == 'pm':
             import pet.penman_monteith as pet_mod
 
+        elif self.s.pet_module == 'thornthwaite':
+            import pet.thornthwaite as pet_mod
+
         # import desired module for Runoff
         if self.s.runoff_module == 'gwam':
             import runoff.gwam as runoff_mod
@@ -182,6 +187,9 @@ class Components:
         elif self.s.pet_module == 'pm':
             pass
 
+        elif self.s.pet_module == 'thornthwaite':
+            pass
+
     def calculate_pet(self, nm=None):
         """
         Calculate monthly potential evapo-transpiration.
@@ -198,6 +206,11 @@ class Components:
 
             return pet_mod.run_pmpet(self.data, self.s.ncell, self.s.pm_nlcs, self.s.StartYear, self.s.EndYear,
                                      self.s.pm_water_idx, self.s.pm_snow_idx, self.s.pm_lc_years)
+
+        elif self.s.pet_module == 'thornthwaite':
+
+            return pet_mod.execute(self.data.tair, self.s.ncell, self.data.lat_radians,
+                                   self.s.StartYear, self.s.EndYear)
 
         elif self.s.pet_module == 'none':
             return self.data.pet_out
