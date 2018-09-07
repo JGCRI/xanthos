@@ -64,6 +64,7 @@ class Components:
             self.pet_out = None
             sft = helper.calc_sinusoidal_factor(self.yr_imth_dys)
             self.solar_dec = sft[0]
+            self.dr = sft[1]
 
         elif self.s.pet_module == 'hs':
             pass

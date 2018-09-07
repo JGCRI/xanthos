@@ -220,7 +220,6 @@ class ConfigReader:
                 # climate data
                 self.trn_tas = os.path.join(self.pet_dir, pet_mod['trn_tas'])
 
-
             # -*****************************************************************-
             # CONDITIONAL FOR NEW PET MODULE
             #
