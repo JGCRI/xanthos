@@ -24,7 +24,7 @@ class ABCD:
     |    Applications, Geoscientific Model Development Discussions, DOI: 10.5194/gmd-2017-113
     |
     | Martinez, G. F., & Gupta, H. V. (2010). Toward improved identification
-    |    of hydrological models: A diagnostic evaluation of the 'abcs' monthly
+    |    of hydrological models: A diagnostic evaluation of the 'abcd' monthly
     |    water balance model for the conterminous United States. Water Resources Research, 46(8).
 
     @:param prm     Object containing calibrated data
@@ -156,7 +156,7 @@ class ABCD:
         if i == 0:
             self.xs[i, :] = self.sn0 + self.snow[i, :]
         else:
-            self.xs[i, :] = self.xs[i-1, :] + self.snow[i, :]
+            self.xs[i, :] = self.xs[i - 1, :] + self.snow[i, :]
 
         # select only snow, intermediate, or only rain for each case
         allrain = np.nonzero(tmin[i, :] > self.train)
@@ -175,7 +175,7 @@ class ABCD:
         if i == 0:
             self.w[i, :] = self.rain[i, :] + self.s0
         else:
-            self.w[i, :] = self.rain[i, :] + self.s[i-1, :] + self.snm[i, :]
+            self.w[i, :] = self.rain[i, :] + self.s[i - 1, :] + self.snm[i, :]
 
         # ET opportunity
         rpt = (self.w[i, :] + self.b)
@@ -192,7 +192,7 @@ class ABCD:
         if i == 0:
             self.g[i, :] = (self.g0 + self.c * awet) / (1 + self.d)
         else:
-            self.g[i, :] = (self.g[i-1, :] + self.c * awet) / (1 + self.d)
+            self.g[i, :] = (self.g[i - 1, :] + self.c * awet) / (1 + self.d)
 
         # populate arrays
         self.ea[i, :] = self.y[i, :] - self.s[i, :]
@@ -261,7 +261,6 @@ class ABCD:
 
         # run spin-up with initial settings and calibrated a, b, c, d, m params
         for i in range(0, self.spinup_steps, 1):
-
             self.abcd_dist(i, self.pet0, self.tmin0)
 
         # reset initial runoff, soil moisture, and groundwater storage values to the average of the last three Decembers
@@ -276,7 +275,6 @@ class ABCD:
 
         # process with first pass parameters
         for i in range(0, self.steps, 1):
-
             self.abcd_dist(i, self.pet, self.tmin)
 
     def emulate(self):
@@ -297,21 +295,20 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
 
     :param basin_num:       The number of the target basin
     :param n_months:        The number of months to process
-    :param spinup_factor    How many times to tile the historic months by
+    :param spinup_steps:    How many times to tile the historic months by
     :param method:          Either 'dist' for distributed, or 'lump' for lumped processing
-    :param verbose:         True if all ABCD parameters are to be exported, False if only coords and rsim (Default)
     :return                 A NumPy array
     """
 
     print("\t\tProcessing spin-up and simulation for basin {}".format(basin_num))
 
     # import ABCD parameters for the target basin
-    pars = pars_abcdm[basin_num-1]
+    pars = pars_abcdm[basin_num - 1]
 
-    # get index where equals basin
+    # get the indices for the selected basin
     basin_idx = np.where(basin_ids == basin_num)
 
-    # extract data where equals basin
+    # extract data for the selected basin only
     _pet = pet[basin_idx]
     _precip = precip[basin_idx]
     _tmin = tmin[basin_idx]
@@ -337,8 +334,9 @@ def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spin
     :param num_basins:          How many basin to run
     :return:                    A list of NumPy arrays
     """
-    rslts = Parallel(n_jobs=jobs)(delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps) for i in range(1, num_basins + 1, 1))
-    return(rslts)
+    rslts = Parallel(n_jobs=jobs)(
+        delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps) for i in range(1, num_basins + 1, 1))
+    return (rslts)
 
 
 def abcd_outputs(rslts, n_months, basin_ids, ncells):
@@ -396,7 +394,7 @@ def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, s
 
     # run all basins at once in parallel
     all_bsns = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
-               pet=pet, precip=precip, tmin=tmin, n_months=n_months, spinup_steps=spinup_steps, jobs=jobs)
+                             pet=pet, precip=precip, tmin=tmin, n_months=n_months, spinup_steps=spinup_steps, jobs=jobs)
 
     # build array to pass to router
     _pet, _aet, _q, _sav = abcd_outputs(all_bsns, n_months=n_months, basin_ids=basin_ids, ncells=67420)
