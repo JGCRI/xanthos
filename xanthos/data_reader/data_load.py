@@ -126,8 +126,11 @@ class LoadData:
             # monthly precipitation mm/mth
             self.precip = self.load_to_array(self.s.PrecipitationFile, varname=self.s.PrecipVarName)
 
-            # monthly average minimum daily temperature degree C
-            self.tmin = self.load_to_array(self.s.TempMinFile, varname=self.s.TempMinVarName)
+            # monthly average minimum daily temperature degree C (optional)
+            if self.s.TempMinFile:
+                self.tmin = self.load_to_array(self.s.TempMinFile, varname=self.s.TempMinVarName)
+            else:
+                self.tmin = None
 
         # Area value for each land grid cell: 67420 x 1, convert from ha to km2
         self.area = self.load_data(self.s.Area) * 0.01

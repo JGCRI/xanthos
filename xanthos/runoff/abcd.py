@@ -311,7 +311,12 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
     # extract data for the selected basin only
     _pet = pet[basin_idx]
     _precip = precip[basin_idx]
-    _tmin = tmin[basin_idx]
+
+    # tmin is optional; if not provided, set tmin larger than rain threshold (removing the snow component of model)
+    if tmin:
+        _tmin = tmin[basin_idx]
+    else:
+        _tmin = np.zeros_like(_pet) + np.inf
 
     # instantiate the model
     he = ABCD(pars, _pet, _precip, _tmin, n_months, spinup_steps, method=method)

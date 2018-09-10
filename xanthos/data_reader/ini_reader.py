@@ -333,7 +333,8 @@ class ConfigReader:
                 try:
                     self.TempMinFile = ro_mod['TempMinFile']
                 except KeyError:
-                    raise('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
+                    print('WARNING: TempMinFile variable not found in the ABCD runoff section of the config file; '
+                          'results will not account for snow melt.')
 
                 try:
                     self.TempMinVarName = ro_mod['TempMinVarName']
