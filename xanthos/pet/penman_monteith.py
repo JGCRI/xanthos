@@ -393,23 +393,20 @@ def run_pmpet(data, ncells, nlcs, start_yr, end_yr, water_idx, snow_idx, land_co
     """
     Run Penman-Monteith PET.
 
-    :param in_dir:              Full path location to the input files
+    :param data:                Object containing temperature, humidity, wind, radiation, and land cover data:
+                                    - surface air temperature in degrees Celsius, 2D [ncells, nmonths]
+                                    - minimum surface air temperature in degrees Celsus, 2D [ncells, nmonths]
+                                    - relative humidity (rhs) in percent
+                                    - wind speed in meters/second
+                                    - surface downwelling shortwave radiation (rsds) in W m-2
+                                    - surface longwave radiation (rlds) in W m-2
+                                    - land cover data [n_cells, n_land_classes, n_yrs]
     :param ncells:              Integer number of grid cells in the data
     :param nlcs:                Number of land classes in the input data
     :param start_yr:            Start year of the project in YYYY format
     :param end_yr:              End year of the project in YYYY format
-    :param f_tair:              Full path with file name and extension to surface air temperature in degrees Celsius,
-                                2D [ncells, nmonths]
-    :param f_tmin:              Full path with file name and extension to minimum surface air temperature in degrees
-                                Celsus, 2D [ncells, nmonths]
-    :param f_rhs:               Full path with file name and extension to relative humidity (rhs) in percent
-    :param f_wind:              Full path with file name and extension to wind speed in meters/second
-    :param f_rsds:              Full path with file name and extension to surface downwelling shortwave radiation (rsds)
-                                in W m-2
-    :param f_rlds:              Full path with file name and extension to surface longwave radiation (rlds) in W m-2
     :param water_idx:           index of water in the land cover data
     :param snow_idx:            index of snow in the land cover data
-    :param land_cover_file      Full path with file name and extension to the land cover data [n_cells, n_land_classes, n_yrs]
     :param land_cover_years     list of integer years in YYYY format that are contained in the land cover data
 
     :return:                    PET array [ncells, nmonths]
