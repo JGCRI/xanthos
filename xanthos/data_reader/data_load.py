@@ -285,6 +285,7 @@ class LoadData:
         # load data to array from file, unless data is already an array
         if isinstance(f, np.ndarray):
             arr = f
+            f = 'in memory'
         else:
             arr = self.load_data(f, 0, varname)
 
