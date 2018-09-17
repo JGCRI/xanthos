@@ -160,7 +160,8 @@ class ConfigReader:
                 try:
                     self.TemperatureFile = os.path.join(self.pet_dir, pet_mod['TemperatureFile'])
                 except KeyError:
-                    raise 'File path not provided for the TemperatureFile variable in the PET section of the config file.'
+                    print('File path not provided for the TemperatureFile variable in the PET section of the config file.')
+                    raise
 
                 try:
                     self.TempVarName = pet_mod['TempVarName']
@@ -170,7 +171,8 @@ class ConfigReader:
                 try:
                     self.DailyTemperatureRangeFile = os.path.join(self.pet_dir, pet_mod['DailyTemperatureRangeFile'])
                 except KeyError:
-                    raise 'File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.'
+                    print('File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.')
+                    raise
 
                 try:
                     self.DTRVarName = pet_mod['DTRVarName']
@@ -291,7 +293,8 @@ class ConfigReader:
                 try:
                     self.PrecipitationFile = os.path.join(self.ro_model_dir, ro_mod['PrecipitationFile'])
                 except KeyError:
-                    raise 'File path not provided for the PrecipitationFile variable in the GCAM runoff section of the config file.'
+                    print('File path not provided for the PrecipitationFile variable in the GCAM runoff section of the config file.')
+                    raise
 
                 try:
                     self.PrecipVarName = ro_mod['PrecipVarName']
@@ -301,7 +304,8 @@ class ConfigReader:
                 try:
                     self.TemperatureFile = os.path.join(self.ro_model_dir, ro_mod['TemperatureFile'])
                 except KeyError:
-                    raise 'File path not provided for the TemperatureFile variable in the GCAM runoff section of the config file.'
+                    print('File path not provided for the TemperatureFile variable in the GCAM runoff section of the config file.')
+                    raise
 
                 try:
                     self.TempVarName = ro_mod['TempVarName']
@@ -311,7 +315,8 @@ class ConfigReader:
                 try:
                     self.DailyTemperatureRangeFile = os.path.join(self.ro_model_dir, ro_mod['DailyTemperatureRangeFile'])
                 except KeyError:
-                    raise 'File path not provided for the DailyTemperatureRangeFile variable in the GCAM runoff section of the config file.'
+                    print('File path not provided for the DailyTemperatureRangeFile variable in the GCAM runoff section of the config file.')
+                    raise
 
                 try:
                     self.DTRVarName = ro_mod['DTRVarName']
@@ -329,7 +334,8 @@ class ConfigReader:
                 try:
                     self.PrecipitationFile = ro_mod['PrecipitationFile']
                 except KeyError:
-                    raise 'File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.'
+                    print('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+                    raise
 
 
                 try:
@@ -340,7 +346,8 @@ class ConfigReader:
                 try:
                     self.TempMinFile = ro_mod['TempMinFile']
                 except KeyError:
-                    raise 'File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.'
+                    print('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
+                    raise
 
                 try:
                     self.TempMinVarName = ro_mod['TempMinVarName']
@@ -361,7 +368,8 @@ class ConfigReader:
             #     try:
             #         self.PrecipitationFile = ro_mod['PrecipitationFile']
             #     except KeyError:
-            #         raise 'File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.'
+            #         print('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+            #         raise
             #
             #
             #     try:
@@ -372,7 +380,8 @@ class ConfigReader:
             #     try:
             #         self.TempMinFile = ro_mod['TempMinFile']
             #     except KeyError:
-            #         raise 'File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.'
+            #         print('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
+            #         raise
             #
             #     try:
             #         self.TempMinVarName = ro_mod['TempMinVarName']
