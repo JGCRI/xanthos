@@ -160,7 +160,8 @@ class ConfigReader:
                 try:
                     self.TemperatureFile = os.path.join(self.pet_dir, pet_mod['TemperatureFile'])
                 except KeyError:
-                    raise('File path not provided for the TemperatureFile variable in the PET section of the config file.')
+                    print('File path not provided for the TemperatureFile variable in the PET section of the config file.')
+                    raise
 
                 try:
                     self.TempVarName = pet_mod['TempVarName']
@@ -170,7 +171,8 @@ class ConfigReader:
                 try:
                     self.DailyTemperatureRangeFile = os.path.join(self.pet_dir, pet_mod['DailyTemperatureRangeFile'])
                 except KeyError:
-                    raise('File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.')
+                    print('File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.')
+                    raise
 
                 try:
                     self.DTRVarName = pet_mod['DTRVarName']
@@ -238,7 +240,7 @@ class ConfigReader:
                 try:
                     self.pet_file = pt['pet_file']
                 except KeyError:
-                    raise("USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module.")
+                    raise "USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module."
 
             else:
                 msg = "ERROR: PET module '{0}' not found. Please check spelling and try again.".format(self.pet_module)
@@ -249,7 +251,7 @@ class ConfigReader:
             try:
                 self.pet_file = pt['pet_file']
             except KeyError:
-                raise("USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module.")
+                raise "USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module."
 
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
@@ -291,7 +293,8 @@ class ConfigReader:
                 try:
                     self.PrecipitationFile = os.path.join(self.ro_model_dir, ro_mod['PrecipitationFile'])
                 except KeyError:
-                    raise('File path not provided for the PrecipitationFile variable in the GCAM runoff section of the config file.')
+                    print('File path not provided for the PrecipitationFile variable in the GCAM runoff section of the config file.')
+                    raise
 
                 try:
                     self.PrecipVarName = ro_mod['PrecipVarName']
@@ -301,7 +304,8 @@ class ConfigReader:
                 try:
                     self.TemperatureFile = os.path.join(self.ro_model_dir, ro_mod['TemperatureFile'])
                 except KeyError:
-                    raise('File path not provided for the TemperatureFile variable in the GCAM runoff section of the config file.')
+                    print('File path not provided for the TemperatureFile variable in the GCAM runoff section of the config file.')
+                    raise
 
                 try:
                     self.TempVarName = ro_mod['TempVarName']
@@ -311,7 +315,8 @@ class ConfigReader:
                 try:
                     self.DailyTemperatureRangeFile = os.path.join(self.ro_model_dir, ro_mod['DailyTemperatureRangeFile'])
                 except KeyError:
-                    raise('File path not provided for the DailyTemperatureRangeFile variable in the GCAM runoff section of the config file.')
+                    print('File path not provided for the DailyTemperatureRangeFile variable in the GCAM runoff section of the config file.')
+                    raise
 
                 try:
                     self.DTRVarName = ro_mod['DTRVarName']
@@ -329,7 +334,8 @@ class ConfigReader:
                 try:
                     self.PrecipitationFile = ro_mod['PrecipitationFile']
                 except KeyError:
-                    raise('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+                    print('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+                    raise
 
 
                 try:
@@ -363,7 +369,8 @@ class ConfigReader:
             #     try:
             #         self.PrecipitationFile = ro_mod['PrecipitationFile']
             #     except KeyError:
-            #         raise('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+            #         print('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+            #         raise
             #
             #
             #     try:
@@ -374,7 +381,8 @@ class ConfigReader:
             #     try:
             #         self.TempMinFile = ro_mod['TempMinFile']
             #     except KeyError:
-            #         raise('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
+            #         print('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
+            #         raise
             #
             #     try:
             #         self.TempMinVarName = ro_mod['TempMinVarName']
@@ -634,3 +642,12 @@ class ConfigReader:
             print('Diagnostics will be performed using the data file: {}'.format(self.VICDataFile))
         except AttributeError:
             pass
+
+    def update(self, args):
+        """
+        Overwrite configuration options
+
+        :@param args:   Dictionary of parameters, where the key is the parameter name
+        """
+        for k, v in args.items():
+            setattr(self, k, v)
