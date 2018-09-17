@@ -312,7 +312,8 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
     _pet = pet[basin_idx]
     _precip = precip[basin_idx]
 
-    # tmin is optional; if not provided, set tmin larger than rain threshold (removing the snow component of model)
+    # tmin is optional; if not provided, set tmin larger than rain threshold
+    # (removing the snow component of model)
     if tmin:
         _tmin = tmin[basin_idx]
     else:
@@ -392,7 +393,20 @@ def abcd_outputs(rslts, n_months, basin_ids, ncells):
 def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, spinup_steps, jobs):
     """
     Run the ABCD model.
-    :return:
+
+    :param n_basins:          How many basin to run
+    :param basin_ids:         Basin ID Map: 67420 x 1, 235 Basins
+    :param pet:               Potential Evapotranspiration for each cell
+    :param precip:            Precipitation for each cell
+    :param tmin:              Monthly average minimum temperature (optional)
+    :param calib_file:        Path to .npy file containing calibrated abcdm parameters
+    :param n_months:          The number of months to process
+    :param spinup_steps:      How many times to tile the historic months by
+    :param jobs:              The number of jobs to use when running basins parallel
+                              (-2, all but one core; -1, all cores; 8, 8 cores)
+
+    :return         A NumPy arrays for coordinates (long, lat) and simulated runoff,
+                    PET, AET and soil moisture with the shape (grid cells, value per month).
     """
     # read parameters from calibration
     prm = np.load(calib_file)
