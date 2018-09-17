@@ -45,9 +45,10 @@ def Aggregation(settings, ref, q):
 
 
 def Aggregation_Map(settings, Map, Names, runoff, varstr):
-    '''aggregate runoff by basin/country/region..., aggregate monthly values to annual.
-    Return table of total runoff by basin/country/region... (row) and year (column) and output in csv'''
-
+    """
+    Aggregate runoff by basin/country/region..., aggregate monthly values to annual.
+    Return table of total runoff by basin/country/region... (row) and year (column) and output in csv
+    """
     if settings.OutputInYear == 1:
         NT = int(settings.nmonths / 12)
     else:

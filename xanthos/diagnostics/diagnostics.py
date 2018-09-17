@@ -33,108 +33,55 @@ import pandas as pd
 def Diagnostics(settings, Q, ref):
     area = ref.area
 
-    if settings.PerformDiagnostics:
-        # Prepare the data
-        ny = int(settings.EndYear - settings.StartYear + 1)
-
-        # convert the original unit mm/month to new unit km3/year
-        q = np.sum(Q[:, :], axis=1) / ny * area / 1e6
-
-        VIC = ref.vic
-
-        VICyears = range(1971, 2001)
-        try:
-            si = VICyears.index(settings.StartYear)
-        except:
-            si = 0
-        try:
-            ei = VICyears.index(settings.EndYear) + 1
-        except:
-            ei = 30
-
-        qq = np.sum(VIC[:, si:ei], axis=1) / (ei - si)
-        plotname = 'VIC_' + str(VICyears[si]) + '-' + str(VICyears[ei - 1])
-
-        UNH = ref.unh
-
-        temp1 = ref.wbmd
-        temp2 = ref.wbmc
-        wbm = np.zeros((settings.ncell), dtype=float)
-        wbmc = np.zeros((settings.ncell), dtype=float)
-        for i in range(temp1.shape[0]):
-            wbm[int(temp1[i, 0]) - 1] = temp1[i, 1]
-
-        for i in range(temp2.shape[0]):
-            wbmc[int(temp2[i, 0]) - 1] = temp2[i, 1]
-
-        # Only basins/countries/regions for which all four models have values are used to estimate the RMSE values
-
-        if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 1:
-            # Basin Based
-            qb = np.zeros((max(ref.basin_ids), 5), dtype=float)
-            qb[:, 0] = Aggregation_Diagnostics(settings, ref.basin_ids, q)
-            qb[:, 1] = Aggregation_Diagnostics(settings, ref.basin_ids, qq)
-            qb[:, 2] = Aggregation_Diagnostics(settings, ref.basin_ids, wbm)
-            qb[:, 3] = Aggregation_Diagnostics(settings, ref.basin_ids, wbmc)
-            qb[:, 4] = Aggregation_Diagnostics(settings, ref.basin_ids, UNH)
-            qb = np.insert(qb, 0, np.sum(qb, axis=0), axis=0)  # add global
-            BasinNames = np.insert(ref.basin_names, 0, 'Global')
-
-            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Basin_Scale_km3peryr.csv"), qb,
-                                plotname, BasinNames)
-
-            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Basin_Scale_km3peryr")
-
-            # Plot_Diagnostics(qb[1:, :], outputname, 'Basin', plotname)
-
-            for i in range(qb.shape[0]):
-                if not (qb[i, 0] > 0 and qb[i, 1] > 0 and qb[i, 2] > 0 and qb[i, 3] > 0 and qb[i, 4] > 0):
-                    qb[i, :] = 0
-
-        if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 2:
-            # Country Based
-            qc = np.zeros((max(ref.country_ids), 5), dtype=float)
-            qc[:, 0] = Aggregation_Diagnostics(settings, ref.country_ids, q)
-            qc[:, 1] = Aggregation_Diagnostics(settings, ref.country_ids, qq)
-            qc[:, 2] = Aggregation_Diagnostics(settings, ref.country_ids, wbm)
-            qc[:, 3] = Aggregation_Diagnostics(settings, ref.country_ids, wbmc)
-            qc[:, 4] = Aggregation_Diagnostics(settings, ref.country_ids, UNH)
-            qc = np.insert(qc, 0, np.sum(qc, axis=0), axis=0)  # add global
-            CountryNames = np.insert(ref.country_names, 0, 'Global')
-
-            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Country_Scale_km3peryr.csv"),
-                                qc, plotname, CountryNames)
-            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Country_Scale_km3peryr")
-
-            # Plot_Diagnostics(qc[1:, :], outputname, 'Country', plotname)
-
-            for i in range(qc.shape[0]):
-                if not (qc[i, 0] > 0 and qc[i, 1] > 0 and qc[i, 2] > 0 and qc[i, 3] > 0 and qc[i, 4] > 0):
-                    qc[i, :] = 0
-
-        if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 3:
-            # Region Based
-            qr = np.zeros((max(ref.region_ids), 5), dtype=float)
-            qr[:, 0] = Aggregation_Diagnostics(settings, ref.region_ids, q)
-            qr[:, 1] = Aggregation_Diagnostics(settings, ref.region_ids, qq)
-            qr[:, 2] = Aggregation_Diagnostics(settings, ref.region_ids, wbm)
-            qr[:, 3] = Aggregation_Diagnostics(settings, ref.region_ids, wbmc)
-            qr[:, 4] = Aggregation_Diagnostics(settings, ref.region_ids, UNH)
-            qr = np.insert(qr, 0, np.sum(qr, axis=0), axis=0)  # add global
-            RegionNames = np.insert(ref.region_names, 0, 'Global')
-
-            writecsvDiagnostics(os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Region_Scale_km3peryr.csv"), qr,
-                                plotname, RegionNames)
-            outputname = os.path.join(settings.OutputFolder, "Diagnostics_Runoff_Region_Scale_km3peryr")
-
-            # Plot_Diagnostics(qr[1:, :], outputname, 'Region', plotname)
-
-            for i in range(qr.shape[0]):
-                if not (qr[i, 0] > 0 and qr[i, 1] > 0 and qr[i, 2] > 0 and qr[i, 3] > 0 and qr[i, 4] > 0):
-                    qr[i, :] = 0
-
-    else:
+    if not settings.PerformDiagnostics:
         return
+
+    # Diagnostics requested, so prepare the data
+    ny = int(settings.EndYear - settings.StartYear + 1)
+
+    # convert the original unit mm/month to new unit km3/year
+    q = np.sum(Q[:, :], axis=1) / ny * area / 1e6
+
+    VIC = ref.vic
+
+    VICyears = range(1971, 2001)
+    try:
+        si = VICyears.index(settings.StartYear)
+    except:
+        si = 0
+    try:
+        ei = VICyears.index(settings.EndYear) + 1
+    except:
+        ei = 30
+
+    qq = np.sum(VIC[:, si:ei], axis=1) / (ei - si)
+    plotname = 'VIC_' + str(VICyears[si]) + '-' + str(VICyears[ei - 1])
+
+    UNH = ref.unh
+
+    temp1 = ref.wbmd
+    temp2 = ref.wbmc
+    wbm = np.zeros((settings.ncell), dtype=float)
+    wbmc = np.zeros((settings.ncell), dtype=float)
+    for i in range(temp1.shape[0]):
+        wbm[int(temp1[i, 0]) - 1] = temp1[i, 1]
+
+    for i in range(temp2.shape[0]):
+        wbmc[int(temp2[i, 0]) - 1] = temp2[i, 1]
+
+    # Only basins/countries/regions for which all four models have values are used to estimate the RMSE values
+
+    # Basin Based
+    if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 1:
+        Write_Diagnostics(settings, ref, 'Basin', q, qq, wbm, wbmc, UNH, plotname)
+
+    # Country Based
+    if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 2:
+        Write_Diagnostics(settings, ref, 'Country', q, qq, wbm, wbmc, UNH, plotname)
+
+    # Region Based
+    if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 3:
+        Write_Diagnostics(settings, ref, 'Region', q, qq, wbm, wbmc, UNH, plotname)
 
 
 def Aggregation_Diagnostics(settings, Map, runoff):
@@ -148,12 +95,48 @@ def Aggregation_Diagnostics(settings, Map, runoff):
     return Map_runoff
 
 
+def Write_Diagnostics(settings, ref, scale, q, qq, wbm, wbmc, UNH, plotname):
+    if scale == 'Region':
+        ids = ref.region_ids
+        names = ref.region_names
+    elif scale == 'Basin':
+        ids = ref.basin_ids
+        names = ref.basin_names
+    elif scale == 'Country':
+        ids = ref.country_ids
+        names = ref.country_names
+    else:
+        raise ValueError("Scale for diagnostics must be Region, Basin, or Country")
+
+    qs = np.zeros((max(ids), 5), dtype=float)
+    qs[:, 0] = Aggregation_Diagnostics(settings, ids, q)
+    qs[:, 1] = Aggregation_Diagnostics(settings, ids, qq)
+    qs[:, 2] = Aggregation_Diagnostics(settings, ids, wbm)
+    qs[:, 3] = Aggregation_Diagnostics(settings, ids, wbmc)
+    qs[:, 4] = Aggregation_Diagnostics(settings, ids, UNH)
+    qs = np.insert(qs, 0, np.sum(qs, axis=0), axis=0)  # add global
+    ScaleNames = np.insert(names, 0, 'Global')
+
+    fname = "Diagnostics_Runoff_{}_Scale_km3peryr".format(scale)
+    writecsvDiagnostics(os.path.join(settings.OutputFolder, fname), qs, plotname, ScaleNames)
+    outputname = os.path.join(settings.OutputFolder, fname)
+
+    # Plot_Diagnostics(qs[1:, :], outputname, scale, plotname)
+
+    for i in range(qs.shape[0]):
+        if not (qs[i, 0] > 0 and qs[i, 1] > 0 and qs[i, 2] > 0 and qs[i, 3] > 0 and qs[i, 4] > 0):
+            qs[i, :] = 0
+
+
 def writecsvDiagnostics(filename, data, ComparisonDataName, Names):
     hdr = "name,xanthos," + ComparisonDataName + ",WBM,WBMc,UNH_1986-1995"
     newdata = np.insert(data.astype(str), 0, Names, axis=1)
 
     df = pd.DataFrame(newdata)
     df.columns = hdr.split(',')
+
+    if filename[-4:] != '.csv':
+        filename = filename + '.csv'
 
     df.to_csv(filename, index=False)
 

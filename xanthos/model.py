@@ -33,11 +33,13 @@ class Xanthos:
         if not os.path.exists(pth):
             os.makedirs(pth)
 
-    def stage(self):
+    def stage(self, mem_args):
         """
         Set up run.
         """
         self.config = ConfigReader(self.ini)
+
+        self.config.update(mem_args)
 
         # create output directory
         self.make_dir(self.config.OutputFolder)
@@ -46,12 +48,14 @@ class Xanthos:
         sys.stdout = Logger()
         self.log_file = os.path.join(self.config.OutputFolder, 'logfile.log')
 
-    def execute(self):
+    def execute(self, args={}):
         """
         Instantiate and write log file.
+
+        @:param args:   Dictionary of config parameters 
         """
         # stage data
-        self.stage()
+        self.stage(args)
 
         with open(self.log_file, 'w') as sys.stdout.log:
             self.config.log_info()

@@ -151,6 +151,8 @@ class Components:
     def prep_arrays(self, nm=None):
         """
         Prepare arrays.
+
+        @:param nm:     time-step number
         """
         if nm is None:
             self.P = np.copy(self.data.precip)  # keep nan in P
@@ -179,8 +181,8 @@ class Components:
             self.mth_solar_dec = np.copy(self.solar_dec[nm])
             self.mth_dr = np.copy(self.dr[nm])
             self.mth_days = np.copy(self.yr_imth_dys[nm, 2])
-            self.mth_temp_pet = np.nan_to_num(self.data.temp[:, nm])
-            self.mth_dtr_pet = np.nan_to_num(self.data.dtr[:, nm])
+            self.mth_temp_pet = np.nan_to_num(self.T)
+            self.mth_dtr_pet = np.nan_to_num(self.D)
 
         elif self.s.pet_module == 'hs':
             pass
@@ -191,7 +193,7 @@ class Components:
         elif self.s.pet_module == 'thornthwaite':
             pass
 
-    def calculate_pet(self, nm=None):
+    def calculate_pet(self):
         """
         Calculate monthly potential evapo-transpiration.
         """
@@ -450,6 +452,7 @@ class Components:
                     print("---{} in progress... ".format(notify))
                     t0 = time.time()
 
+                    ## TODO: why are these different cases?
                     # calculate PET
                     if pet:
                         print("\tProcessing PET...")
