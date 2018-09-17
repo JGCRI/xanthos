@@ -393,6 +393,14 @@ def run_pmpet(data, ncells, nlcs, start_yr, end_yr, water_idx, snow_idx, land_co
     """
     Run Penman-Monteith PET.
 
+    :param data:                Object containing temperature, humidity, wind, radiation, and land cover data:
+                                    - surface air temperature in degrees Celsius, 2D [ncells, nmonths]
+                                    - minimum surface air temperature in degrees Celsus, 2D [ncells, nmonths]
+                                    - relative humidity (rhs) in percent
+                                    - wind speed in meters/second
+                                    - surface downwelling shortwave radiation (rsds) in W m-2
+                                    - surface longwave radiation (rlds) in W m-2
+                                    - land cover data [n_cells, n_land_classes, n_yrs]
     :param ncells:              Integer number of grid cells in the data
     :param nlcs:                Number of land classes in the input data
     :param start_yr:            Start year of the project in YYYY format
