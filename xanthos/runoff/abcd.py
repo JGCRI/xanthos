@@ -314,10 +314,10 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
 
     # tmin is optional; if not provided, set tmin larger than rain threshold
     # (removing the snow component of model)
-    if tmin:
-        _tmin = tmin[basin_idx]
-    else:
+    if tmin is None:
         _tmin = np.zeros_like(_pet) + np.inf
+    else:
+        _tmin = tmin[basin_idx]
 
     # instantiate the model
     he = ABCD(pars, _pet, _precip, _tmin, n_months, spinup_steps, method=method)

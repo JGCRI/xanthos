@@ -133,6 +133,8 @@ class LoadData:
             if self.s.TempMinFile:
                 self.tmin = self.load_to_array(self.s.TempMinFile, varname=self.s.TempMinVarName)
             else:
+                print("\t\tNo minimum temperature file provided for ABCD runoff "
+                      "module; Snowmelt will not be accounted for.")
                 self.tmin = None
 
         # Area value for each land grid cell: 67420 x 1, convert from ha to km2
