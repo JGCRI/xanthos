@@ -24,13 +24,21 @@ class Calibrate:
         self.obs_unit = obs_unit
         self.out_dir = out_dir
 
+        # Minimum temperature is optional; if not provided, the snow components
+        # of the model is effectively removed, so remove the model parameter
+        # for snow (M)
+        self.nosnow = self.tmin is None
+
         # set the bounds; if the values are exactly 0 or 1 the model returns nan
         LB = 1e-4
         UB = 1 - LB
         self.bounds = [(LB, UB), (LB, 8 - LB), (LB, UB), (LB, UB), (LB, UB)]
 
+        if self.nosnow:
+            self.bounds.pop()  # remove calibration parameter M
+
         # create arrays to hold outputs
-        self.all_pars = np.zeros((1, 5))
+        self.all_pars = np.zeros((1, len(self.bounds)))
         self.kge_vals = np.zeros(1)
 
         # get grid indices for the current basin
@@ -40,7 +48,12 @@ class Calibrate:
         # transpose data for use in the ABCD model
         self.bsn_PET = self.pet[self.basin_idx]
         self.bsn_P = self.precip[self.basin_idx]
-        self.bsn_TMIN = self.tmin[self.basin_idx]
+
+        # if no tmin provided, just ensure it is larger than the rain threshold
+        if self.nosnow:
+            self.bsn_TMIN = None
+        else:
+            self.bsn_TMIN = self.tmin[self.basin_idx]
 
         # select basin and remove extra years from observed runoff data
         self.bsn_Robs = self.obs[np.where(self.obs[:, 0] == basin_num)][:self.n_months, 1]
@@ -121,7 +134,6 @@ def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup
         np.put(rsim, basin_idx, he.rsim)
 
         return routing_func(rsim)
-
 
 def objective_kge(pars, model_func, set_calibrate, pet, precip, tmin, n_months, runoff_spinup, obs_unit, bsn_areas, bsn_Robs, basin_idx, arr_shp, routing_func=None):
     """

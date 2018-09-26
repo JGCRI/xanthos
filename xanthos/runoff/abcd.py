@@ -44,12 +44,15 @@ class ABCD:
         self.steps = process_steps
         self.spinup_steps = spinup_steps
 
+        # are we running with the snow component?
+        self.nosnow = tmin is None
+
         # assign attributes
         self.a = pars[0]
         self.b = pars[1] * 1000
         self.c = pars[2]
         self.d = pars[3]
-        self.m = pars[4]
+        self.m = pars[4] if not self.nosnow else 0
 
         # values [initial runoff, soil moisture storage, groundwater storage
         self.inv = np.array([20, 100, 500])
@@ -62,12 +65,16 @@ class ABCD:
         # precipitation as input
         self.p = precip.T[0:self.steps, :]
 
-        # temperature minimum as input
-        self.tmin = tmin.T[0:self.steps, :]
-
         self.pet0 = self.pet[0:self.spinup_steps, :].copy()
         self.p0 = self.p[0:self.spinup_steps, :].copy()
-        self.tmin0 = self.tmin[0:self.spinup_steps, :].copy()
+
+        # temperature minimum as input, if provided
+        if self.nosnow:
+            self.tmin = None
+            self.tmin0 = None
+        else:
+            self.tmin = tmin.T[0:self.steps, :]
+            self.tmin0 = self.tmin[0:self.spinup_steps, :].copy()
 
         # populate param arrays
         self.snm = None
@@ -127,6 +134,10 @@ class ABCD:
         """
         Assign rain and snow arrays.
         """
+        # we only need rain array if running without snow
+        if self.nosnow:
+            self.rain = p
+            return
 
         # construct snow and rain arrays like precip shape
         self.rain = np.zeros_like(p)
@@ -153,23 +164,24 @@ class ABCD:
 
     def abcd_dist(self, i, pet, tmin):
 
-        if i == 0:
-            self.xs[i, :] = self.sn0 + self.snow[i, :]
-        else:
-            self.xs[i, :] = self.xs[i - 1, :] + self.snow[i, :]
+        if not self.nosnow:
+            if i == 0:
+                self.xs[i, :] = self.sn0 + self.snow[i, :]
+            else:
+                self.xs[i, :] = self.xs[i - 1, :] + self.snow[i, :]
 
-        # select only snow, intermediate, or only rain for each case
-        allrain = np.nonzero(tmin[i, :] > self.train)
-        rainorsnow = np.nonzero((tmin[i, :] <= self.train) & (tmin[i, :] >= self.tsnow))
-        allsnow = np.nonzero(tmin[i, :] < self.tsnow)
+            # select only snow, intermediate, or only rain for each case
+            allrain = np.nonzero(tmin[i, :] > self.train)
+            rainorsnow = np.nonzero((tmin[i, :] <= self.train) & (tmin[i, :] >= self.tsnow))
+            allsnow = np.nonzero(tmin[i, :] < self.tsnow)
 
-        # estimate snowmelt (SNM)
-        self.snm[i, allrain] = self.xs[i, allrain] * self.m
-        self.snm[i, rainorsnow] = (self.xs[i, rainorsnow] * self.m) * ((self.train - tmin[i, rainorsnow]) / (self.train - self.tsnow))
-        self.snm[i, allsnow] = 0
+            # estimate snowmelt (SNM)
+            self.snm[i, allrain] = self.xs[i, allrain] * self.m
+            self.snm[i, rainorsnow] = (self.xs[i, rainorsnow] * self.m) * ((self.train - tmin[i, rainorsnow]) / (self.train - self.tsnow))
+            self.snm[i, allsnow] = 0
 
-        # accumulated snow water equivalent
-        self.xs[i, :] -= self.snm[i, :]
+            # accumulated snow water equivalent
+            self.xs[i, :] -= self.snm[i, :]
 
         # get available water
         if i == 0:
@@ -315,7 +327,7 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
     # tmin is optional; if not provided, set tmin larger than rain threshold
     # (removing the snow component of model)
     if tmin is None:
-        _tmin = np.zeros_like(_pet) + np.inf
+        _tmin = tmin
     else:
         _tmin = tmin[basin_idx]
 
