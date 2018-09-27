@@ -198,7 +198,7 @@ def calibrate_all(settings, data, pet, router_function):
     """
     Run calibration for ABCD model for all basins in parallel.
     """
-    for basin_num in range(1, settings.n_basins + 1, 1):
+    for basin_num in range(settings.cal_basin_start, settings.cal_basin_end + 1, 1):
 
         print("\tCalibrating Basin:  {}".format(basin_num))
 
