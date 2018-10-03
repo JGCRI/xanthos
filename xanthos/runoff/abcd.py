@@ -324,8 +324,8 @@ def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, sp
     _pet = pet[basin_idx]
     _precip = precip[basin_idx]
 
-    # tmin is optional; if not provided, set tmin larger than rain threshold
-    # (removing the snow component of model)
+    # tmin is optional, but the snow component of the model will not be used
+    # without it
     if tmin is None:
         _tmin = tmin
     else:
