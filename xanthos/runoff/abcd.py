@@ -51,7 +51,7 @@ class ABCD:
 
         # assign attributes
         self.a = pars[:, 0]
-        self.b = pars[:, 1] * 1000  # note this make an unnecessary copy
+        self.b = pars[:, 1] * 1000  # note this makes an unnecessary copy
         self.c = pars[:, 2]
         self.d = pars[:, 3]
         self.m = pars[:, 4] if not self.nosnow else 0
@@ -124,8 +124,8 @@ class ABCD:
         """
         Set the initial streamflow.
 
-        p = precipitation
-        v = initial runoff
+        :param p:   precipitation
+        :param v:   initial runoff
 
         :return: array
         """
@@ -183,7 +183,7 @@ class ABCD:
                 self.xs[i, :] = self.xs[i - 1, :] + self.snow[i, :]
 
             # select only snow, intermediate, or only rain for each case
-            allrain = tmin[i, :] > self.train
+            allrain = np.nonzero(tmin[i, :] > self.train)
             rainorsnow = np.nonzero((tmin[i, :] <= self.train) & (tmin[i, :] >= self.tsnow))
             allsnow = np.nonzero(tmin[i, :] < self.tsnow)
 
@@ -269,23 +269,15 @@ class ABCD:
         gs_rollover = self.g[dec_idx, :]
 
         # initial values are set by basin, so here we have to go basin-by-basin
-        ro = np.empty_like(self.basin_ids)
-        sm = np.empty_like(self.basin_ids)
-        gs = np.empty_like(self.basin_ids)
+        ro = np.empty(self.basin_ids.shape)
+        sm = np.empty(self.basin_ids.shape)
+        gs = np.empty(self.basin_ids.shape)
 
         for i in np.unique(self.basin_ids):
             b_idx = (i == self.basin_ids)
             ro[b_idx] = np.mean(np.nanmean(rsim_rollover[:, b_idx], axis=1))
             sm[b_idx] = np.mean(np.nanmean(sm_rollover[:, b_idx], axis=1))
             gs[b_idx] = np.mean(np.nanmean(gs_rollover[:, b_idx], axis=1))
-
-        # ro = np.mean(np.nanmean(rsim_rollover, axis=1))
-        # sm = np.mean(np.nanmean(sm_rollover, axis=1))
-        # gs = np.mean(np.nanmean(gs_rollover, axis=1))
-        #
-        # print rsim_rollover.shape
-        # print np.nanmean(rsim_rollover, axis = 1)
-        # exit()
 
         self.inv = np.array([ro, sm, gs])
         self.s0 = self.inv[1]
@@ -309,7 +301,7 @@ class ABCD:
         """
         Run simulation using spin-up values.
         """
-        # initialize arrays for simulation from  spin-up
+        # initialize arrays for simulation from spin-up
         self.init_arrays(self.precip, self.tmin)
 
         # process with first pass parameters
@@ -327,12 +319,6 @@ class ABCD:
         self.simulate()
 
 
-def _run_basin(basin_nums, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps):
-    rslts = []
-    for i in basin_nums:
-        rslts.append(_run_basins(i, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps))
-    return rslts
-
 def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, spinup_steps, method='dist'):
     """
     Run the ABCD model for each basin.
@@ -346,12 +332,7 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
 
     print("\t\tProcessing spin-up and simulation for basins {}".format(basin_nums))
 
-    # import ABCD parameters for the target basin
-    # basin_nums_idx = np.array(basin_nums) - 1
-    # pars = pars_abcdm[basin_nums_idx]
-
     # get the indices for the selected basins
-    # basin_indices = np.where(basin_ids == basin_nums)
     basin_indices = np.where(np.isin(basin_ids, basin_nums))
 
     # pass basin ids to model for setting basin-specific initial values
@@ -393,60 +374,9 @@ def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spin
     :param num_basins:          How many basin to run
     :return:                    A list of NumPy arrays
     """
-    # rslts = Parallel(n_jobs=jobs)(
-    #     delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps) for i in [range(1, 59), range(59, 118), range(118, 177), range(177, 236)])
     rslts = _run_basins(range(1, num_basins + 1), pars, basin_ids, pet, precip, tmin, n_months, spinup_steps)
-    # rslts = []
-    # for i in range(1, num_basins + 1, 1):
-    #     _run_basins(i, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps)
+
     return rslts
-
-
-def abcd_outputs(rslts, n_months, basin_ids, ncells):
-    """
-    Load each saved array of outputs from the ABCD runs and stack them.
-
-    :param rslts:   Python list containing ABCD outputs in order.
-    :return         A NumPy array for coordinates (long, lat) and simulated runoff
-                    with the shape (grid cells, value per month).
-    """
-    _pet, _aet, _q, _sav = np.split(rslts, 4, axis=1)
-    return _pet, _aet, _q, _sav
-    _aet = np.zeros(shape=(ncells, n_months))
-    _q = np.zeros(shape=(ncells, n_months))
-    _sav = np.zeros(shape=(ncells, n_months))
-    _pet = np.zeros(shape=(ncells, n_months))
-
-    # for each file, load it and then stack it
-    for idx, arr in enumerate(rslts):
-        # get basin idx...
-        basin_idx = np.where(basin_ids == idx + 1)
-
-        start = 0
-        end = start + n_months
-
-        # slice out pet
-        _pet[basin_idx] = arr[:, start:end]
-
-        start = end
-        end = start + n_months
-
-        # slice out aet
-        _aet[basin_idx] = arr[:, start:end]
-
-        start = end
-        end = start + n_months
-
-        # slice out q
-        _q[basin_idx] = arr[:, start:end]
-
-        start = end
-        end = start + n_months
-
-        # slice out soil moisture storage
-        _sav[basin_idx] = arr[:, start:end]
-
-    return _pet, _aet, _q, _sav
 
 
 def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, spinup_steps, jobs):
@@ -471,10 +401,11 @@ def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, s
     prm = np.load(calib_file)
 
     # run all basins at once in parallel
-    all_bsns = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
-                             pet=pet, precip=precip, tmin=tmin, n_months=n_months, spinup_steps=spinup_steps, jobs=jobs)
+    rslts = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
+                          pet=pet, precip=precip, tmin=tmin, n_months=n_months,
+                          spinup_steps=spinup_steps, jobs=jobs)
 
     # build array to pass to router
-    _pet, _aet, _q, _sav = abcd_outputs(all_bsns, n_months=n_months, basin_ids=basin_ids, ncells=67420)
+    _pet, _aet, _q, _sav = np.split(rslts, 4, axis=1)
 
     return _pet, _aet, _q, _sav
