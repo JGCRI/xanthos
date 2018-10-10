@@ -241,6 +241,12 @@ class Components:
                                          pet=pet, precip=self.data.precip, tmin=np.nan_to_num(self.data.tmin),
                                          calib_file=self.s.calib_file, n_months=self.s.nmonths,
                                          spinup_steps=self.s.runoff_spinup, jobs=self.s.ro_jobs)
+            # import sys
+            import pickle, sys
+            with open('/Users/brau074/Documents/xanthos-work/backup/abcd_fast1.pkl', 'w') as f:
+                pickle.dump(rg, f)
+            sys.exit(0)
+            # sys.exit(0)
 
             self.PET, self.AET, self.Q, self.Sav = rg
 
