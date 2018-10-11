@@ -1,15 +1,16 @@
 """
 ABCD runoff model.
 
-@author   Chris R. Vernon
+@author   Chris R. Vernon, Caleb J. Braun
 @email:   chris.vernon@pnnl.gov
 @Project: Xanthos 2.0
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
-Copyright (c) 2017, Battelle Memorial Institute
+Copyright (c) 2018, Battelle Memorial Institute
 """
 
+import sys
 import numpy as np
 from joblib import Parallel, delayed
 
@@ -330,6 +331,7 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
         print("\t\tProcessing spin-up and simulation for basins {}...{}".format(basin_nums[0], basin_nums[-1]))
     else:
         print("\t\tProcessing spin-up and simulation for basin {}".format(basin_nums))
+    sys.stdout.flush()
 
     # get the indices for the selected basins
     basin_indices = np.where(np.isin(basin_ids, basin_nums))
@@ -363,13 +365,13 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     return vals
 
 
-def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps, jobs=-1):
+def abcd_parallel(n_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps, jobs=-1):
     """
-    This model is made to run a basin at a time.  Running them in parallel
-    greatly speeds things up. The user can choose to output just the coordinates
-    and simulated runoff, or the whole suite of outputs from the ABCD model.
+    This model can run any number of basins at a time.  Splitting them into
+    chunks and running them in parallel greatly speeds things up.
 
-    :param num_basins:          How many basins to run
+    :param pars:                Array of abcdm parameters by grid cell
+    :param n_basins:            How many basins to run
     :return:                    A list of NumPy arrays
     """
     # rough optimization for dividing basins across threads
@@ -378,7 +380,7 @@ def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spin
     else:
         n_chunks = jobs * 2
 
-    basin_ranges = np.array_split(np.arange(1, num_basins + 1), n_chunks)
+    basin_ranges = np.array_split(np.arange(1, n_basins + 1), n_chunks)
 
     rslts = Parallel(n_jobs=jobs, backend="threading")(delayed(_run_basins)
                                                        (i, pars, basin_ids, pet, precip,
@@ -416,9 +418,8 @@ def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, s
     prm = np.load(calib_file)
 
     # run all basins at once in parallel
-    rslts = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
-                          pet=pet, precip=precip, tmin=tmin, n_months=n_months,
-                          spinup_steps=spinup_steps, jobs=jobs)
+    rslts = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids, pet=pet, precip=precip,
+                          tmin=tmin, n_months=n_months, spinup_steps=spinup_steps, jobs=jobs)
 
     # build array to pass to router
     _pet, _aet, _q, _sav = np.split(rslts, 4, axis=1)
