@@ -326,8 +326,10 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     :param method:          Either 'dist' for distributed, or 'lump' for lumped processing
     :return                 A NumPy array
     """
-
-    print("\t\tProcessing spin-up and simulation for basins {}".format(basin_nums))
+    if len(basin_nums) > 1:
+        print("\t\tProcessing spin-up and simulation for basins {}...{}".format(basin_nums[0], basin_nums[-1]))
+    else:
+        print("\t\tProcessing spin-up and simulation for basin {}".format(basin_nums))
 
     # get the indices for the selected basins
     basin_indices = np.where(np.isin(basin_ids, basin_nums))
@@ -335,7 +337,7 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     # pass basin ids to model for setting basin-specific initial values
     _basin_ids = basin_ids[basin_indices]
 
-    # import ABCD parameters for the target basins
+    # import ABCD parameters for the target basins (constant for all months)
     pars_by_cell = pars_abcdm[basin_ids - 1]
     pars = pars_by_cell[basin_indices]
 
@@ -343,8 +345,7 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     _pet = pet[basin_indices]
     _precip = precip[basin_indices]
 
-    # tmin is optional, but the snow component of the model will not be used
-    # without it
+    # tmin is optional, but the snow component of the model will not be used without it
     if tmin is None:
         _tmin = tmin
     else:
@@ -368,12 +369,29 @@ def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spin
     greatly speeds things up. The user can choose to output just the coordinates
     and simulated runoff, or the whole suite of outputs from the ABCD model.
 
-    :param num_basins:          How many basin to run
+    :param num_basins:          How many basins to run
     :return:                    A list of NumPy arrays
     """
-    rslts = _run_basins(range(1, num_basins + 1), pars, basin_ids, pet, precip, tmin, n_months, spinup_steps)
+    # rough optimization for dividing basins across threads
+    if jobs < 1:
+        n_chunks = 8
+    else:
+        n_chunks = jobs * 2
 
-    return rslts
+    basin_ranges = np.array_split(np.arange(1, num_basins + 1), n_chunks)
+
+    rslts = Parallel(n_jobs=jobs, backend="threading")(delayed(_run_basins)
+                                                       (i, pars, basin_ids, pet, precip,
+                                                        tmin, n_months, spinup_steps) for i in basin_ranges)
+
+    out = np.empty((len(basin_ids), n_months * 4))  # 4 output variables for every month
+
+    # combine parallel results back in the correct order
+    for i, br in enumerate(basin_ranges):
+        basin_indices = np.where(np.isin(basin_ids, br))
+        out[basin_indices, :] = rslts[i]
+
+    return out
 
 
 def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, spinup_steps, jobs):
