@@ -148,22 +148,22 @@ class ABCD:
         self.rain = np.zeros_like(p)
         self.snow = np.zeros_like(p)
 
-        # get the index of each value meeting criteria
-        allrain = np.nonzero(tmin > self.train)
-        rainorsnow = np.nonzero((tmin <= self.train) & (tmin >= self.tsnow))
-        allsnow = np.nonzero(tmin < self.tsnow)
+        # get the indices of each value meeting criteria
+        allrain = tmin > self.train
+        rainorsnow = (tmin <= self.train) & (tmin >= self.tsnow)
+        allsnow = tmin < self.tsnow
 
         # populate the snow array
         self.snow[rainorsnow] = p[rainorsnow] * (self.train - tmin[rainorsnow]) / (self.train - self.tsnow)
 
-        if allrain:
+        if allrain.any():
             self.rain[allrain] = p[allrain]
             self.snow[allrain] = 0
 
-        if rainorsnow:
+        if rainorsnow.any():
             self.rain[rainorsnow] = p[rainorsnow] - self.snow[rainorsnow]
 
-        if allsnow:
+        if allsnow.any():
             self.rain[allsnow] = 0
             self.snow[allsnow] = p[allsnow]
 
@@ -183,9 +183,9 @@ class ABCD:
                 self.xs[i, :] = self.xs[i - 1, :] + self.snow[i, :]
 
             # select only snow, intermediate, or only rain for each case
-            allrain = np.nonzero(tmin[i, :] > self.train)
-            rainorsnow = np.nonzero((tmin[i, :] <= self.train) & (tmin[i, :] >= self.tsnow))
-            allsnow = np.nonzero(tmin[i, :] < self.tsnow)
+            allrain = tmin[i, :] > self.train
+            rainorsnow = (tmin[i, :] <= self.train) & (tmin[i, :] >= self.tsnow)
+            allsnow = tmin[i, :] < self.tsnow
 
             # estimate snowmelt (SNM)
             self.snm[i, allrain] = self.xs[i, allrain] * self.m[allrain]
