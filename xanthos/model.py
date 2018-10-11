@@ -45,8 +45,8 @@ class Xanthos:
         self.make_dir(self.config.OutputFolder)
 
         # instantiate and write log file
-        # sys.stdout = Logger()
-        # self.log_file = os.path.join(self.config.OutputFolder, 'logfile.log')
+        sys.stdout = Logger()
+        self.log_file = os.path.join(self.config.OutputFolder, 'logfile.log')
 
     def execute(self, args={}):
         """
@@ -57,38 +57,38 @@ class Xanthos:
         # stage data
         self.stage(args)
 
-        # with open(self.log_file, 'w') as sys.stdout.log:
-            # self.config.log_info()
+        with open(self.log_file, 'w') as sys.stdout.log:
+            self.config.log_info()
 
             # run selected model configuration
-        if self.config.mod_cfg == 'hargreaves_gwam_mrtm':
-            mods.hargreaves_gwam_mrtm(self.config)
+            if self.config.mod_cfg == 'hargreaves_gwam_mrtm':
+                mods.hargreaves_gwam_mrtm(self.config)
 
-        elif self.config.mod_cfg == 'hargreaves_abcd_mrtm':
-            mods.hargreaves_abcd_mrtm(self.config)
+            elif self.config.mod_cfg == 'hargreaves_abcd_mrtm':
+                mods.hargreaves_abcd_mrtm(self.config)
 
-        elif self.config.mod_cfg == 'pm_gwam_mrtm':
-            mods.pm_gwam_mrtm(self.config)
+            elif self.config.mod_cfg == 'pm_gwam_mrtm':
+                mods.pm_gwam_mrtm(self.config)
 
-        elif self.config.mod_cfg == 'pm_abcd_mrtm':
-            mods.pm_abcd_mrtm(self.config)
+            elif self.config.mod_cfg == 'pm_abcd_mrtm':
+                mods.pm_abcd_mrtm(self.config)
 
-        elif self.config.mod_cfg == 'hs_abcd_mrtm':
-            mods.hs_abcd_mrtm(self.config)
+            elif self.config.mod_cfg == 'hs_abcd_mrtm':
+                mods.hs_abcd_mrtm(self.config)
 
-        elif self.config.mod_cfg == 'thornthwaite_abcd_mrtm':
-            mods.thornthwaite_abcd_mrtm(self.config)
+            elif self.config.mod_cfg == 'thornthwaite_abcd_mrtm':
+                mods.thornthwaite_abcd_mrtm(self.config)
 
-        elif self.config.mod_cfg == 'none_gwam_mrtm':
-            mods.none_gwam_mrtm(self.config)
+            elif self.config.mod_cfg == 'none_gwam_mrtm':
+                mods.none_gwam_mrtm(self.config)
 
-        elif self.config.mod_cfg == 'none_abcd_mrtm':
-            mods.none_abcd_mrtm(self.config)
+            elif self.config.mod_cfg == 'none_abcd_mrtm':
+                mods.none_abcd_mrtm(self.config)
 
-        elif self.config.mod_cfg == 'none_none_mrtm':
-            mods.none_abcd_mrtm(self.config)
+            elif self.config.mod_cfg == 'none_none_mrtm':
+                mods.none_abcd_mrtm(self.config)
 
-        print("End of {0}".format(self.config.ProjectName))
+            print("End of {0}".format(self.config.ProjectName))
 
 
 if __name__ == "__main__":

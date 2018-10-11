@@ -10,7 +10,6 @@ License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 Copyright (c) 2018, Battelle Memorial Institute
 """
 
-import sys
 import numpy as np
 from joblib import Parallel, delayed
 
@@ -327,12 +326,6 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     :param method:          Either 'dist' for distributed, or 'lump' for lumped processing
     :return                 A NumPy array
     """
-    if len(basin_nums) > 1:
-        print("\t\tProcessing spin-up and simulation for basins {}...{}".format(basin_nums[0], basin_nums[-1]))
-    else:
-        print("\t\tProcessing spin-up and simulation for basin {}".format(basin_nums))
-    sys.stdout.flush()
-
     # get the indices for the selected basins
     basin_indices = np.where(np.isin(basin_ids, basin_nums))
 
@@ -382,6 +375,8 @@ def abcd_parallel(n_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup
 
     basin_ranges = np.array_split(np.arange(1, n_basins + 1), n_chunks)
 
+    print('\t\tProcessing spin-up and simulation for basins {}...{}'.format(1, n_basins))
+
     rslts = Parallel(n_jobs=jobs, backend="threading")(delayed(_run_basins)
                                                        (i, pars, basin_ids, pet, precip,
                                                         tmin, n_months, spinup_steps) for i in basin_ranges)
@@ -418,7 +413,7 @@ def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, s
     prm = np.load(calib_file)
 
     # run all basins at once in parallel
-    rslts = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids, pet=pet, precip=precip,
+    rslts = abcd_parallel(n_basins=n_basins, pars=prm, basin_ids=basin_ids, pet=pet, precip=precip,
                           tmin=tmin, n_months=n_months, spinup_steps=spinup_steps, jobs=jobs)
 
     # build array to pass to router
