@@ -58,7 +58,7 @@ class ABCD:
 
         # values [initial runoff, soil moisture storage, groundwater storage
         self.inv = np.array([20, 100, 500])
-        self.s0 = self.inv[1]
+        self.soil_moisture_storage0 = self.inv[1]
         self.g0 = self.inv[2]
 
         # PET as input, transpose to row based
@@ -80,23 +80,20 @@ class ABCD:
 
         # populate param arrays
         self.snm = None
-        self.ea = None
-        self.re = None
-        self.dr = None
-        self.base = None
+        self.actual_et = None
         self.g = None
-        self.s = None
+        self.soil_moisture_storage = None
         self.w = None
         self.y = None
         self.xs = None
         self.rsim = None
         self.rain = None
         self.snow = None
-        self.sn0 = 0
-        self.train = 2.5
-        self.tsnow = 0.6
+        self.SN0 = 0
+        self.TRAIN = 2.5
+        self.TSNOW = 0.6
 
-    def set_ea(self, p, frac=0.6):
+    def set_actual_et(self, p, frac=0.6):
         """
         Set the initial value of actual evapotranspiration (ET) at 60% of precipitation.
 
@@ -149,12 +146,12 @@ class ABCD:
         self.snow = np.zeros_like(p)
 
         # get the indices of each value meeting criteria
-        allrain = tmin > self.train
-        rainorsnow = (tmin <= self.train) & (tmin >= self.tsnow)
-        allsnow = tmin < self.tsnow
+        allrain = tmin > self.TRAIN
+        rainorsnow = (tmin <= self.TRAIN) & (tmin >= self.TSNOW)
+        allsnow = tmin < self.TSNOW
 
         # populate the snow array
-        self.snow[rainorsnow] = p[rainorsnow] * (self.train - tmin[rainorsnow]) / (self.train - self.tsnow)
+        self.snow[rainorsnow] = p[rainorsnow] * (self.TRAIN - tmin[rainorsnow]) / (self.TRAIN - self.TSNOW)
 
         if allrain.any():
             self.rain[allrain] = p[allrain]
@@ -178,18 +175,18 @@ class ABCD:
 
         if not self.nosnow:
             if i == 0:
-                self.xs[i, :] = self.sn0 + self.snow[i, :]
+                self.xs[i, :] = self.SN0 + self.snow[i, :]
             else:
                 self.xs[i, :] = self.xs[i - 1, :] + self.snow[i, :]
 
             # select only snow, intermediate, or only rain for each case
-            allrain = tmin[i, :] > self.train
-            rainorsnow = (tmin[i, :] <= self.train) & (tmin[i, :] >= self.tsnow)
-            allsnow = tmin[i, :] < self.tsnow
+            allrain = tmin[i, :] > self.TRAIN
+            rainorsnow = (tmin[i, :] <= self.TRAIN) & (tmin[i, :] >= self.TSNOW)
+            allsnow = tmin[i, :] < self.TSNOW
 
             # estimate snowmelt (SNM)
             self.snm[i, allrain] = self.xs[i, allrain] * self.m[allrain]
-            self.snm[i, rainorsnow] = (self.xs[i, rainorsnow] * self.m[rainorsnow]) * ((self.train - tmin[i, rainorsnow]) / (self.train - self.tsnow))
+            self.snm[i, rainorsnow] = (self.xs[i, rainorsnow] * self.m[rainorsnow]) * ((self.TRAIN - tmin[i, rainorsnow]) / (self.TRAIN - self.TSNOW))
             self.snm[i, allsnow] = 0
 
             # accumulated snow water equivalent
@@ -197,9 +194,9 @@ class ABCD:
 
         # get available water
         if i == 0:
-            self.w[i, :] = self.rain[i, :] + self.s0
+            self.w[i, :] = self.rain[i, :] + self.soil_moisture_storage0
         else:
-            self.w[i, :] = self.rain[i, :] + self.s[i - 1, :] + self.snm[i, :]
+            self.w[i, :] = self.rain[i, :] + self.soil_moisture_storage[i - 1, :] + self.snm[i, :]
 
         # ET opportunity
         rpt = (self.w[i, :] + self.b)
@@ -207,7 +204,7 @@ class ABCD:
         self.y[i, :] = rpt / pt2 - np.power(np.power(rpt / pt2, 2) - (self.w[i, :] * self.b / self.a), 0.5)
 
         # soil water storage
-        self.s[i, :] = self.y[i, :] * np.exp(-pet[i, :].real / self.b)
+        self.soil_moisture_storage[i, :] = self.y[i, :] * np.exp(-pet[i, :].real / self.b)
 
         # get the difference between available water and ET opportunity
         awet = (self.w[i, :] - self.y[i, :])
@@ -219,14 +216,11 @@ class ABCD:
             self.g[i, :] = (self.g[i - 1, :] + self.c * awet) / (1 + self.d)
 
         # populate arrays
-        self.ea[i, :] = self.y[i, :] - self.s[i, :]
-        self.ea[i, :] = np.maximum(0, self.ea[i, :])
-        self.ea[i, :] = np.minimum(pet[i, :].real, self.ea[i, :])
-        self.s[i, :] = self.y[i, :] - self.ea[i, :]
-        self.re[i, :] = self.c * awet
-        self.dr[i, :] = (1 - self.c) * awet
+        self.actual_et[i, :] = self.y[i, :] - self.soil_moisture_storage[i, :]
+        self.actual_et[i, :] = np.maximum(0, self.actual_et[i, :])
+        self.actual_et[i, :] = np.minimum(pet[i, :].real, self.actual_et[i, :])
+        self.soil_moisture_storage[i, :] = self.y[i, :] - self.actual_et[i, :]
         self.rsim[i, :] = (1 - self.c) * awet + self.d * self.g[i, :]
-        self.base[i, :] = self.d * self.g[i, :]
 
     def init_arrays(self, p, tmin):
         """
@@ -236,12 +230,9 @@ class ABCD:
         self.rsim = self.set_rsim(p, self.inv[0])
 
         self.snm = np.zeros_like(p)
-        self.ea = self.set_ea(p)
-        self.re = np.zeros_like(p)
-        self.dr = np.zeros_like(p)
-        self.base = np.zeros_like(p)
+        self.actual_et = self.set_actual_et(p)
         self.g = np.zeros_like(p)
-        self.s = np.zeros_like(p)
+        self.soil_moisture_storage = np.zeros_like(p)
         self.w = np.zeros_like(p)
         self.y = np.zeros_like(p)
         self.xs = self.set_xs(p)
@@ -265,7 +256,7 @@ class ABCD:
             raise
 
         rsim_rollover = self.rsim[dec_idx, :]
-        sm_rollover = self.s[dec_idx, :]
+        sm_rollover = self.soil_moisture_storage[dec_idx, :]
         gs_rollover = self.g[dec_idx, :]
 
         # initial values are set by basin, so here we have to go basin-by-basin
@@ -280,7 +271,7 @@ class ABCD:
             gs[b_idx] = np.mean(np.nanmean(gs_rollover[:, b_idx], axis=1))
 
         self.inv = np.array([ro, sm, gs])
-        self.s0 = self.inv[1]
+        self.soil_moisture_storage0 = self.inv[1]
         self.g0 = self.inv[2]
 
     def spinup(self):
@@ -360,7 +351,7 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     he.emulate()
 
     # stack outputs
-    vals = np.hstack([he.pet.T, he.ea.T, he.rsim.T, he.s.T])
+    vals = np.hstack([he.pet.T, he.actual_et.T, he.rsim.T, he.soil_moisture_storage.T])
 
     return vals
 
