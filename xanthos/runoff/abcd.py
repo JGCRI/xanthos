@@ -56,6 +56,11 @@ class ABCD:
         self.d = pars[:, 3]
         self.m = pars[:, 4] if not self.nosnow else 0
 
+        # cache parameter values used in repeated calculations
+        self.a_times2 = self.a * 2
+        self.b_over_a = self.b / self.a
+        self.d_plus_1 = self.d + 1
+
         # values [initial runoff, soil moisture storage, groundwater storage
         self.inv = np.array([20, 100, 500])
         self.soil_moisture_storage0 = self.inv[1]
@@ -89,6 +94,7 @@ class ABCD:
         self.rsim = None
         self.rain = None
         self.snow = None
+
         self.SN0 = 0
         self.TRAIN = 2.5
         self.TSNOW = 0.6
@@ -200,27 +206,28 @@ class ABCD:
 
         # ET opportunity
         rpt = (self.w[i, :] + self.b)
-        pt2 = (2 * self.a)
-        self.y[i, :] = rpt / pt2 - np.power(np.power(rpt / pt2, 2) - (self.w[i, :] * self.b / self.a), 0.5)
+        rpt_over_pt2 = rpt / self.a_times2
+        self.y[i, :] = rpt_over_pt2 - np.sqrt(np.square(rpt_over_pt2) - (self.w[i, :] * self.b_over_a))
 
         # soil water storage
         self.soil_moisture_storage[i, :] = self.y[i, :] * np.exp(-pet[i, :].real / self.b)
 
         # get the difference between available water and ET opportunity
         awet = (self.w[i, :] - self.y[i, :])
+        c_x_awet = self.c * awet
 
         # groundwater storage
         if i == 0:
-            self.g[i, :] = (self.g0 + self.c * awet) / (1 + self.d)
+            self.g[i, :] = (self.g0 + c_x_awet) / self.d_plus_1
         else:
-            self.g[i, :] = (self.g[i - 1, :] + self.c * awet) / (1 + self.d)
+            self.g[i, :] = (self.g[i - 1, :] + c_x_awet) / self.d_plus_1
 
         # populate arrays
         self.actual_et[i, :] = self.y[i, :] - self.soil_moisture_storage[i, :]
         self.actual_et[i, :] = np.maximum(0, self.actual_et[i, :])
         self.actual_et[i, :] = np.minimum(pet[i, :].real, self.actual_et[i, :])
         self.soil_moisture_storage[i, :] = self.y[i, :] - self.actual_et[i, :]
-        self.rsim[i, :] = (1 - self.c) * awet + self.d * self.g[i, :]
+        self.rsim[i, :] = (awet - c_x_awet) + self.d * self.g[i, :]
 
     def init_arrays(self, p, tmin):
         """
