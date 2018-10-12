@@ -111,21 +111,18 @@ class LoadData:
             self.elev = np.nan_to_num(np.load(self.s.pm_elev))
 
         elif self.s.pet_module == 'thornthwaite':
-            self.tair = np.nan_to_num(np.load(self.s.trn_tas))
+            self.tair = self.load_to_array(self.s.trn_tas, 'trn_tas', nan_to_num=True)
 
         elif self.s.pet_module == 'none':
-
             # load user supplied PET data
             self.pet_out = self.load_to_array(self.s.pet_file)
 
         # get data for the runoff module selected
         if self.s.runoff_module == 'gwam':
-
             # monthly precipitation mm/mth
             self.precip = self.load_to_array(self.s.PrecipitationFile, varname=self.s.PrecipVarName)
 
         elif self.s.runoff_module == 'abcd':
-
             # monthly precipitation mm/mth
             self.precip = self.load_to_array(self.s.PrecipitationFile, varname=self.s.PrecipVarName)
 
@@ -392,6 +389,7 @@ class LoadReferenceData:
 
     :param settings:        settings object from configuration
     """
+
     def __init__(self, settings):
 
         # Area value for each land grid cell: 67420 x 1, convert from ha to km2
