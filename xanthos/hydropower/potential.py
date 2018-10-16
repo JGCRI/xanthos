@@ -1,13 +1,15 @@
-'''
+"""
+Calculate hydropower potential.
+
 Created on April 25, 2017
 
-Original:
 @author: Sean Turner (sean.turner@pnnl.gov)
+@Project: Xanthos V2.0
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-'''
+"""
 
 import numpy as np
 import pandas as pd
@@ -43,7 +45,7 @@ def HydropowerPotential(settings, q_grids):
 
     # TECHNICAL POTENTIAL
     techpot = e_grids_annual.groupby(hyd_grid_data["regID"], axis=1).sum()
-    techpot_ = techpot.drop(techpot.columns[0], axis=1)
+    techpot.drop(techpot.columns[0], axis=1)
     filename_techpot = os.path.join(settings.OutputFolder,
                                     "tech_hydro_pot_by_gcam_region_EJperyr_{}.csv".format(settings.ProjectName))
 
@@ -56,8 +58,8 @@ def HydropowerPotential(settings, q_grids):
     techpot_expl = e_grids_annual.groupby(hyd_grid_data["regID"] * hyd_grid_data["inGrandELEC"], axis=1).sum()
     techpot_expl_ = techpot_expl.drop(techpot_expl.columns[0], axis=1)
 
-    filename_techpot_expl = os.path.join(settings.OutputFolder,
-                                         "tech_expliot_hyd_pot_by_gcam_region_EJperyr_{}.csv".format(settings.ProjectName))
+    fname = "tech_expliot_hyd_pot_by_gcam_region_EJperyr_{}.csv".format(settings.ProjectName)
+    filename_techpot_expl = os.path.join(settings.OutputFolder, fname)
 
     outdf_expl = techpot_expl_.T
     outdf_expl.reset_index(inplace=True)
@@ -66,8 +68,9 @@ def HydropowerPotential(settings, q_grids):
 
 
 def constrain_q(q, ex):
-    """
-    CONSTRAIN EACH GRID OF INFLOW TO REPRESENT MAXIMUM TURBINE CAPACITY, DEFINED BY q_ex
+    """CONSTRAIN EACH GRID OF INFLOW.
+
+    CONSTRAIN TO REPRESENT MAXIMUM TURBINE CAPACITY, DEFINED BY q_ex
 
     :param q:
     :param ex:

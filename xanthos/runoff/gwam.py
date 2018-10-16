@@ -1,4 +1,4 @@
-'''
+"""
 Module for generating monthly runoff from climatological input data
 
 @date   10/14/2016
@@ -10,14 +10,13 @@ Module for generating monthly runoff from climatological input data
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-
-'''
+"""
 
 import numpy as np
 
 
 def runoffgen(PET, P, settings, Sm, chstor, indexing=999):
-    '''
+    """
     Inputs:
 
     P:        monthly precip data from climate model
@@ -36,7 +35,7 @@ def runoffgen(PET, P, settings, Sm, chstor, indexing=999):
     AET:               monthly actual evapo-transpiration
     Q:                 monthly runoff volume
     Sav:               monthly soil column moisture
-    '''
+    """
 
     # Don't have an initial value for the soil moisture.
     # Initialize with half the maximum capacity instead.

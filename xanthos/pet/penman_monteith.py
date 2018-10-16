@@ -1,3 +1,13 @@
+"""
+Calculate Monthly PET using the Penman Monteith Method.
+
+@Project: Xanthos V2.0
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+"""
+
 import logging
 import calendar
 import numpy as np
@@ -147,11 +157,12 @@ def calc_rtotc(v, nmonths, ncells, vpd, vpdopen, vpdclose):
 
 def calc_a(v, nlcs, nmonths, ncells, dz):
     """
-    Calc available energy
+    Calculate available energy.
+
     Net outgoiong long-wave radiation(J m-2 mon-1), remove f,
     emiss here is land surface emissivity.
     """
-    dm = np.tile(v.dm, (nlcs, ncells, int(nmonths / 12)))
+    dm = np.tile(v.dm, (nlcs, ncells, int(nmonths / 12)))  # TODO: remove
     emiss = np.swapaxes(np.tile(v.c.emiss, (nmonths, ncells, 1)), 0, -1)
     rlds = np.tile(v.c.rlds, (nlcs, 1, 1))
     rnl = v.sigma * np.power(v.tairx + 273, 4.0) * emiss * dz - rlds * 86400 * dz

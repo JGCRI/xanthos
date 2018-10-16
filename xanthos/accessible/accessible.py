@@ -61,7 +61,10 @@ def AccessibleWater(settings, ref, runoff):
 
     # calculate Environmental Flow Requirements (EFR) per basin using 10% of historical mean
     if settings.StartYear > settings.HistEndYear:
-        logging.warning('No historical data used in calculating Environmental Flow Requirements (EFR) per basin for Accessible Water')
+        logging.warning(
+            'No historical data used in calculating Environmental Flow '
+            'Requirements (EFR) per basin for Accessible Water'
+        )
         edf = settings.Env_FlowPercent * np.mean(Map_runoff, axis=1)
 
     elif settings.EndYear <= settings.HistEndYear:

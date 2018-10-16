@@ -1,4 +1,6 @@
-'''
+"""
+Aggregation functions.
+
 Created on Oct 26, 2016
 @author: lixi729
 @Project: Xanthos V1.0
@@ -7,11 +9,10 @@ Created on Oct 26, 2016
 2. Output in csv files, total runoff by basin/country/region... (row) and month/year (column)
    unit is determined by user settings
 
-
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-'''
+"""
 
 import numpy as np
 import os
@@ -20,9 +21,12 @@ import pandas as pd
 
 
 def Aggregation(settings, ref, q):
+    """Aggregate and write results based on user settings."""
     Aggregation = {}
 
-    if settings.AggregateRunoffBasin > 0 or settings.AggregateRunoffCountry > 0 or settings.AggregateRunoffGCAMRegion > 0:
+    if (settings.AggregateRunoffBasin > 0 or
+            settings.AggregateRunoffCountry > 0 or
+            settings.AggregateRunoffGCAMRegion > 0):
 
         if settings.AggregateRunoffBasin > 0:  # Basin
             logging.info("Aggregating by Basin")
@@ -47,8 +51,11 @@ def Aggregation(settings, ref, q):
 
 def Aggregation_Map(settings, Map, Names, runoff, varstr):
     """
-    Aggregate runoff by basin/country/region..., aggregate monthly values to annual.
-    Return table of total runoff by basin/country/region... (row) and year (column) and output in csv
+    Aggregate runoff by basin/country/region.
+
+    Aggregate monthly values to annual and output as csv.
+
+    :return:    table of total runoff by basin/country/region (row) and year (column)
     """
     if settings.OutputInYear == 1:
         NT = int(settings.nmonths / 12)
@@ -76,6 +83,7 @@ def Aggregation_Map(settings, Map, Names, runoff, varstr):
 
 
 def writecsvAggregation(data, settings, var):
+    """Save aggregate data as csv file."""
     filename = os.path.join(settings.OutputFolder,
                             '{}_{}_{}'.format(var, settings.OutputUnitStr, '_'.join(settings.ProjectName.split(' '))))
 

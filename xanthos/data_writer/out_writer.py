@@ -1,18 +1,19 @@
 """
-Created on Oct 11, 2016
-@author: lixi729
-@Project: Xanthos V1.0
-
-
-License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
-
-Copyright (c) 2017, Battelle Memorial Institute
-
+Module to write output data files.
 
 Output Settings:
 OutputFormat:  = 0(default, netcdf file); = 1(csv file)
 OutputUnit:    = 0(default, mm); = 1(km3)
-OutputInYear:  = 0(default, per month); =1(per year, the output will combine 12-month results into annual result)
+OutputInYear:  = 0(default, per month); = 1(per year, the output will combine 12-month results into annual result)
+
+Created on Oct 11, 2016
+
+@author: lixi729
+@Project: Xanthos V1.0
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
 """
 
 import os
@@ -23,7 +24,7 @@ from scipy import io as spio
 
 
 def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
-
+    """Write out main Xanthos output variables."""
     ChStorageNameStr = Settings.OutputNameStr
     SO = np.copy(SAV)
 
@@ -68,7 +69,7 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
             AET[:, j] *= conversion
             Q[:, j] *= conversion
             SAV[:, j] *= conversion
-            #Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
+            # Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
 
         if Settings.OutputInYear == 1:
             Settings.OutputUnitStr = "km3peryear"
@@ -102,13 +103,14 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
 
 
 def SaveData(settings, var, data, flag):
-
+    """Save output data as a NetCDF or .csv."""
     if var == 'avgchflow':
         unit = 'm3persec'
     else:
         unit = settings.OutputUnitStr
 
-    filename = os.path.join(settings.OutputFolder, '{}_{}_{}'.format(var, unit, '_'.join(settings.ProjectName.split(' '))))
+    filename = '{}_{}_{}'.format(var, unit, '_'.join(settings.ProjectName.split(' ')))
+    filename = os.path.join(settings.OutputFolder, filename)
 
     if flag == 0:
         SaveNetCDF(filename, data, settings, var)
@@ -117,12 +119,13 @@ def SaveData(settings, var, data, flag):
 
 
 def SaveMAT(filename, data, varstr):
+    """Save output data in the .mat format."""
     filename = filename + ".mat"
     spio.savemat(filename, {varstr: data})
 
 
 def SaveCSV(filename, data, settings):
-
+    """Write numpy array as a csv."""
     # convert to data frame to set header and basin number in file
     df = pd.DataFrame(data)
 
@@ -156,6 +159,7 @@ def SaveCSV(filename, data, settings):
 
 
 def SaveNetCDF(filename, data, Settings, varstr):
+    """Write numpy array as a NetCDF."""
     filename = filename + ".nc"
     # open
     datagrp = spio.netcdf.netcdf_file(filename, 'w')
@@ -184,6 +188,7 @@ def SaveNetCDF(filename, data, Settings, varstr):
 
 
 def writecsvMap(filename, data, Settings):
+    """Write .csv map."""
     years = map(str, range(Settings.StartYear, Settings.EndYear + 1))
     headerline = "id," + ",".join([year for year in years])
 

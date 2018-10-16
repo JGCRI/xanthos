@@ -1,4 +1,6 @@
-'''
+"""
+Calculate routing using Modified River Transport Model.
+
 @date   10/14/2016
 @author: lixi729
 @email: xinya.li@pnl.gov
@@ -7,14 +9,14 @@
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-'''
+"""
 
 import numpy as np
 import scipy.sparse as sparse
 
 
 def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
-    '''
+    """
     L:    flow distance (m)                                        = (N x 1)
     S0:   initial channel storage value for the month (m^3)        = (N x 1)
     F0:   initial channel flow value (instantaneous) for the month (m^3/s) = (N x 1)
@@ -29,7 +31,7 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
     S:     channel storage, unit m3
     Favg:  monthly average channel flow, unit m3/s
     F:     instantaneous channel flow, unit m3/s
-    '''
+    """
 
     N = L.shape[0]  # number of cells
 
@@ -83,8 +85,7 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
 
 
 def downstream(coord, flowdir, settings):
-    """Generate downstream cell ID matrix"""
-
+    """Generate downstream cell ID matrix."""
     gridmap = np.zeros((settings.ngridrow, settings.ngridcol), dtype=int, order='F')
     # Insert grid cell ID to 2D grid index position
     gridmap[coord[:, 4].astype(int) - 1, coord[:, 3].astype(int) - 1] = coord[:, 0]
@@ -121,7 +122,9 @@ def downstream(coord, flowdir, settings):
 
 
 def upstream(coord, downstream, settings):
-    """Return a matrix of ngrid x 9 values.
+    """
+    Return a matrix of ngrid x 9 values.
+
     For each cell, the first 8 values are the cellIDs neighbor cells.
     The 9th is the number of neighbor cells that actually flow into the center cell.
     The neighbor cells are ordered so that the cells that flow into the center cell come first.
@@ -130,8 +133,8 @@ def upstream(coord, downstream, settings):
     id1 id2 id3 id4 id5 id6 id7 id8 N
 
     if N==3, then id1, id2, ad id3 flow into the center cell; the others don't.
-    Many cells will not have a full complement of neighbors. These missing neighbors are given the ID 0 """
-
+    Many cells will not have a full complement of neighbors. These missing neighbors are given the ID 0.
+    """
     gridmap = np.zeros((settings.ngridrow, settings.ngridcol), dtype=int, order='F')
     # Insert grid cell ID to 2D grid index position
     gridmap[coord[:, 4].astype(int) - 1, coord[:, 3].astype(int) - 1] = coord[:, 0]  # 1-67420
@@ -192,7 +195,9 @@ def upstream(coord, downstream, settings):
 
 
 def upstream_genmatrix(upid):
-    """Generate a sparse matrix representation of the upstream cells for each cell.
+    """
+    Generate a sparse matrix representation of the upstream cells for each cell.
+
     The RHS of the ODE for channel storage S can be writen as
 
     dS/dt = UP * F + erlateral - S / T
@@ -202,8 +207,8 @@ def upstream_genmatrix(upid):
     dS/dt = [UP - I] S / T + erlateral
 
     This function returns UM = UP - I
-    The second argument is the Jacobian matrix, J."""
-
+    The second argument is the Jacobian matrix, J.
+    """
     N = upid.shape[0]
 
     # Preallocate the sparse matrix.

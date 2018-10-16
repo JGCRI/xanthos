@@ -1,17 +1,14 @@
-'''
+"""
+Generate time series plots.
+
 Created on Feb 10, 2017
 @author: lixi729
 @Project: Xanthos V1.0
 
-
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-
-
-Generate Time series plots
-
-'''
+"""
 
 import os
 import logging
@@ -22,55 +19,53 @@ import matplotlib.dates as mdates
 
 
 def TimeSeriesPlot(settings, Q, Avg_ChFlow, ref):
-
-    if settings.CreateTimeSeriesPlot:
-
-        Folder = os.path.join(settings.OutputFolder, 'TimeSeriesPlot')
-
-        if not os.path.exists(Folder):
-            os.makedirs(Folder)
-
-        x = {}
-        # Prepare the data
-        if settings.OutputInYear == 1:  # convert the original unit month to new unit year
-            TimeUnit = 'year'
-            x['data'] = np.array([datetime.datetime(i, 1, 1) for i in range(settings.StartYear, settings.EndYear + 1)])
-            x['xmin'] = datetime.datetime(settings.StartYear - 1, 1, 1)
-            x['xmax'] = datetime.datetime(settings.EndYear + 1, 1, 1)
-        else:
-            TimeUnit = 'month'
-            x['data'] = np.array(
-                [datetime.datetime(i, j, 1) for i in range(settings.StartYear, settings.EndYear + 1) for j in
-                 range(1, 13)])
-            x['xmin'] = datetime.datetime(settings.StartYear - 1, 12, 1)
-            x['xmax'] = datetime.datetime(settings.EndYear + 1, 1, 1)
-
-        if settings.OutputUnit == 1:
-            LengthUnit = 'km^3'
-        else:
-            LengthUnit = 'mm'
-
-        if settings.TimeSeriesScale == 1:
-            scalestr = 'Basin'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
-
-        elif settings.TimeSeriesScale == 2:
-            scalestr = 'Country'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
-
-        elif settings.TimeSeriesScale == 3:
-            scalestr = 'GCAMRegion'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
-        else:
-            scalestr = 'Basin'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
-            scalestr = 'Country'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
-            scalestr = 'GCAMRegion'
-            CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
-
-    else:
+    """Create time series plots of Xanthos output data."""
+    if not settings.CreateTimeSeriesPlot:
         return
+
+    Folder = os.path.join(settings.OutputFolder, 'TimeSeriesPlot')
+
+    if not os.path.exists(Folder):
+        os.makedirs(Folder)
+
+    x = {}
+    # Prepare the data
+    if settings.OutputInYear == 1:  # convert the original unit month to new unit year
+        TimeUnit = 'year'
+        x['data'] = np.array([datetime.datetime(i, 1, 1) for i in range(settings.StartYear, settings.EndYear + 1)])
+        x['xmin'] = datetime.datetime(settings.StartYear - 1, 1, 1)
+        x['xmax'] = datetime.datetime(settings.EndYear + 1, 1, 1)
+    else:
+        TimeUnit = 'month'
+        x['data'] = np.array(
+            [datetime.datetime(i, j, 1) for i in range(settings.StartYear, settings.EndYear + 1) for j in
+             range(1, 13)])
+        x['xmin'] = datetime.datetime(settings.StartYear - 1, 12, 1)
+        x['xmax'] = datetime.datetime(settings.EndYear + 1, 1, 1)
+
+    if settings.OutputUnit == 1:
+        LengthUnit = 'km^3'
+    else:
+        LengthUnit = 'mm'
+
+    if settings.TimeSeriesScale == 1:
+        scalestr = 'Basin'
+        CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
+
+    elif settings.TimeSeriesScale == 2:
+        scalestr = 'Country'
+        CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
+
+    elif settings.TimeSeriesScale == 3:
+        scalestr = 'GCAMRegion'
+        CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
+    else:
+        scalestr = 'Basin'
+        CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
+        scalestr = 'Country'
+        CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
+        scalestr = 'GCAMRegion'
+        CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x)
 
 
 def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit, LengthUnit, x):

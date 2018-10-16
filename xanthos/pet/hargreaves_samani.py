@@ -1,5 +1,5 @@
 """
-Hargreaves-Samani PET
+Hargreaves-Samani PET.
 
 @author   Yaling Liu
 @email:   cauliuyaling@gmail.com

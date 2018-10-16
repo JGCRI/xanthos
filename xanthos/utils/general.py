@@ -1,3 +1,14 @@
+"""
+General helper functions.
+
+@author: lixi729
+@Project: Xanthos V1.0
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2017, Battelle Memorial Institute
+"""
+
 import numpy as np
 
 
@@ -10,7 +21,6 @@ def set_month_arrays(n_months, start_year, end_year):
     :param end_year:                end year
     :return:                        numpy array of arrays [ [year, month_index, num_days], ... ]
     """
-
     counter = 0
 
     # year, month, number of days in month
@@ -48,7 +58,6 @@ def calc_sinusoidal_factor(yr_imth_ndays, startmonth=1):
     @:return dr:             inverse relative distance Earth-Sun
     @:return solar_dec:      solar declination in radians
     """
-
     solar_dec = np.zeros((yr_imth_ndays.shape[0],), dtype=float)
     dr = np.zeros((yr_imth_ndays.shape[0],), dtype=float)
 

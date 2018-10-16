@@ -1,12 +1,12 @@
 """
-Module to load input data files
+Module to load input data files.
+
 Created 8/8/2016
 
 Modified:
 @Date 10/05/2016
 @author: Xinya Li (xinya.li@pnl.gov), Chris R. Vernon (chris.vernon@pnnl.gov)
 @Project: Xanthos V2.0
-
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
@@ -16,19 +16,25 @@ Copyright (c) 2017, Battelle Memorial Institute
 import os
 import numpy as np
 from scipy import io as sio
-
 from xanthos.utils.numpy_parser import GetArrayCSV, GetArrayTXT
 
 
 class ValidationException(Exception):
+    """Custom exception for invalid Xanthos inputs."""
+
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
 
 
 class LoadData:
+    """Load Xanthos input datasets from a Config object."""
 
     def __init__(self, config_obj):
+        """
+        Load data based on specified configuration.
 
+        :param config_obj:  a parsed configuration file as a ConfigObj
+        """
         self.s = config_obj
 
         # get data for PET module selected
@@ -205,9 +211,7 @@ class LoadData:
             self.cal_obs = self.load_data(self.s.cal_observed, 0)[:, [0, 3]]
 
     def load_soil_data(self):
-        """
-        Load soil moisture file into array if in future mode, else stage zeros array.
-        """
+        """Load soil moisture file into array if in future mode, else stage zeros array."""
         try:
             # Initialize channel storage/soil moisture.
             if self.s.HistFlag.lower() == "true":
@@ -223,7 +227,9 @@ class LoadData:
 
     def load_soil_moisture(self, missing=-9999):
         """
-        Assign max soil moisture (mm/month) [2] to Sm.  For historic data use 0.5 * sm to an initial value to pass to
+        Assign max soil moisture (mm/month) [2] to Sm.
+
+        For historic data use 0.5 * sm to an initial value to pass to
         runoff model. If future mode, read values from historical file.
         """
         data = np.zeros((self.s.ncell, 5), order='F')
@@ -254,17 +260,13 @@ class LoadData:
         return data
 
     def get_country_names(self):
-        """
-        Get an array of country names corresponding to GCAM countries
-        """
+        """Get an array of country names corresponding to GCAM countries."""
         with open(self.s.CountryNames, 'r') as f:
             country = f.read().splitlines()
             return np.array([i.split(',') for i in country])[:, 1]
 
     def get_region_names(self):
-        """
-        Get an array of region names corresponding to the GCAM region id map
-        """
+        """Get an array of region names corresponding to the GCAM region id map."""
         with open(self.s.GCAMRegionNames, 'r') as f:
             f.readline()
             region = f.read().split('\n')
@@ -272,7 +274,7 @@ class LoadData:
 
     def load_to_array(self, f, varname=None, neg_to_zero=False, nan_to_num=False):
         """
-        Loads and validates monthly input data.
+        Load and validate monthly input data.
 
         Dimension: 67420 x number of years*12, for example:
         Historical: 1950-2005  672 months
@@ -329,9 +331,7 @@ class LoadData:
 
     @staticmethod
     def load_data(fn, headerNum=0, key=" "):
-        """
-        Load grid data stored in files defined in GRID_CONSTANTS.
-        """
+        """Load grid data stored in files defined in GRID_CONSTANTS."""
         # for MATLAB files
         if fn.endswith('.mat'):
             data = sio.loadmat(fn)[key]
@@ -381,83 +381,6 @@ class LoadData:
         return data
 
 
-class LoadReferenceData:
-    """
-    Load reference data.
-
-    :param settings:        settings object from configuration
-    """
-    def __init__(self, settings):
-
-        # Area value for each land grid cell: 67420 x 1, convert from ha to km2
-        self.area = load_const_griddata(settings.Area) * 0.01
-
-        # Coordinates for flattened grid:  67420 x 5, the columns are ID#, lon, lat, ilon, ilat
-        self.coords = load_const_griddata(settings.Coord)
-
-        # Basin ID Map: 67420 x 1, 235 Basins
-        self.basin_ids = load_const_griddata(settings.BasinIDs, 1).astype(int)
-
-        # Corresponding to Basin ID Map, 235 Basin Names: 1D String Array
-        self.basin_names = load_const_griddata(settings.BasinNames)
-
-        # GCAM Region ID Map :  67420 x 1 (The nonag region table will be the 'primary' region assignment)
-        self.region_ids = load_const_griddata(settings.GCAMRegionIDs, 1).astype(int)
-
-        # Corresponding to GCAM Region ID Map
-        with open(settings.GCAMRegionNames, 'r') as f:
-            f.readline()
-            region = f.read().split('\n')
-            self.region_names = np.array([i.split(',') for i in region])[:, 0]
-
-        # Country ID Map : 67420 x 1 (249 countries: 1-249)
-        self.country_ids = load_const_griddata(settings.CountryIDs, 1).astype(int)
-
-        # Corresponding to Country ID Map, 0-248 index number and 249 Country Names: 2D String Array
-        with open(settings.CountryNames, 'r') as f:
-            country = f.read().splitlines()
-            self.country_names = np.array([i.split(',') for i in country])[:, 1]
-
-        if settings.runoff_module == 'gwam':
-            # Max Soil Moisture Map (mm/month): 67420 x 1
-            self.max_soil_moist = load_const_griddata(settings.MaxSoilMois, 1)
-
-            # Water Bodies: assign MSM = 999, 306 x 2, Col 1 is the cell number in 67420
-            self.lakes_msm = load_const_griddata(settings.LakesMSM).astype(int)
-            self.lakes_msm[:, 0] -= 1
-
-            # Additional water bodies: assign MSM = 999, 421 x 2,  Col 1 is the cell number in 67420
-            self.addit_water_msm = load_const_griddata(settings.AdditWaterMSM).astype(int)
-            self.addit_water_msm[:, 0] -= 1
-
-
-def load_climate_data(fle, n_cells, n_months, varname=None, neg_to_zero=False):
-    """
-    Loads and checks input climate data.
-
-    Dimension: 67420 x number of years*12, for example:
-    Historical: 1950-2005  672 months
-    Future: 2006-2100  1140 months
-
-    @:param fle:            file path with extension
-    @:param var_name:       NetCDF variable name
-    @:param neg_to_zero:    convert negative values to zero
-    @:param n_cells:        number of cells
-    @:param n_months:       number of months
-
-    @:return:               array
-    """
-    a = load_const_griddata(fle, 0, varname)
-
-    if neg_to_zero:
-        a[np.where(a < 0)] = 0
-
-    if varname is None:
-        varname = os.path.splitext(os.path.basename(fle))[0]
-
-    return check_climate_data(a, n_cells=n_cells, n_months=n_months, text=varname)
-
-
 def load_routing_data(fle, ngridrow, ngridcol, map_index, skip=68, rep_val=None):
     """
     Load routing data.
@@ -483,9 +406,7 @@ def load_routing_data(fle, ngridrow, ngridcol, map_index, skip=68, rep_val=None)
 
 
 def load_soil_data(settings):
-    """
-    Load soil moisture file into array if in future mode, else stage zeros array.
-    """
+    """Load soil moisture file into array if in future mode, else stage zeros array."""
     try:
         # Initialize channel storage/soil moisture.
         if settings.HistFlag == "True":
@@ -501,9 +422,7 @@ def load_soil_data(settings):
 
 
 def load_chs_data(settings):
-    """
-    Load channel velocity file into array if in future mode, else stage zeros array.
-    """
+    """Load channel velocity file into array if in future mode, else stage zeros array."""
     try:
 
         # Initialize channel storage/soil moisture.
@@ -518,9 +437,7 @@ def load_chs_data(settings):
 
 
 def load_gcm_var(fn, varname):
-    """
-    Loads climate data from the specified GCM
-    """
+    """Load climate data from the specified GCM."""
     if not os.path.isfile(fn):
         raise IOError("File does not exist:  {}".format(fn))
 
@@ -530,34 +447,8 @@ def load_gcm_var(fn, varname):
     return data
 
 
-def check_climate_data(data, n_cells, n_months, text):
-    """
-    Check array size of input and check to make sure the total number of months can be split into years.
-
-    :param data:            input array
-    :param n_cells:         number of cells
-    :param n_months:        number of months
-    :param text:            name of target variable
-    """
-    err_cell = "Error: Inconsistent {0} data grid size. Expecting size: {1}. Received size: {2}".format(text, n_cells, data.shape[0])
-    err_mth = "Error: Inconsistent {0} data grid size. Expecting size: {1}. Received size: {2}".format(text, n_months, data.shape[1])
-
-    if not data.shape[0] == n_cells:
-        raise ValidationException(err_cell)
-
-    if not data.shape[1] == n_months:
-        raise ValidationException(err_mth)
-
-    if not data.shape[1] % 12 == 0:
-        raise ValidationException("Error: Number of months in climate data can not be converted into integral years.")
-
-    return data
-
-
 def load_const_griddata(fn, headerNum=0, key=" "):
-    """
-    Load constant grid data stored in files defined in GRID_CONSTANTS.
-    """
+    """Load constant grid data stored in files defined in GRID_CONSTANTS."""
     # for MATLAB files
     if fn.endswith('.mat'):
         data = load_gcm_var(fn, key)
@@ -608,9 +499,7 @@ def load_const_griddata(fn, headerNum=0, key=" "):
 
 
 def vectorize(data, ngridrow, ngridcol, map_index, skip):
-    """
-    Convert 2D Map (360 x 720) Matrix to 1D Map(67420)
-    """
+    """Convert 2D Map (360 x 720) Matrix to 1D Map(67420)."""
     new = np.zeros((ngridrow, ngridcol), dtype=float) - 9999
 
     for i in range(0, data.shape[0]):
@@ -622,6 +511,7 @@ def vectorize(data, ngridrow, ngridcol, map_index, skip):
 
 
 def load_soil_moisture(d, ngrids, missing=-9999):
+    """Load soil moisture."""
     data = np.zeros((ngrids, 5), order='F')
 
     data[:, 0] = d.area
@@ -635,9 +525,10 @@ def load_soil_moisture(d, ngrids, missing=-9999):
     country = d.country_ids[:]
     basin = d.basin_ids[:]
 
-    # Ignore all the cells in which we are missing an ID value for soil moisture, country, or basin.
-    # Thus, country and basin coverage must be consistent.
-    # Basins coverage is smaller, and GCAM region ignores Greenland.
+    # Ignore all the cells in which we are missing an ID value for soil
+    # moisture, country, or basin. Thus, country and basin coverage
+    # must be consistent. Basins coverage is smaller, and GCAM region
+    # ignores Greenland.
     invalid = np.where((data[:, 2] == 0) | (country == 0) | (basin == 0))[0]
 
     # should this be 0:2

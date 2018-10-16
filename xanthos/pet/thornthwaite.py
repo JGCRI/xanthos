@@ -1,15 +1,16 @@
 """
-Calculating Monthly PET (Thornthwaite Method)
+Calculating Monthly PET using the Thornthwaite Method.
 
-Rewritten:
 @date: 8/7/18
-@author: Caleb Braun (caleb.braun@pnnl.gov)
+@author: Caleb Braun
+@email caleb.braun@pnnl.gov
 @Project: Xanthos V2.0
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2018, Battelle Memorial Institute
 """
+
 import calendar
 import numpy as np
 
@@ -79,7 +80,7 @@ def execute(tas, lat_radians, start_yr, end_yr):
     # All nans and negatives are treated as zero
     tas[np.logical_or(np.isnan(tas), tas < 0)] = 0
 
-    ## Heat Index and exponential calculations:
+    # --- Heat Index and exponential calculations:
     i = np.copy(tas)
 
     # Monthly Thornthwaite Heat Index formula:
@@ -89,22 +90,20 @@ def execute(tas, lat_radians, start_yr, end_yr):
     I = np.add.reduceat(i, np.arange(0, i.shape[1], NMONTHS), axis=1)
 
     # Calculate the exponential constants
-    a = (.000000675 * I ** 3) - (.0000771 * I ** 2 ) + (.0179 * I) + .492
+    a = (.000000675 * I ** 3) - (.0000771 * I ** 2) + (.0179 * I) + .492
 
     # Spread yearly values back over all months
     I = np.repeat(I, NMONTHS, axis=1)
     a = np.repeat(a, NMONTHS, axis=1)
 
-
-    ## Pet calculations:
+    # --- Pet calculations:
     # Calculate PET before adjusting for real month length and theoretical
     # sunshine hours.
     # If you don't pass `out` the indices where (I == 0) will be uninitialized.
     pet_unadj = np.divide(10 * tas, I, out=np.zeros_like(I), where=(I != 0))
     pet_unadj = 16 * np.power(pet_unadj, a)
 
-
-    ## Correction variables
+    # --- Correction variables
     # Monthly mean daylight hours
     L = calc_daylight_hours(MONTHDAYS, lat_radians)
     L = np.repeat(L, (end_yr - start_yr + 1), axis=1)
