@@ -16,6 +16,7 @@ OutputInYear:  = 0(default, per month); =1(per year, the output will combine 12-
 """
 
 import os
+import logging
 import numpy as np
 import pandas as pd
 from scipy import io as spio
@@ -28,9 +29,9 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
 
     flag = Settings.OutputFormat
     if flag == 0:
-        print("Save in NetCDF files")
+        logging.debug("Save in NetCDF files")
     else:
-        print("Save in CSV files")
+        logging.debug("Save in CSV files")
 
     if Settings.OutputInYear == 1:
         ny = int(Settings.EndYear - Settings.StartYear + 1)
@@ -57,7 +58,7 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
 
         del pet, aet, q, sav, ac
 
-        print("Output data annually")
+        logging.debug("Output data annually")
 
     if Settings.OutputUnit == 1:  # convert the original unit mm/month to new unit km3/month
         conversion = area / 1e6  # mm -> km3
@@ -79,9 +80,9 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
         else:
             Settings.OutputUnitStr = "mmpermonth"
 
-    print("Unit is {}".format(Settings.OutputUnitStr))
+    logging.debug("Unit is {}".format(Settings.OutputUnitStr))
 
-    print("Output dimension is {}".format(PET.shape))
+    logging.debug("Output dimension is {}".format(PET.shape))
 
     SaveData(Settings, 'pet', PET, flag)
     SaveData(Settings, 'aet', AET, flag)
@@ -90,11 +91,11 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
     SaveData(Settings, 'avgchflow', Avg_ChFlow, flag)
 
     if Settings.HistFlag == 'True':
-        print("The following two files are saved as initialization data sets (latest month) for future mode:")
-        print("ChStorage: monthly output, unit is m^3, dimension is {}".format(ChStorage.shape))
+        logging.info("The following two files are saved as initialization data sets (latest month) for future mode:")
+        logging.info("ChStorage: monthly output, unit is m^3, dimension is {}".format(ChStorage.shape))
         Settings.OutputNameStr = ChStorageNameStr
 
-        print("Soil column moisture: monthly output, unit is mm/month, dimension is {}".format(SO.shape))
+        logging.info("Soil column moisture: monthly output, unit is mm/month, dimension is {}".format(SO.shape))
         Settings.OutputNameStr = ChStorageNameStr
 
     return Q, Avg_ChFlow

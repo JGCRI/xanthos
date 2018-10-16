@@ -14,6 +14,7 @@ Generate Time series plots
 '''
 
 import os
+import logging
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -97,16 +98,13 @@ def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit,
     ac = np.insert(ac, 0, np.sum(ac, axis=0), axis=0)  # add global
 
     try:
-
-        l = len(settings.TimeSeriesMapID)
-
         for i in settings.TimeSeriesMapID:
 
             outputname = os.path.join(Folder, '{0}{1}_{2}'.format(scalestr, i, Names[i]))
 
             Plot_TS(q[i, :], outputname, 'runoff', TimeUnit, LengthUnit, x)
             Plot_TS(ac[i, :], outputname, 'streamflow', 'sec', 'm^3', x)
-            print("Scale: {}, Create plots for {}_{}".format(scalestr, i, Names[i]))
+            logging.info("Scale: {}, Create plots for {}_{}".format(scalestr, i, Names[i]))
 
     except:
 
@@ -117,7 +115,7 @@ def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit,
 
                 Plot_TS(q[i, :], outputname, 'runoff', TimeUnit, LengthUnit, x)
                 Plot_TS(ac[i, :], outputname, 'streamflow', 'sec', 'm^3', x)
-            print("Scale: {}, Create plots for all".format(scalestr))
+            logging.info("Scale: {}, Create plots for all".format(scalestr))
         else:
             i = settings.TimeSeriesMapID
 
@@ -125,7 +123,7 @@ def CreateData_TimeSeriesScale(settings, Q, Avg_ChFlow, ref, scalestr, TimeUnit,
 
             Plot_TS(q[i, :], outputname, 'runoff', TimeUnit, LengthUnit, x)
             Plot_TS(ac[i, :], outputname, 'streamflow', 'sec', 'm^3', x)
-            print("Scale: {}, Create plots for {}_{}".format(scalestr, i, Names[i]))
+            logging.info("Scale: {}, Create plots for {}_{}".format(scalestr, i, Names[i]))
 
     return
 

@@ -115,7 +115,7 @@ class Xanthos:
         elif self.config.mod_cfg == 'none_none_mrtm':
             mods.none_abcd_mrtm(self.config)
 
-        print("End of {0}".format(self.config.ProjectName))
+        logging.info("End of {0}".format(self.config.ProjectName))
 
 
 if __name__ == "__main__":

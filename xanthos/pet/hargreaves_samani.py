@@ -10,14 +10,13 @@ License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 Copyright (c) 2017, Battelle Memorial Institute
 """
 
+import logging
 import calendar
 import numpy as np
 
 
 def days_per_month(start_year, end_year):
-    """
-    Get days per month as list. Account for leap years.
-    """
+    """Get days per month as list. Account for leap years."""
     l = []
     yrs = range(start_year, end_year + 1, 1)
 
@@ -74,14 +73,14 @@ def update_user(mth_idx, start_year, prev_yr=None):
 
     if mth_idx == 0:
 
-        print(msg.format(start_year))
+        logging.info(msg.format(start_year))
         return start_year
 
     if yr_val.is_integer():
 
         yr = prev_yr + 1
 
-        print(msg.format(yr))
+        logging.info(msg.format(yr))
         return yr
 
     else:
