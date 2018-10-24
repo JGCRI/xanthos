@@ -29,7 +29,8 @@ class Xanthos:
     """
 
     def __init__(self, ini):
-        """Initialize Xanthos.
+        """
+        Initialize Xanthos.
 
         :param ini:     path to configuration file
         """
@@ -43,7 +44,8 @@ class Xanthos:
             os.makedirs(pth)
 
     def init_log(self):
-        """Initialize project-wide logger.
+        """
+        Initialize project-wide logger.
 
         The logger outputs to both stdout and a file.
         """
@@ -78,7 +80,8 @@ class Xanthos:
         self.init_log()
 
     def execute(self, args={}):
-        """Instantiate and write log file.
+        """
+        Instantiate and write log file.
 
         @:param args:   Dictionary of config parameters
         """
@@ -113,7 +116,7 @@ class Xanthos:
             mods.none_abcd_mrtm(self.config)
 
         elif self.config.mod_cfg == 'none_none_mrtm':
-            mods.none_abcd_mrtm(self.config)
+            mods.none_none_mrtm(self.config)
 
         logging.info("End of {0}".format(self.config.ProjectName))
 
