@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 import time
 from scipy.optimize import differential_evolution
 
@@ -80,12 +81,12 @@ class Calibrate:
         self.all_pars[0, :] = pars
         self.kge_vals[0] = 1 - ed
 
-        print("\t\tFinished calibration for basin {0} which contains {1} grid cells.".format(self.basin_num, self.basin_idx[0].shape[0]))
-        print("\t\tPopulation size:  {}".format(popsize))
-        print("\t\tParameter values (a,b,c,d,m):  {}".format(pars))
-        print("\t\tKGE:  {}".format(1 - ed))
-        print("\t\tNumber of function evaluations:  {}".format(nfev))
-        print("\t\tCalibration time (seconds):  {}".format(time.time() - st))
+        logging.debug("\t\tFinished calibration for basin {0} which contains {1} grid cells.".format(self.basin_num, self.basin_idx[0].shape[0]))
+        logging.debug("\t\tPopulation size:  {}".format(popsize))
+        logging.debug("\t\tParameter values (a,b,c,d,m):  {}".format(pars))
+        logging.debug("\t\tKGE:  {}".format(1 - ed))
+        logging.debug("\t\tNumber of function evaluations:  {}".format(nfev))
+        logging.debug("\t\tCalibration time (seconds):  {}".format(time.time() - st))
 
         np.save('{}/kge_result_basin_{}.npy'.format(self.out_dir, self.basin_num), self.kge_vals)
         np.save('{}/abcdm_parameters_basin_{}.npy'.format(self.out_dir, self.basin_num), self.all_pars)
@@ -188,6 +189,6 @@ def calibrate_all(settings, data, pet, router_function):
     """
     for basin_num in range(1, settings.n_basins + 1, 1):
 
-        print("\tCalibrating Basin:  {}".format(basin_num))
+        logging.info("\tCalibrating Basin:  {}".format(basin_num))
 
         process_basin(basin_num, settings, data, pet, router_function)
