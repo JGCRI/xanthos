@@ -208,8 +208,6 @@ def thornthwaite_abcd_none(config):
                  runoff=True,
                  runoff_step=None,
                  routing=False,
-                 routing_num_steps=config.nmonths,
-                 routing_step='month',
                  notify='Simulation')
 
     # accessible water module
