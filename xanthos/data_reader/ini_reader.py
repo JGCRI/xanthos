@@ -161,7 +161,8 @@ class ConfigReader:
                 try:
                     self.TemperatureFile = os.path.join(self.pet_dir, pet_mod['TemperatureFile'])
                 except KeyError:
-                    logging.exception('File path not provided for the TemperatureFile variable in the PET section of the config file.')
+                    logging.exception(
+                        'File path not provided for the TemperatureFile variable in the PET section of the config file.')
                     raise
 
                 try:
@@ -172,7 +173,8 @@ class ConfigReader:
                 try:
                     self.DailyTemperatureRangeFile = os.path.join(self.pet_dir, pet_mod['DailyTemperatureRangeFile'])
                 except KeyError:
-                    logging.exception('File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.')
+                    logging.exception(
+                        'File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.')
                     raise
 
                 try:
@@ -289,12 +291,14 @@ class ConfigReader:
                         self.SavVarName = ro_mod['SavVarName']
 
                     except KeyError:
-                        raise ValidationException("Error: ChStorageFile and ChStorageVarName are not defined for Future Mode.")
+                        raise ValidationException(
+                            "Error: ChStorageFile and ChStorageVarName are not defined for Future Mode.")
 
                 try:
                     self.PrecipitationFile = os.path.join(self.ro_model_dir, ro_mod['PrecipitationFile'])
                 except KeyError:
-                    logging.exception('File path not provided for the PrecipitationFile variable in the GCAM runoff section of the config file.')
+                    logging.exception(
+                        'File path not provided for the PrecipitationFile variable in the GCAM runoff section of the config file.')
                     raise
 
                 try:
@@ -305,7 +309,8 @@ class ConfigReader:
                 try:
                     self.TemperatureFile = os.path.join(self.ro_model_dir, ro_mod['TemperatureFile'])
                 except KeyError:
-                    logging.exception('File path not provided for the TemperatureFile variable in the GCAM runoff section of the config file.')
+                    logging.exception(
+                        'File path not provided for the TemperatureFile variable in the GCAM runoff section of the config file.')
                     raise
 
                 try:
@@ -314,9 +319,11 @@ class ConfigReader:
                     self.TempVarName = None
 
                 try:
-                    self.DailyTemperatureRangeFile = os.path.join(self.ro_model_dir, ro_mod['DailyTemperatureRangeFile'])
+                    self.DailyTemperatureRangeFile = os.path.join(
+                        self.ro_model_dir, ro_mod['DailyTemperatureRangeFile'])
                 except KeyError:
-                    logging.exception('File path not provided for the DailyTemperatureRangeFile variable in the GCAM runoff section of the config file.')
+                    logging.exception(
+                        'File path not provided for the DailyTemperatureRangeFile variable in the GCAM runoff section of the config file.')
                     raise
 
                 try:
@@ -335,9 +342,9 @@ class ConfigReader:
                 try:
                     self.PrecipitationFile = ro_mod['PrecipitationFile']
                 except KeyError:
-                    logging.exception('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+                    logging.exception(
+                        'File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
                     raise
-
 
                 try:
                     self.PrecipVarName = ro_mod['PrecipVarName']
@@ -347,8 +354,7 @@ class ConfigReader:
                 try:
                     self.TempMinFile = ro_mod['TempMinFile']
                 except KeyError:
-                    logging.exception('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
-                    raise
+                    self.TempMinFile = None
 
                 try:
                     self.TempMinVarName = ro_mod['TempMinVarName']
@@ -394,7 +400,8 @@ class ConfigReader:
                 pass
 
             else:
-                raise ValidationException("ERROR: Runoff module '{0}' not found. Please check spelling and try again.".format(self.runoff_module))
+                raise ValidationException(
+                    "ERROR: Runoff module '{0}' not found. Please check spelling and try again.".format(self.runoff_module))
         else:
             self.runoff_module = 'none'
 
@@ -452,7 +459,8 @@ class ConfigReader:
                 pass
 
             else:
-                raise ValidationException("ERROR: Routing module '{0}' not found. Please check spelling and try again.".format(self.routing_module))
+                raise ValidationException(
+                    "ERROR: Routing module '{0}' not found. Please check spelling and try again.".format(self.routing_module))
 
         else:
             self.routing_module = 'none'
@@ -523,7 +531,8 @@ class ConfigReader:
                 self.Env_FlowPercent = float(a['Env_FlowPercent'])
 
                 if (self.StartYear > self.GCAM_StartYear) or (self.EndYear < self.GCAM_EndYear):
-                    raise ValidationException("Accessible water range of GCAM years are outside the range of years in climate data.")
+                    raise ValidationException(
+                        "Accessible water range of GCAM years are outside the range of years in climate data.")
 
         # hydropower potential
         if hp:
@@ -552,6 +561,12 @@ class ConfigReader:
                 self.cal_observed = cal['observed']
                 self.obs_unit = self.ck_obs_unit(self.set_calibrate, cal['obs_unit'])
                 self.calib_out_dir = self.create_dir(cal['calib_out_dir'])
+                try:
+                    self.cal_basin_start = int(cal['start_basin'])
+                    self.cal_basin_end = int(cal['end_basin'])
+                except KeyError:
+                    self.cal_basin_start = 1
+                    self.cal_basin_end = self.n_basins
 
         # -*****************************************************************-
         # CONDITIONAL FOR NEW RUNOFF MODULE
@@ -575,7 +590,8 @@ class ConfigReader:
         if set_calib == 0:
 
             if unit not in valid_runoff:
-                raise ValidationException("Calibration data input units '{}' for runoff data not in required units '{}'".format(unit, valid_runoff))
+                raise ValidationException(
+                    "Calibration data input units '{}' for runoff data not in required units '{}'".format(unit, valid_runoff))
 
             else:
                 return unit
@@ -583,7 +599,8 @@ class ConfigReader:
         elif set_calib == 1:
 
             if unit not in valid_streamflow:
-                raise ValidationException("Calibration data input units '{}' for streamflow data not in required units '{}'".format(unit, valid_streamflow))
+                raise ValidationException(
+                    "Calibration data input units '{}' for streamflow data not in required units '{}'".format(unit, valid_streamflow))
 
             else:
                 return unit
@@ -593,7 +610,8 @@ class ConfigReader:
         Check to see if the target year is within the bounds of the data.
         """
         if (yr < self.StartYear) or (yr > self.EndYear):
-            raise ValidationException("Accessible water year {0} is outside the range of years in the climate data.".format(yr))
+            raise ValidationException(
+                "Accessible water year {0} is outside the range of years in the climate data.".format(yr))
         else:
             return yr
 
@@ -652,4 +670,6 @@ class ConfigReader:
         :@param args:   Dictionary of parameters, where the key is the parameter name
         """
         for k, v in args.items():
+            if not hasattr(self, k):
+                print('Warning: {} is not a valid parameter'.format(k))
             setattr(self, k, v)

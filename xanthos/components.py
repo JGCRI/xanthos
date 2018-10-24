@@ -453,7 +453,7 @@ class Components:
                     logging.info("---{} in progress... ".format(notify))
                     t0 = time.time()
 
-                    ## TODO: why are these different cases?
+                    # TODO: why are these different cases?
                     # calculate PET
                     if pet:
                         logging.info("\tProcessing PET...")
