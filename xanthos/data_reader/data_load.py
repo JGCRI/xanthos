@@ -132,7 +132,7 @@ class LoadData:
                       "module; Snowmelt will not be accounted for.")
                 self.tmin = None
             else:
-                self.tmin = self.load_to_array(self.s.TempMinFile, varname=self.s.TempMinVarName)
+                self.tmin = self.load_to_array(self.s.TempMinFile, varname=self.s.TempMinVarName, nan_to_num=True)
 
         # Area value for each land grid cell: 67420 x 1, convert from ha to km2
         self.area = self.load_data(self.s.Area) * 0.01
@@ -542,8 +542,10 @@ def check_climate_data(data, n_cells, n_months, text):
     :param n_months:        number of months
     :param text:            name of target variable
     """
-    err_cell = "Error: Inconsistent {0} data grid size. Expecting size: {1}. Received size: {2}".format(text, n_cells, data.shape[0])
-    err_mth = "Error: Inconsistent {0} data grid size. Expecting size: {1}. Received size: {2}".format(text, n_months, data.shape[1])
+    err_cell = "Error: Inconsistent {0} data grid size. Expecting size: {1}. Received size: {2}".format(
+        text, n_cells, data.shape[0])
+    err_mth = "Error: Inconsistent {0} data grid size. Expecting size: {1}. Received size: {2}".format(
+        text, n_months, data.shape[1])
 
     if not data.shape[0] == n_cells:
         raise ValidationException(err_cell)

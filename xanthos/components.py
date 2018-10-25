@@ -239,7 +239,7 @@ class Components:
         elif self.s.runoff_module == 'abcd':
 
             rg = runoff_mod.abcd_execute(n_basins=self.s.n_basins, basin_ids=self.data.basin_ids,
-                                         pet=pet, precip=self.data.precip, tmin=np.nan_to_num(self.data.tmin),
+                                         pet=pet, precip=self.data.precip, tmin=self.data.tmin,
                                          calib_file=self.s.calib_file, n_months=self.s.nmonths,
                                          spinup_steps=self.s.runoff_spinup, jobs=self.s.ro_jobs)
 
