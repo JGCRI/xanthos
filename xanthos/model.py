@@ -121,7 +121,17 @@ class Xanthos:
         elif self.config.mod_cfg == 'none_none_mrtm':
             mods.none_none_mrtm(self.config)
 
+        self.cleanup()
+
+    def cleanup(self):
+        """Close log files."""
         logging.info("End of {0}".format(self.config.ProjectName))
+
+        # Remove logging handlers - they are initialized at the module level, so this prevents duplicate logs from
+        # being created if Xanthos is run multiple times.
+        logger = logging.getLogger()
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
 
 
 if __name__ == "__main__":
