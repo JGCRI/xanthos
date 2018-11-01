@@ -118,6 +118,9 @@ class Xanthos:
         elif self.config.mod_cfg == 'none_none_mrtm':
             mods.none_none_mrtm(self.config)
 
+        else:
+            logging.warning("Selected configuration {0} not supported.".format(self.config.mod_cfg))
+
         logging.info("End of {0}".format(self.config.ProjectName))
 
 

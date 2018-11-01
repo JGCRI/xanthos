@@ -460,7 +460,7 @@ class ConfigReader:
         self.mod_cfg = '{0}_{1}_{2}'.format(self.pet_module, self.runoff_module, self.routing_module)
 
         if self.mod_cfg == 'none_none_none':
-            raise ValidationException('No PFT, Runoff, or Routing model selected.')
+            raise ValidationException('No PET, Runoff, or Routing model selected.')
 
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
