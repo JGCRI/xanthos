@@ -1,5 +1,5 @@
 """
-Read in settings from configuration file *.ini
+Read in settings from configuration file *.ini.
 
 @author: Xinya Li (xinya.li@pnl.gov) and Chris Vernon (chris.vernon@pnnl.gov)
 
@@ -9,6 +9,7 @@ Copyright (c) 2017, Battelle Memorial Institute
 """
 
 import os
+import logging
 from configobj import ConfigObj
 
 
@@ -160,7 +161,7 @@ class ConfigReader:
                 try:
                     self.TemperatureFile = os.path.join(self.pet_dir, pet_mod['TemperatureFile'])
                 except KeyError:
-                    print('File path not provided for the TemperatureFile variable in the PET section of the config file.')
+                    logging.exception('File path not provided for the TemperatureFile variable in the PET section of the config file.')
                     raise
 
                 try:
@@ -171,7 +172,7 @@ class ConfigReader:
                 try:
                     self.DailyTemperatureRangeFile = os.path.join(self.pet_dir, pet_mod['DailyTemperatureRangeFile'])
                 except KeyError:
-                    print('File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.')
+                    logging.exception('File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.')
                     raise
 
                 try:
@@ -293,7 +294,7 @@ class ConfigReader:
                 try:
                     self.PrecipitationFile = os.path.join(self.ro_model_dir, ro_mod['PrecipitationFile'])
                 except KeyError:
-                    print('File path not provided for the PrecipitationFile variable in the GCAM runoff section of the config file.')
+                    logging.exception('File path not provided for the PrecipitationFile variable in the GCAM runoff section of the config file.')
                     raise
 
                 try:
@@ -304,7 +305,7 @@ class ConfigReader:
                 try:
                     self.TemperatureFile = os.path.join(self.ro_model_dir, ro_mod['TemperatureFile'])
                 except KeyError:
-                    print('File path not provided for the TemperatureFile variable in the GCAM runoff section of the config file.')
+                    logging.exception('File path not provided for the TemperatureFile variable in the GCAM runoff section of the config file.')
                     raise
 
                 try:
@@ -315,7 +316,7 @@ class ConfigReader:
                 try:
                     self.DailyTemperatureRangeFile = os.path.join(self.ro_model_dir, ro_mod['DailyTemperatureRangeFile'])
                 except KeyError:
-                    print('File path not provided for the DailyTemperatureRangeFile variable in the GCAM runoff section of the config file.')
+                    logging.exception('File path not provided for the DailyTemperatureRangeFile variable in the GCAM runoff section of the config file.')
                     raise
 
                 try:
@@ -334,7 +335,7 @@ class ConfigReader:
                 try:
                     self.PrecipitationFile = ro_mod['PrecipitationFile']
                 except KeyError:
-                    print('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+                    logging.exception('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
                     raise
 
 
@@ -367,7 +368,7 @@ class ConfigReader:
             #     try:
             #         self.PrecipitationFile = ro_mod['PrecipitationFile']
             #     except KeyError:
-            #         print('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+            #         logging.exception('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
             #         raise
             #
             #
@@ -379,7 +380,7 @@ class ConfigReader:
             #     try:
             #         self.TempMinFile = ro_mod['TempMinFile']
             #     except KeyError:
-            #         print('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
+            #         logging.exception('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
             #         raise
             #
             #     try:
@@ -476,7 +477,7 @@ class ConfigReader:
             self.CountryIDs = os.path.join(self.Reference, 'country.csv')
             self.CountryNames = os.path.join(self.Reference, 'country-names.csv')
         else:
-            print('WARNING:  No reference data selected for use.')
+            logging.warning('No reference data selected for use.')
 
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
@@ -624,26 +625,28 @@ class ConfigReader:
         return pth
 
     def log_info(self):
-
-        print('ProjectName : {}'.format(self.ProjectName))
-        print('InputFolder : {}'.format(self.InputFolder))
-        print('OutputFolder: {}'.format(self.OutputFolder))
-        print('StartYear - End Year        : {0}-{1}'.format(self.StartYear, self.EndYear))
-        print('Number of Months            : {}'.format(self.nmonths))
+        """
+        Log project-level details.
+        """
+        logging.info('ProjectName : {}'.format(self.ProjectName))
+        logging.info('InputFolder : {}'.format(self.InputFolder))
+        logging.info('OutputFolder: {}'.format(self.OutputFolder))
+        logging.info('StartYear - End Year: {0}-{1}'.format(self.StartYear, self.EndYear))
+        logging.info('Number of Months    : {}'.format(self.nmonths))
 
         if self.HistFlag.lower() in ['true', 't', 'yes', 'y', '1']:
-            print('Running: Historic Mode')
+            logging.info('Running: Historic Mode')
 
         else:
-            print('Running:  Future Mode')
+            logging.info('Running: Future Mode')
             try:
-                print('Historic Soil Moisture File: {}'.format(self.SavFile))
-                print('Historic Channel Storage File: {}'.format(self.ChStorageFile))
+                logging.info('Historic Soil Moisture File: {}'.format(self.SavFile))
+                logging.info('Historic Channel Storage File: {}'.format(self.ChStorageFile))
             except AttributeError:
                 pass
 
         try:
-            print('Diagnostics will be performed using the data file: {}'.format(self.VICDataFile))
+            logging.info('Diagnostics will be performed using the data file: {}'.format(self.VICDataFile))
         except AttributeError:
             pass
 

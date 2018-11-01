@@ -1,4 +1,6 @@
-'''
+"""
+Calculate accessible water by basin.
+
 Created on March 1, 2017
 
 Original:
@@ -9,24 +11,19 @@ Rewritten:
 @email: xinya.li@pnl.gov
 @Project: Xanthos V1.0
 
-
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-
-'''
+"""
 
 import os
+import logging
 import numpy as np
 import pandas as pd
 
-import xanthos.data_writer as wtr
-
 
 def AccessibleWater(settings, ref, runoff):
-    """
-    Calculate accessible water per basin.
-    """
+    """Calculate accessible water per basin."""
     bdf = ref.basin_names
 
     # read in reservoir capacity at basin level
@@ -64,7 +61,7 @@ def AccessibleWater(settings, ref, runoff):
 
     # calculate Environmental Flow Requirements (EFR) per basin using 10% of historical mean
     if settings.StartYear > settings.HistEndYear:
-        print('Warning: No historical data used in calculating Environmental Flow Requirements (EFR) per basin for Accessible Water')
+        logging.warning('No historical data used in calculating Environmental Flow Requirements (EFR) per basin for Accessible Water')
         edf = settings.Env_FlowPercent * np.mean(Map_runoff, axis=1)
 
     elif settings.EndYear <= settings.HistEndYear:
@@ -85,11 +82,13 @@ def AccessibleWater(settings, ref, runoff):
 
 
 def RollingWindowFilter(data, window, Dimension=0):
-    # Obtain the moving average, the result is set to the center of the window (interval)
-    # Dimension = 0 , column; = 1 , row
-    # Window: odd integer, size of the interval
-    # data: 1D or 2D data array
+    """Obtain the moving average.
 
+    The result is set to the center of the window (interval)
+    :param data:        1D or 2D data array
+    :param window:      odd integer, size of the interval
+    :param Dimension:   0, column; = 1 , row
+    """
     weights = np.repeat(1.0, window) / window
     it = int((window - 1) / 2) + 1
     if data.ndim == 1:
@@ -111,9 +110,7 @@ def RollingWindowFilter(data, window, Dimension=0):
 
 
 def QInGCAMYears(qs, settings):
-    """
-    Create data frame with only target GCAM years.
-    """
+    """Create data frame with only target GCAM years."""
     ValidYears = range(settings.StartYear, settings.EndYear + 1)
     GCAMYears = range(settings.GCAM_StartYear, settings.GCAM_EndYear + 1, settings.GCAM_YearStep)
     q_gcam = np.zeros((qs.shape[0], len(GCAMYears)), dtype=float)
@@ -125,9 +122,7 @@ def QInGCAMYears(qs, settings):
 
 
 def accessible_water(qtot, base, efr, res):
-    """
-    Calculate accessible water.
-    """
+    """Calculate accessible water."""
     ac = np.zeros(qtot.shape, dtype=float)
     for i in range(qtot.shape[1]):
         a = qtot[:, i] - efr
@@ -139,7 +134,7 @@ def accessible_water(qtot, base, efr, res):
 
 
 def genGCAMOutput(filename, data, bdf, settings):
-    # Create data frame containing basin_id, basin_name, and accessible water by year.
+    """Create data frame containing basin_id, basin_name, and accessible water by year."""
     years = map(str, range(settings.GCAM_StartYear, settings.GCAM_EndYear + 1, settings.GCAM_YearStep))
     hdr = "id,name," + ",".join([year for year in years])
 
@@ -151,7 +146,3 @@ def genGCAMOutput(filename, data, bdf, settings):
     df = pd.DataFrame(Result)
     df.columns = hdr.split(',')
     df.to_csv(filename, index=False)
-
-
-#    with open(filename + '.csv', 'w') as outfile:
-#        np.savetxt(outfile, Result, delimiter=',', header=headerline, fmt='%s')

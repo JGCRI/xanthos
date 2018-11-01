@@ -7,11 +7,12 @@ License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 Copyright (c) 2017, Battelle Memorial Institute
 """
 
+import logging
 import numpy as np
 
 
-# get the size of a 2D array
 def Size(l):
+    """Get the size of a 2D array."""
     nrow = len(l)
     try:
         ncol = len(l[0])
@@ -35,12 +36,10 @@ def SizeC(l):
 
 # Convert subscripts to linear indices
 def sub2ind(arraySize, rowSub, colSub):
-    """
-    Convert subscripts to linear indices.
-    """
+    """Convert subscripts to linear indices."""
     linearInd = []
     if len(rowSub) != len(colSub):
-        print('def sub2ind at Rearranging: length of rowSub is not equal to length of colSub!')
+        logging.warning('def sub2ind at Rearranging: length of rowSub is not equal to length of colSub!')
     else:
         arr = tuple(arraySize)
         for i in range(0, len(rowSub)):
@@ -51,9 +50,9 @@ def sub2ind(arraySize, rowSub, colSub):
 
 # Convert linear indices to subscripts
 def ind2sub(arraySize, index):
-    """
-    Convert linear indices to subscripts.
-    Index is a list or 1d array
+    """Convert linear indices to subscripts.
+
+    :param index:   A list or 1d array
     """
     linearInd = np.zeros((len(index), 2), dtype=int)
     arr = tuple(arraySize)
