@@ -124,7 +124,7 @@ def execute(tas, lat_radians, start_yr, end_yr):
     # Final equation
     #   L = Monthly mean daylight hours  (shape = pet_unadj.shape)
     #   N = Number of days in each month (shape = nmonths)
-    pet = pet_unadj * (L / NMONTHS) * (N / 30)
+    pet = pet_unadj * (L / NMONTHS) * (N / 30.0)
 
     # return numpy array of PET in mm/month [ncells x nmonths]
     return pet

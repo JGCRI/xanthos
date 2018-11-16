@@ -33,7 +33,7 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
 
     N = L.shape[0]  # number of cells
 
-    nt = nday * 24 * 3600 / dt  # number of time steps
+    nt = int(nday * 24 * 3600 / dt)  # number of time steps
 
     # setup
     S = np.copy(S0)
