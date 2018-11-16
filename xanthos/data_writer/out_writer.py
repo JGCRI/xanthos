@@ -184,7 +184,7 @@ def SaveNetCDF(filename, data, Settings, varstr):
 
 
 def writecsvMap(filename, data, Settings):
-    years = map(str, range(Settings.StartYear, Settings.EndYear + 1))
+    years = list(map(str, list(range(Settings.StartYear, Settings.EndYear + 1))))
     headerline = "id," + ",".join([year for year in years])
 
     with open(filename + '.csv', 'w') as outfile:

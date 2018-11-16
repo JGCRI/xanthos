@@ -507,7 +507,7 @@ class ConfigReader:
 
                 except:
                     # as list
-                    l = map(int, t['MapID'])
+                    l = list(map(int, t['MapID']))
                     self.TimeSeriesMapID = l
 
         # accessible water
@@ -651,5 +651,5 @@ class ConfigReader:
 
         :@param args:   Dictionary of parameters, where the key is the parameter name
         """
-        for k, v in args.items():
+        for k, v in list(args.items()):
             setattr(self, k, v)
