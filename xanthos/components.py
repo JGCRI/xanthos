@@ -14,18 +14,18 @@ import numpy as np
 import time
 import logging
 
-import data_reader.data_load as fetch
-import utils.general as helper
-import utils.math as umth
-import calibrate.calibrate_abcd as calib_mod
-from data_writer.out_writer import OUTWriter
-from diagnostics.aggregation import Aggregation
-from diagnostics.diagnostics import Diagnostics
-from diagnostics.time_series import TimeSeriesPlot
-from accessible.accessible import AccessibleWater
-from hydropower.potential import HydropowerPotential
-from hydropower.actual import HydropowerActual
-from data_reader.data_load import LoadData
+import xanthos.data_reader.data_load as fetch
+import xanthos.utils.general as helper
+import xanthos.utils.math as umth
+import xanthos.calibrate.calibrate_abcd as calib_mod
+from xanthos.data_writer.out_writer import OUTWriter
+from xanthos.diagnostics.aggregation import Aggregation
+from xanthos.diagnostics.diagnostics import Diagnostics
+from xanthos.diagnostics.time_series import TimeSeriesPlot
+from xanthos.accessible.accessible import AccessibleWater
+from xanthos.hydropower.potential import HydropowerPotential
+from xanthos.hydropower.actual import HydropowerActual
+from xanthos.data_reader.data_load import LoadData
 
 
 class Components:
@@ -113,7 +113,7 @@ class Components:
         self.mth_dr = None
         self.mth_days = None
 
-        # outputs
+        # aggregated outputs
         self.q = None
         self.ac = None
 
@@ -127,27 +127,27 @@ class Components:
 
         # import desired module for PET
         if self.s.pet_module == 'hargreaves':
-            import pet.hargreaves as pet_mod
+            import xanthos.pet.hargreaves as pet_mod
 
         elif self.s.pet_module == 'hs':
-            import pet.hargreaves_samani as pet_mod
+            import xanthos.pet.hargreaves_samani as pet_mod
 
         elif self.s.pet_module == 'pm':
-            import pet.penman_monteith as pet_mod
+            import xanthos.pet.penman_monteith as pet_mod
 
         elif self.s.pet_module == 'thornthwaite':
-            import pet.thornthwaite as pet_mod
+            import xanthos.pet.thornthwaite as pet_mod
 
         # import desired module for Runoff
         if self.s.runoff_module == 'gwam':
-            import runoff.gwam as runoff_mod
+            import xanthos.runoff.gwam as runoff_mod
 
         elif self.s.runoff_module == 'abcd':
-            import runoff.abcd as runoff_mod
+            import xanthos.runoff.abcd as runoff_mod
 
         # import desired module for Routing
         if self.s.routing_module == 'mrtm':
-            import routing.mrtm as routing_mod
+            import xanthos.routing.mrtm as routing_mod
 
     def prep_arrays(self, nm=None):
         """
@@ -453,7 +453,7 @@ class Components:
                     logging.info("---{} in progress... ".format(notify))
                     t0 = time.time()
 
-                    ## TODO: why are these different cases?
+                    # TODO: why are these different cases?
                     # calculate PET
                     if pet:
                         logging.info("\tProcessing PET...")

@@ -14,8 +14,8 @@ import argparse
 import os
 import sys
 import logging
-from data_reader.ini_reader import ConfigReader
-import configurations as mods
+from xanthos.data_reader.ini_reader import ConfigReader
+import xanthos.configurations as mods
 
 
 class Xanthos:
