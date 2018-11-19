@@ -222,6 +222,8 @@ def none_none_mrtm(config):
     # aggregate outputs
     c.aggregate_outputs()
 
+    return c
+
 
 def none_abcd_mrtm(config):
     """
