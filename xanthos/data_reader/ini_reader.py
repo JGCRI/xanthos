@@ -347,8 +347,7 @@ class ConfigReader:
                 try:
                     self.TempMinFile = ro_mod['TempMinFile']
                 except KeyError:
-                    logging.exception('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
-                    raise
+                    self.TempMinFile = None
 
                 try:
                     self.TempMinVarName = ro_mod['TempMinVarName']
@@ -461,7 +460,7 @@ class ConfigReader:
         self.mod_cfg = '{0}_{1}_{2}'.format(self.pet_module, self.runoff_module, self.routing_module)
 
         if self.mod_cfg == 'none_none_none':
-            raise ValidationException('No PFT, Runoff, or Routing model selected.')
+            raise ValidationException('No PET, Runoff, or Routing model selected.')
 
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
@@ -552,6 +551,12 @@ class ConfigReader:
                 self.cal_observed = cal['observed']
                 self.obs_unit = self.ck_obs_unit(self.set_calibrate, cal['obs_unit'])
                 self.calib_out_dir = self.create_dir(cal['calib_out_dir'])
+                try:
+                    self.cal_basin_start = int(cal['start_basin'])
+                    self.cal_basin_end = int(cal['end_basin'])
+                except KeyError:
+                    self.cal_basin_start = 1
+                    self.cal_basin_end = self.n_basins
 
         # -*****************************************************************-
         # CONDITIONAL FOR NEW RUNOFF MODULE
@@ -652,4 +657,6 @@ class ConfigReader:
         :@param args:   Dictionary of parameters, where the key is the parameter name
         """
         for k, v in args.items():
+            if not hasattr(self, k):
+                print('Warning: {} is not a valid parameter'.format(k))
             setattr(self, k, v)
