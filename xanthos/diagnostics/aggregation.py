@@ -4,17 +4,18 @@ Created on Oct 26, 2016
 @Project: Xanthos V1.0
 
 1. The option to aggregate the gridded results by the river basins / country / region
-2. Output in csv files, total runoff by basin/country/region... (row) and month/year (column), unit is determined by user settings
+2. Output in csv files, total runoff by basin/country/region... (row) and month/year (column)
+   unit is determined by user settings
 
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-
 '''
 
 import numpy as np
 import os
+import logging
 import pandas as pd
 
 
@@ -24,22 +25,22 @@ def Aggregation(settings, ref, q):
     if settings.AggregateRunoffBasin > 0 or settings.AggregateRunoffCountry > 0 or settings.AggregateRunoffGCAMRegion > 0:
 
         if settings.AggregateRunoffBasin > 0:  # Basin
-            print("Aggregation by Basin")
+            logging.info("Aggregating by Basin")
             Aggregation['Basin_runoff'] = Aggregation_Map(settings, ref.basin_ids,
                                                           ref.basin_names, q, "Basin_runoff")
-            print "Basin_runoff: unit is ", settings.OutputUnitStr
+            logging.info("Basin_runoff: unit is {}".format(settings.OutputUnitStr))
 
         if settings.AggregateRunoffCountry > 0:  # Country
-            print("Aggregation by Country")
+            logging.info("Aggregating by Country")
             Aggregation['Country_runoff'] = Aggregation_Map(settings, ref.country_ids, ref.country_names, q,
                                                             "Country_runoff")
-            print "Country_runoff: unit is ", settings.OutputUnitStr
+            logging.info("Country_runoff: unit is {}".format(settings.OutputUnitStr))
 
         if settings.AggregateRunoffGCAMRegion > 0:  # GCAMRegion
-            print("Aggregation by GCAM Region")
+            logging.info("Aggregating by GCAM Region")
             Aggregation['Region_runoff'] = Aggregation_Map(settings, ref.region_ids, ref.region_names, q,
                                                            "GCAMRegion_runoff")
-            print("Country_runoff: unit is ", settings.OutputUnitStr)
+            logging.info("Country_runoff: unit is ".format(settings.OutputUnitStr))
 
     return Aggregation
 

@@ -12,6 +12,7 @@ Copyright (c) 2017, Battelle Memorial Institute
 
 import numpy as np
 import time
+import logging
 
 import data_reader.data_load as fetch
 import utils.general as helper
@@ -336,12 +337,12 @@ class Components:
                 # --------------------------------------------------
                 if (pet_step == 'month') and (runoff_step == 'month') and (routing_step == 'month'):
 
-                    print("---{} in progress...".format(notify))
+                    logging.info("---{} in progress...".format(notify))
                     t0 = time.time()
 
                     if pet:
 
-                        print("\tProcessing PET...")
+                        logging.info("\tProcessing PET...")
                         t = time.time()
 
                         for nm in range(pet_num_steps):
@@ -354,7 +355,7 @@ class Components:
                             # calculate pet
                             self.calculate_pet()
 
-                        print("\tPET processed in {} seconds---".format(time.time() - t))
+                        logging.info("\tPET processed in {} seconds---".format(time.time() - t))
 
                     # for the case where the user provides a PET dataset
                     else:
@@ -363,7 +364,7 @@ class Components:
 
                     if runoff:
 
-                        print("\tProcessing Runoff...")
+                        logging.info("\tProcessing Runoff...")
                         t = time.time()
 
                         for nm in range(runoff_num_steps):
@@ -375,20 +376,20 @@ class Components:
                                 # update soil moisture (sav) array for next step
                                 self.sm_prev = np.copy(self.Sav[:, nm])
 
-                        print("\tRunoff processed in {} seconds---".format(time.time() - t))
+                        logging.info("\tRunoff processed in {} seconds---".format(time.time() - t))
 
                     # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
                     if routing:
 
-                        print("\tProcessing Routing...")
+                        logging.info("\tProcessing Routing...")
                         t = time.time()
 
                         # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
                         self.calculate_routing(self.Q)
 
-                        print("\tRouting processed in {} seconds---".format(time.time() - t))
+                        logging.info("\tRouting processed in {} seconds---".format(time.time() - t))
 
-                    print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
+                    logging.info("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
                 # --------------------------------------------------
                 # USED FOR THE FOLLOWING CONFIGURATIONS:
@@ -397,12 +398,12 @@ class Components:
                 # --------------------------------------------------
                 elif (pet_step == 'month') and (runoff_step is None) and (routing_step == 'month'):
 
-                    print("---{} in progress... ".format(notify))
+                    logging.info("---{} in progress... ".format(notify))
                     t0 = time.time()
 
                     # calculate PET
                     if pet:
-                        print("\tProcessing PET...")
+                        logging.info("\tProcessing PET...")
                         t = time.time()
                         pet_out = np.zeros_like(self.data.precip)
 
@@ -413,7 +414,7 @@ class Components:
                             # calculate pet
                             pet_out[:, nm] = self.calculate_pet()
 
-                        print("\tPET processed in {} seconds---".format(time.time() - t))
+                        logging.info("\tPET processed in {} seconds---".format(time.time() - t))
 
                     # for the case where the user provides a PET dataset
                     else:
@@ -422,25 +423,25 @@ class Components:
 
                     # calculate runoff for all basins all months
                     if runoff:
-                        print("\tProcessing Runoff...")
+                        logging.info("\tProcessing Runoff...")
                         t = time.time()
 
                         self.calculate_runoff(pet=pet_out)
 
-                        print("\tRunoff processed in {} seconds---".format(time.time() - t))
+                        logging.info("\tRunoff processed in {} seconds---".format(time.time() - t))
 
                     # process routing
                     if routing:
 
-                        print("\tProcessing Routing...")
+                        logging.info("\tProcessing Routing...")
                         t = time.time()
 
                         # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
                         self.calculate_routing(self.Q)
 
-                        print("\tRouting processed in {} seconds---".format(time.time() - t))
+                        logging.info("\tRouting processed in {} seconds---".format(time.time() - t))
 
-                    print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
+                    logging.info("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
                 # --------------------------------------------------
                 # USED FOR THE FOLLOWING CONFIGURATIONS:
@@ -449,19 +450,19 @@ class Components:
                 # --------------------------------------------------
                 elif (pet_step is None) and (runoff_step is None) and (routing_step == 'month'):
 
-                    print("---{} in progress... ".format(notify))
+                    logging.info("---{} in progress... ".format(notify))
                     t0 = time.time()
 
                     # TODO: why are these different cases?
                     # calculate PET
                     if pet:
-                        print("\tProcessing PET...")
+                        logging.info("\tProcessing PET...")
                         t = time.time()
 
                         # calculate pet
                         pet_out = self.calculate_pet()
 
-                        print("\tPET processed in {} seconds---".format(time.time() - t))
+                        logging.info("\tPET processed in {} seconds---".format(time.time() - t))
 
                     # for the case where the user provides a PET dataset
                     else:
@@ -470,25 +471,25 @@ class Components:
 
                     # calculate runoff for all basins all months
                     if runoff:
-                        print("\tProcessing Runoff...")
+                        logging.info("\tProcessing Runoff...")
                         t = time.time()
 
                         self.calculate_runoff(pet=pet_out)
 
-                        print("\tRunoff processed in {} seconds---".format(time.time() - t))
+                        logging.info("\tRunoff processed in {} seconds---".format(time.time() - t))
 
                     # process routing
                     if routing:
 
-                        print("\tProcessing Routing...")
+                        logging.info("\tProcessing Routing...")
                         t = time.time()
 
                         # process spin up for channel storage from historic period
                         self.calculate_routing(self.Q)
 
-                        print("\tRouting processed in {} seconds---".format(time.time() - t))
+                        logging.info("\tRouting processed in {} seconds---".format(time.time() - t))
 
-                    print("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
+                    logging.info("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
     # -------------------------------------------------------------------
     # -------------------------------------------------------------------
@@ -501,96 +502,96 @@ class Components:
         Run accessible water module
         """
         if self.s.CalculateAccessibleWater:
-            print("---Start Accessible Water:")
+            logging.info("---Start Accessible Water:")
             t0 = time.time()
 
             AccessibleWater(self.s, self.data, self.Q)
 
-            print("---Accessible Water has finished successfully: %s seconds ------" % (time.time() - t0))
+            logging.info("---Accessible Water has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def hydropower_potential(self):
         """
         Run hydropower potential module.
         """
         if self.s.CalculateHydropowerPotential:
-            print("---Start Hydropower Potential:")
+            logging.info("---Start Hydropower Potential:")
             t0 = time.time()
 
             HydropowerPotential(self.s, self.Avg_ChFlow)
 
-            print("---Hydropower Potential has finished successfully: %s seconds ------" % (time.time() - t0))
+            logging.info("---Hydropower Potential has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def hydropower_actual(self):
         """
         Run hydropower actual module.
         """
         if self.s.CalculateHydropowerActual:
-            print("---Start Hydropower Actual:")
+            logging.info("---Start Hydropower Actual:")
             t0 = time.time()
 
             HydropowerActual(self.s, self.Avg_ChFlow)
 
-            print("---Hydropower Actual has finished successfully: %s seconds ------" % (time.time() - t0))
+            logging.info("---Hydropower Actual has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def diagnostics(self):
         """
         Run diagnostics.
         """
         if self.s.PerformDiagnostics:
-            print("---Start Diagnostics:")
+            logging.info("---Start Diagnostics:")
             t0 = time.time()
 
             Diagnostics(self.s, self.Q, self.data)
 
-            print("---Diagnostics has finished successfully: %s seconds ------" % (time.time() - t0))
+            logging.info("---Diagnostics has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def output_simulation(self):
         """
         Output simulation results.  This step both converts the data to the user specified format and
         """
-        print("---Output simulation results:")
+        logging.info("---Output simulation results:")
         t0 = time.time()
 
         self.q, self.ac = OUTWriter(self.s, self.data.area, self.PET, self.AET, self.Q, self.Sav, self.ChStorage,
                                     self.Avg_ChFlow)
 
-        print("---Output finished: %s seconds ---" % (time.time() - t0))
+        logging.info("---Output finished: %s seconds ---" % (time.time() - t0))
 
     def aggregate_outputs(self):
         """
         Aggregation by Basin, Country, and/or Region.
         """
         if self.s.AggregateRunoffBasin > 0 or self.s.AggregateRunoffCountry > 0 or self.s.AggregateRunoffGCAMRegion > 0:
-            print("---Start Aggregation:")
+            logging.info("---Start Aggregation:")
             t0 = time.time()
 
             Aggregation(self.s, self.data, self.q)
 
-            print("---Aggregation has finished successfully: %s seconds ------" % (time.time() - t0))
+            logging.info("---Aggregation has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def plots(self):
         """
         Create time series plots.
         """
         if self.s.CreateTimeSeriesPlot:
-            print("---Creating Time Series Plots:")
+            logging.info("---Creating Time Series Plots:")
             t0 = time.time()
 
             TimeSeriesPlot(self.s, self.q, self.ac, self.data)
 
-            print("---Plots has finished successfully: %s seconds ------" % (time.time() - t0))
+            logging.info("---Plots has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def calibrate(self):
         """
         Run calibration to generate parameters for the ABCD model
         """
-        print("---Processing PET...")
+        logging.info("---Processing PET...")
         t = time.time()
 
         pet_out = self.calculate_pet()
 
-        print("---PET processed in {} seconds---".format(time.time() - t))
+        logging.info("---PET processed in {} seconds---".format(time.time() - t))
 
-        print("---Running calibration:")
+        logging.info("---Running calibration:")
 
         calib_mod.calibrate_all(settings=self.s, data=self.data, pet=pet_out, router_function=self.calculate_routing)

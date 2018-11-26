@@ -10,6 +10,7 @@ License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 Copyright (c) 2018, Battelle Memorial Institute
 """
 
+import logging
 import numpy as np
 from joblib import Parallel, delayed
 
@@ -256,9 +257,10 @@ class ABCD:
             dec_idx = [-1, -13, -25]
 
         except IndexError:
-            print('Spin-up steps must produce at least 10 years spin-up.')
-            print('Your spin-up only consist of {} months'.format(self.spinup_steps))
-            print('Please reconfigure and try again.')
+            logging.exception(
+                'Spin-up steps must produce at least 10 years spin-up. Your '
+                'spin-up only consist of {} months. Please reconfigure and try '
+                'again.'.format(self.spinup_steps))
             raise
 
         rsim_rollover = self.rsim[dec_idx, :]
@@ -329,8 +331,12 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     # get the indices for the selected basins
     basin_indices = np.where(np.isin(basin_ids, basin_nums))
 
+<<<<<<< HEAD
     # pass basin ids to model for setting basin-specific initial values
     _basin_ids = basin_ids[basin_indices]
+=======
+    logging.info("\t\tProcessing spin-up and simulation for basin {}".format(basin_num))
+>>>>>>> master
 
     # import ABCD parameters for the target basins (constant for all months)
     pars_by_cell = pars_abcdm[basin_ids - 1]
