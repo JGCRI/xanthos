@@ -331,12 +331,8 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     # get the indices for the selected basins
     basin_indices = np.where(np.isin(basin_ids, basin_nums))
 
-<<<<<<< HEAD
     # pass basin ids to model for setting basin-specific initial values
     _basin_ids = basin_ids[basin_indices]
-=======
-    logging.info("\t\tProcessing spin-up and simulation for basin {}".format(basin_num))
->>>>>>> master
 
     # import ABCD parameters for the target basins (constant for all months)
     pars_by_cell = pars_abcdm[basin_ids - 1]
@@ -379,9 +375,11 @@ def abcd_parallel(n_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup
     else:
         n_chunks = jobs * 2
 
-    basin_ranges = np.array_split(np.arange(1, n_basins + 1), n_chunks)
+    # Split the range of basins into separate chunks for each thread to process
+    min_basin = min(basin_ids)
+    basin_ranges = np.array_split(np.arange(min_basin, min_basin + n_basins), n_chunks)
 
-    print('\t\tProcessing spin-up and simulation for basins {}...{}'.format(1, n_basins))
+    logging.info("\t\tProcessing spin-up and simulation for basins {}...{}".format(min_basin, n_basins))
 
     rslts = Parallel(n_jobs=jobs, backend="threading")(delayed(_run_basins)
                                                        (i, pars, basin_ids, pet, precip,
