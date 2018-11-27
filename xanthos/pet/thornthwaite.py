@@ -2,7 +2,7 @@
 Calculating Monthly PET (Thornthwaite Method)
 
 Rewritten:
-@date: 8/7/18
+@date: 9/7/18
 @author: Caleb Braun (caleb.braun@pnnl.gov)
 @Project: Xanthos V2.0
 
