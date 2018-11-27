@@ -256,6 +256,10 @@ class ABCD:
             # get Decembers from end of array (-1=last december, -13=two years ago, -25=three years ago)
             dec_idx = [-1, -13, -25]
 
+            rsim_rollover = self.rsim[dec_idx, :]
+            sm_rollover = self.soil_water_storage[dec_idx, :]
+            gs_rollover = self.groundwater_storage[dec_idx, :]
+
         except IndexError:
             logging.exception(
                 'Spin-up steps must produce at least 10 years spin-up. Your '
@@ -263,15 +267,12 @@ class ABCD:
                 'again.'.format(self.spinup_steps))
             raise
 
-        rsim_rollover = self.rsim[dec_idx, :]
-        sm_rollover = self.soil_water_storage[dec_idx, :]
-        gs_rollover = self.groundwater_storage[dec_idx, :]
-
-        # initial values are set by basin, so here we have to go basin-by-basin
+        # initial values arrays (1d, where length is the sum of number of cells for all basins running)
         ro = np.empty(self.basin_ids.shape)
         sm = np.empty(self.basin_ids.shape)
         gs = np.empty(self.basin_ids.shape)
 
+        # initial values are set by taking the mean value by basin, so here we have to go basin-by-basin
         for i in np.unique(self.basin_ids):
             b_idx = (i == self.basin_ids)
             ro[b_idx] = np.mean(np.nanmean(rsim_rollover[:, b_idx], axis=1))
@@ -323,16 +324,17 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     Run the ABCD model for each basin.
 
     :param basin_nums:      The numbers of the target basins
+    :param basin_ids:       Basin ID Map: 67420 x 1, 235 Basins
     :param n_months:        The number of months to process
     :param spinup_steps:    How many times to tile the historic months by
     :param method:          Either 'dist' for distributed, or 'lump' for lumped processing
     :return                 A NumPy array
     """
-    # get the indices for the selected basins
+    # get the grid cell indices of the target basins (integer 1d array)
     basin_indices = np.where(np.isin(basin_ids, basin_nums))
 
     # pass basin ids to model for setting basin-specific initial values
-    _basin_ids = basin_ids[basin_indices]
+    target_basins_ids = basin_ids[basin_indices]
 
     # import ABCD parameters for the target basins (constant for all months)
     pars_by_cell = pars_abcdm[basin_ids - 1]
@@ -349,7 +351,7 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
         _tmin = tmin[basin_indices]
 
     # instantiate the model
-    he = ABCD(pars, _pet, _precip, _tmin, _basin_ids, n_months, spinup_steps, method=method)
+    he = ABCD(pars, _pet, _precip, _tmin, target_basins_ids, n_months, spinup_steps, method=method)
 
     # run it
     he.emulate()
@@ -381,6 +383,7 @@ def abcd_parallel(n_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup
 
     logging.info("\t\tProcessing spin-up and simulation for basins {}...{}".format(min_basin, n_basins))
 
+    _run_basins(np.arange(1, 20), pars, basin_ids, pet, precip, tmin, n_months, spinup_steps)
     rslts = Parallel(n_jobs=jobs, backend="threading")(delayed(_run_basins)
                                                        (i, pars, basin_ids, pet, precip,
                                                         tmin, n_months, spinup_steps) for i in basin_ranges)

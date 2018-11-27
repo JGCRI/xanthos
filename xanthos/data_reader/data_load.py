@@ -14,6 +14,7 @@ Copyright (c) 2017, Battelle Memorial Institute
 """
 
 import os
+import logging
 import numpy as np
 from scipy import io as sio
 
@@ -128,8 +129,8 @@ class LoadData:
 
             # monthly average minimum daily temperature degree C (optional)
             if self.s.TempMinFile is None:
-                print('NOTE: TempMinFile variable not found for the ABCD runoff '
-                      "module; Snowmelt will not be accounted for.")
+                logging.info(
+                    'TempMinFile variable not found for the ABCD runoff module; Snowmelt will not be accounted for.')
                 self.tmin = None
             else:
                 self.tmin = self.load_to_array(self.s.TempMinFile, varname=self.s.TempMinVarName)

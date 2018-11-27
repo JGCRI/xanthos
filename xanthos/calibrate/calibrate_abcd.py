@@ -81,12 +81,12 @@ class Calibrate:
         # record how long each basin takes to solve
         st = time.time()
         pars = differential_evolution(objective_kge,
-                    bounds=self.bounds,
-                    args=(basin_runoff, self.set_calibrate, self.bsn_PET, self.bsn_P, self.bsn_TMIN, self.n_months,
-                          self.runoff_spinup, self.obs_unit, self.bsn_areas, self.bsn_Robs, self.basin_idx, self.precip.shape,
-                          self.router_func),
-                    popsize=popsize,
-                    polish=False)
+                                      bounds=self.bounds,
+                                      args=(basin_runoff, self.set_calibrate, self.bsn_PET, self.bsn_P, self.bsn_TMIN, self.n_months,
+                                            self.runoff_spinup, self.obs_unit, self.bsn_areas, self.bsn_Robs, self.basin_idx, self.precip.shape,
+                                            self.router_func),
+                                      popsize=popsize,
+                                      polish=False)
 
         # extract calibrated parameters for A,B,C,D,M; KGE values
         pars, ed, nfev = pars.x, pars.fun, pars.nfev
@@ -94,7 +94,8 @@ class Calibrate:
         self.all_pars[0, :] = pars
         self.kge_vals[0] = 1 - ed
 
-        logging.debug("\t\tFinished calibration for basin {0} which contains {1} grid cells.".format(self.basin_num, self.basin_idx[0].shape[0]))
+        logging.debug("\t\tFinished calibration for basin {0} which contains {1} grid cells.".format(
+            self.basin_num, self.basin_idx[0].shape[0]))
         logging.debug("\t\tPopulation size:  {}".format(popsize))
         logging.debug("\t\tParameter values (a,b,c,d,m):  {}".format(pars))
         logging.debug("\t\tKGE:  {}".format(1 - ed))
@@ -111,10 +112,17 @@ def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup
 
     :return:
     """
+    # The ABCD model can run multiple basins simultaneously, but it initializes
+    # each basin individually. This parameter is used to map basin ids to the
+    # grid cells of the input arrays. For calibration, however, only one basin
+    # is run at a time, so we can map id 0 to all cells.
+    target_basin_ids = np.zeros(len(basin_idx[0]))
+
+    pars = pars[np.newaxis, ...]
 
     # if calibrating against observed runoff
     if set_calibrate == 0:
-        he = ABCD(pars, pet, precip, tmin, n_months, runoff_spinup, method='dist')
+        he = ABCD(pars, pet, precip, tmin, target_basin_ids, n_months, runoff_spinup, method='dist')
         he.emulate()
 
         if obs_unit == 'km3_per_mth':
@@ -127,7 +135,7 @@ def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup
 
     # if calibrating against observed streamflow
     else:
-        he = ABCD(pars, pet, precip, tmin, n_months, runoff_spinup, method='dist')
+        he = ABCD(pars, pet, precip, tmin, target_basin_ids, n_months, runoff_spinup, method='dist')
         he.emulate()
 
         # add rsim data from the basin back into a global array of zeros to be used by the router
@@ -135,6 +143,7 @@ def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup
         np.put(rsim, basin_idx, he.rsim)
 
         return routing_func(rsim)
+
 
 def objective_kge(pars, model_func, set_calibrate, pet, precip, tmin, n_months, runoff_spinup, obs_unit, bsn_areas, bsn_Robs, basin_idx, arr_shp, routing_func=None):
     """
@@ -150,7 +159,8 @@ def objective_kge(pars, model_func, set_calibrate, pet, precip, tmin, n_months, 
     :param spinup_steps:        number of months from time 0 of the input data to use as spin up
     :return efficiency:         KGE
     """
-    modelled = model_func(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup, obs_unit, bsn_areas, basin_idx, arr_shp, routing_func)
+    modelled = model_func(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup,
+                          obs_unit, bsn_areas, basin_idx, arr_shp, routing_func)
     observed = bsn_Robs
 
     # Calculate KGE
