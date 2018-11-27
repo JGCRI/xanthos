@@ -552,11 +552,13 @@ class ConfigReader:
                 self.obs_unit = self.ck_obs_unit(self.set_calibrate, cal['obs_unit'])
                 self.calib_out_dir = self.create_dir(cal['calib_out_dir'])
                 try:
-                    self.cal_basin_start = int(cal['start_basin'])
-                    self.cal_basin_end = int(cal['end_basin'])
+                    self.cal_basins = cal['calibration_basins']
+                    # calibration basins can be specified as either a single
+                    # number (ex. 3), range (ex. 3-5), or a list (ex. 3,4,5)
+                    if type(self.cal_basins) is not list:
+                        self.cal_basins = [self.cal_basins]
                 except KeyError:
-                    self.cal_basin_start = 1
-                    self.cal_basin_end = self.n_basins
+                    self.cal_basins = ['1-{}'.format(self.n_basins)]
 
         # -*****************************************************************-
         # CONDITIONAL FOR NEW RUNOFF MODULE

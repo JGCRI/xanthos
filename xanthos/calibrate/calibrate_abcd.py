@@ -195,12 +195,33 @@ def process_basin(basin_num, settings, data, pet, router_function=None):
     cal.calibrate_basin()
 
 
+def expand_str_range(str_ranges):
+    """
+    Expand a list of string ranges into full list of integers.
+
+    Given a list of strings of integers or hyphen-separated integer ranges,
+    expand the values to include the complete range. For example, if str_ranges
+    is ['0-2', '6', '7-9'], this function will return [0, 1, 2, 6, 7, 8, 9].
+
+    :param str_ranges:      List of strings, representing integer ranges
+    """
+    out_list = []
+    for r in str_ranges:
+        if '-' in r:
+            start, end = r.split('-')
+            out_list.extend(range(int(start), int(end) + 1))
+        else:
+            out_list.append(int(r))
+
+    return out_list
+
+
 def calibrate_all(settings, data, pet, router_function):
     """
-    Run calibration for ABCD model for all basins in parallel.
+    Run calibration for ABCD model for all basins.
     """
-    for basin_num in range(settings.cal_basin_start, settings.cal_basin_end + 1, 1):
-
-        logging.info("\tCalibrating Basin:  {}".format(basin_num))
+    for basin_num in expand_str_range(settings.cal_basins):
+        basin_name = data.basin_names[basin_num - 1]
+        logging.info("\tCalibrating Basin:  {} ({})".format(basin_num, basin_name))
 
         process_basin(basin_num, settings, data, pet, router_function)
