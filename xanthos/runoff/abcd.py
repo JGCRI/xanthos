@@ -323,7 +323,7 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     """
     Run the ABCD model for each basin.
 
-    :param basin_nums:      The numbers of the target basins
+    :param basin_nums:      The numbers of the target basins (1d NumPy array)
     :param basin_ids:       Basin ID Map: 67420 x 1, 235 Basins
     :param n_months:        The number of months to process
     :param spinup_steps:    How many times to tile the historic months by
@@ -383,7 +383,6 @@ def abcd_parallel(n_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup
 
     logging.info("\t\tProcessing spin-up and simulation for basins {}...{}".format(min_basin, n_basins))
 
-    _run_basins(np.arange(1, 20), pars, basin_ids, pet, precip, tmin, n_months, spinup_steps)
     rslts = Parallel(n_jobs=jobs, backend="threading")(delayed(_run_basins)
                                                        (i, pars, basin_ids, pet, precip,
                                                         tmin, n_months, spinup_steps) for i in basin_ranges)
