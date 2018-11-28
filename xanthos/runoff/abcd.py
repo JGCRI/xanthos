@@ -1,13 +1,13 @@
 """
 ABCD runoff model.
 
-@author   Chris R. Vernon
+@author   Chris R. Vernon, Caleb J. Braun
 @email:   chris.vernon@pnnl.gov
 @Project: Xanthos 2.0
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
-Copyright (c) 2017, Battelle Memorial Institute
+Copyright (c) 2018, Battelle Memorial Institute
 """
 
 import logging
@@ -38,36 +38,37 @@ class ABCD:
     @:return m      Float from 0-1
     """
 
-    def __init__(self, pars, pet, precip, tmin, process_steps, spinup_steps, method='dist'):
+    def __init__(self, pars, pet, precip, tmin, basin_ids, process_steps, spinup_steps, method='dist'):
+
+        # are we running with the snow component?
+        self.nosnow = tmin is None
+
+        # extract the a, b, c, d, and optionally m parameters
+        self.a = pars[:, 0]
+        self.b = pars[:, 1] * 1000
+        self.c = pars[:, 2]
+        self.d = pars[:, 3]
+        self.m = pars[:, 4] if not self.nosnow else 0
+
+        # cache parameter values used in abcd_dist calculations
+        self.a_times2 = self.a * 2
+        self.b_over_a = self.b / self.a
+        self.d_plus_1 = self.d + 1
+
+        self.basin_ids = basin_ids
 
         # set processing method and steps
         self.method = method
         self.steps = process_steps
         self.spinup_steps = spinup_steps
 
-        # are we running with the snow component?
-        self.nosnow = tmin is None
-
-        # assign attributes
-        self.a = pars[0]
-        self.b = pars[1] * 1000
-        self.c = pars[2]
-        self.d = pars[3]
-        self.m = pars[4] if not self.nosnow else 0
-
-        # values [initial runoff, soil moisture storage, groundwater storage
-        self.inv = np.array([20, 100, 500])
-        self.s0 = self.inv[1]
-        self.g0 = self.inv[2]
-
-        # PET as input, transpose to row based
+        # PET and precipitation as input, transpose to row based
         self.pet = pet.T[0:self.steps, :]
+        self.precip = precip.T[0:self.steps, :]
 
-        # precipitation as input
-        self.p = precip.T[0:self.steps, :]
-
+        # initialize arrays for spinup values
         self.pet0 = self.pet[0:self.spinup_steps, :].copy()
-        self.p0 = self.p[0:self.spinup_steps, :].copy()
+        self.precip0 = self.precip[0:self.spinup_steps, :].copy()
 
         # temperature minimum as input, if provided
         if self.nosnow:
@@ -77,25 +78,28 @@ class ABCD:
             self.tmin = tmin.T[0:self.steps, :]
             self.tmin0 = self.tmin[0:self.spinup_steps, :].copy()
 
+        # values [initial runoff, soil moisture storage, groundwater storage
+        self.inv = np.array([20, 100, 500])
+        self.soil_water_storage0 = self.inv[1]
+        self.groundwater_storage0 = self.inv[2]
+
         # populate param arrays
         self.snm = None
-        self.ea = None
-        self.re = None
-        self.dr = None
-        self.base = None
-        self.g = None
-        self.s = None
-        self.w = None
-        self.y = None
-        self.xs = None
+        self.actual_et = None
+        self.groundwater_storage = None
+        self.soil_water_storage = None
+        self.water_avail = None
+        self.et_op = None
+        self.snowpack = None
         self.rsim = None
         self.rain = None
         self.snow = None
-        self.sn0 = 0
-        self.train = 2.5
-        self.tsnow = 0.6
 
-    def set_ea(self, p, frac=0.6):
+        self.SN0 = 0
+        self.TRAIN = 2.5
+        self.TSNOW = 0.6
+
+    def set_actual_et(self, p, frac=0.6):
         """
         Set the initial value of actual evapotranspiration (ET) at 60% of precipitation.
 
@@ -105,9 +109,9 @@ class ABCD:
 
         arr[0, :] = p[0, :] * frac
 
-        return arr
+        self.actual_et = arr
 
-    def set_xs(self, p):
+    def set_snowpack(self, p):
         """
         Set the initial value of accumulated snow water at 10% of precipitation.
 
@@ -117,11 +121,14 @@ class ABCD:
 
         arr[0, :] = p[0, :] / 10
 
-        return arr
+        self.snowpack = arr
 
     def set_rsim(self, p, v):
         """
         Set the initial streamflow.
+
+        :param p:   precipitation
+        :param v:   initial runoff
 
         :return: array
         """
@@ -129,9 +136,9 @@ class ABCD:
 
         arr[0, :] = v
 
-        return arr
+        self.rsim = arr
 
-    def get_rs(self, p, tmin):
+    def set_rain_and_snow(self, p, tmin):
         """
         Assign rain and snow arrays.
         """
@@ -144,109 +151,114 @@ class ABCD:
         self.rain = np.zeros_like(p)
         self.snow = np.zeros_like(p)
 
-        # get the index of each value meeting criteria
-        allrain = np.nonzero(tmin > self.train)
-        rainorsnow = np.nonzero((tmin <= self.train) & (tmin >= self.tsnow))
-        allsnow = np.nonzero(tmin < self.tsnow)
+        # get the indices of each value meeting criteria
+        allrain = tmin > self.TRAIN
+        rainorsnow = (tmin <= self.TRAIN) & (tmin >= self.TSNOW)
+        allsnow = tmin < self.TSNOW
 
         # populate the snow array
-        self.snow[rainorsnow] = p[rainorsnow] * (self.train - tmin[rainorsnow]) / (self.train - self.tsnow)
+        self.snow[rainorsnow] = p[rainorsnow] * (self.TRAIN - tmin[rainorsnow]) / (self.TRAIN - self.TSNOW)
 
-        if allrain:
+        if allrain.any():
             self.rain[allrain] = p[allrain]
             self.snow[allrain] = 0
 
-        if rainorsnow:
+        if rainorsnow.any():
             self.rain[rainorsnow] = p[rainorsnow] - self.snow[rainorsnow]
 
-        if allsnow:
+        if allsnow.any():
             self.rain[allsnow] = 0
             self.snow[allsnow] = p[allsnow]
 
     def abcd_dist(self, i, pet, tmin):
+        """
+        ABCD Model
 
+        @:param i       Current month
+        @:param pet     Potential Evapotranspiration
+        @:param tmin    Monthly minimum temperature (if running with snow)
+        """
         if not self.nosnow:
             if i == 0:
-                self.xs[i, :] = self.sn0 + self.snow[i, :]
+                self.snowpack[i, :] = self.SN0 + self.snow[i, :]
             else:
-                self.xs[i, :] = self.xs[i - 1, :] + self.snow[i, :]
+                self.snowpack[i, :] = self.snowpack[i - 1, :] + self.snow[i, :]
 
             # select only snow, intermediate, or only rain for each case
-            allrain = np.nonzero(tmin[i, :] > self.train)
-            rainorsnow = np.nonzero((tmin[i, :] <= self.train) & (tmin[i, :] >= self.tsnow))
-            allsnow = np.nonzero(tmin[i, :] < self.tsnow)
+            allrain = tmin[i, :] > self.TRAIN
+            rainorsnow = (tmin[i, :] <= self.TRAIN) & (tmin[i, :] >= self.TSNOW)
+            allsnow = tmin[i, :] < self.TSNOW
 
             # estimate snowmelt (SNM)
-            self.snm[i, allrain] = self.xs[i, allrain] * self.m
-            self.snm[i, rainorsnow] = (self.xs[i, rainorsnow] * self.m) * \
-                ((self.train - tmin[i, rainorsnow]) / (self.train - self.tsnow))
+            self.snm[i, allrain] = self.snowpack[i, allrain] * self.m[allrain]
+            self.snm[i, rainorsnow] = (self.snowpack[i, rainorsnow] * self.m[rainorsnow]) * \
+                ((self.TRAIN - tmin[i, rainorsnow]) / (self.TRAIN - self.TSNOW))
             self.snm[i, allsnow] = 0
 
             # accumulated snow water equivalent
-            self.xs[i, :] -= self.snm[i, :]
+            self.snowpack[i, :] -= self.snm[i, :]
 
         # get available water
         if i == 0:
-            self.w[i, :] = self.rain[i, :] + self.s0
+            self.water_avail[i, :] = self.rain[i, :] + self.soil_water_storage0
         else:
-            self.w[i, :] = self.rain[i, :] + self.s[i - 1, :] + self.snm[i, :]
+            self.water_avail[i, :] = self.rain[i, :] + self.soil_water_storage[i - 1, :] + self.snm[i, :]
 
         # ET opportunity
-        rpt = (self.w[i, :] + self.b)
-        pt2 = (2 * self.a)
-        self.y[i, :] = rpt / pt2 - np.power(np.power(rpt / pt2, 2) - (self.w[i, :] * self.b / self.a), 0.5)
+        rpt = (self.water_avail[i, :] + self.b)
+        rpt_over_pt2 = rpt / self.a_times2
+        self.et_op[i, :] = rpt_over_pt2 - np.sqrt(np.square(rpt_over_pt2) - (self.water_avail[i, :] * self.b_over_a))
 
         # soil water storage
-        self.s[i, :] = self.y[i, :] * np.exp(-pet[i, :].real / self.b)
+        self.soil_water_storage[i, :] = self.et_op[i, :] * np.exp(-pet[i, :].real / self.b)
 
         # get the difference between available water and ET opportunity
-        awet = (self.w[i, :] - self.y[i, :])
+        awet = (self.water_avail[i, :] - self.et_op[i, :])
+        c_x_awet = self.c * awet
 
         # groundwater storage
         if i == 0:
-            self.g[i, :] = (self.g0 + self.c * awet) / (1 + self.d)
+            self.groundwater_storage[i, :] = (self.groundwater_storage0 + c_x_awet) / self.d_plus_1
         else:
-            self.g[i, :] = (self.g[i - 1, :] + self.c * awet) / (1 + self.d)
+            self.groundwater_storage[i, :] = (self.groundwater_storage[i - 1, :] + c_x_awet) / self.d_plus_1
 
         # populate arrays
-        self.ea[i, :] = self.y[i, :] - self.s[i, :]
-        self.ea[i, :] = np.maximum(0, self.ea[i, :])
-        self.ea[i, :] = np.minimum(pet[i, :].real, self.ea[i, :])
-        self.s[i, :] = self.y[i, :] - self.ea[i, :]
-        self.re[i, :] = self.c * awet
-        self.dr[i, :] = (1 - self.c) * awet
-        self.rsim[i, :] = (1 - self.c) * awet + self.d * self.g[i, :]
-        self.base[i, :] = self.d * self.g[i, :]
+        self.actual_et[i, :] = self.et_op[i, :] - self.soil_water_storage[i, :]
+        self.actual_et[i, :] = np.maximum(0, self.actual_et[i, :])
+        self.actual_et[i, :] = np.minimum(pet[i, :].real, self.actual_et[i, :])
+        self.soil_water_storage[i, :] = self.et_op[i, :] - self.actual_et[i, :]
+        self.rsim[i, :] = (awet - c_x_awet) + self.d * self.groundwater_storage[i, :]
 
     def init_arrays(self, p, tmin):
         """
         Initialize arrays based on spin-up or simulation run status.
         """
-        # construct simulated runoff array
-        self.rsim = self.set_rsim(p, self.inv[0])
+        # construct simulated runoff, actual evapotranspiration, and snowpack arrays
+        self.set_rsim(p, self.inv[0])
+        self.set_actual_et(p)
+        self.set_snowpack(p)
 
         self.snm = np.zeros_like(p)
-        self.ea = self.set_ea(p)
-        self.re = np.zeros_like(p)
-        self.dr = np.zeros_like(p)
-        self.base = np.zeros_like(p)
-        self.g = np.zeros_like(p)
-        self.s = np.zeros_like(p)
-        self.w = np.zeros_like(p)
-        self.y = np.zeros_like(p)
-        self.xs = self.set_xs(p)
+        self.groundwater_storage = np.zeros_like(p)
+        self.soil_water_storage = np.zeros_like(p)
+        self.water_avail = np.zeros_like(p)
+        self.et_op = np.zeros_like(p)
 
         # partition snow and rain
-        self.get_rs(p, tmin)
+        self.set_rain_and_snow(p, tmin)
 
     def set_vals(self):
         """
-        Reset initial values for runoff [0], soil moisture [1], and groundwater storage [2] based on spin-up as the
-        average of the last three Decembers.
+        Reset initial values for runoff [0], soil moisture [1], and groundwater
+        storage [2] based on spin-up as the average of the last three Decembers.
         """
         try:
             # get Decembers from end of array (-1=last december, -13=two years ago, -25=three years ago)
             dec_idx = [-1, -13, -25]
+
+            rsim_rollover = self.rsim[dec_idx, :]
+            sm_rollover = self.soil_water_storage[dec_idx, :]
+            gs_rollover = self.groundwater_storage[dec_idx, :]
 
         except IndexError:
             logging.exception(
@@ -255,38 +267,42 @@ class ABCD:
                 'again.'.format(self.spinup_steps))
             raise
 
-        rsim_rollover = self.rsim[dec_idx, :]
-        sm_rollover = self.s[dec_idx, :]
-        gs_rollover = self.g[dec_idx, :]
+        # initial values arrays (1d, where length is the sum of number of cells for all basins running)
+        ro = np.empty(self.basin_ids.shape)
+        sm = np.empty(self.basin_ids.shape)
+        gs = np.empty(self.basin_ids.shape)
 
-        ro = np.mean(np.nanmean(rsim_rollover, axis=1))
-        sm = np.mean(np.nanmean(sm_rollover, axis=1))
-        gs = np.mean(np.nanmean(gs_rollover, axis=1))
+        # initial values are set by taking the mean value by basin, so here we have to go basin-by-basin
+        for i in np.unique(self.basin_ids):
+            b_idx = (i == self.basin_ids)
+            ro[b_idx] = np.mean(np.nanmean(rsim_rollover[:, b_idx], axis=1))
+            sm[b_idx] = np.mean(np.nanmean(sm_rollover[:, b_idx], axis=1))
+            gs[b_idx] = np.mean(np.nanmean(gs_rollover[:, b_idx], axis=1))
 
         self.inv = np.array([ro, sm, gs])
-        self.s0 = self.inv[1]
-        self.g0 = self.inv[2]
+        self.soil_water_storage0 = self.inv[1]
+        self.groundwater_storage0 = self.inv[2]
 
     def spinup(self):
         """
         Run spin-up using initial values.
         """
         # initialize arrays for spinup
-        self.init_arrays(self.p0, self.tmin0)
+        self.init_arrays(self.precip0, self.tmin0)
 
         # run spin-up with initial settings and calibrated a, b, c, d, m params
         for i in range(0, self.spinup_steps, 1):
             self.abcd_dist(i, self.pet0, self.tmin0)
 
-        # reset initial runoff, soil moisture, and groundwater storage values to the average of the last three Decembers
+        # reset initial runoff, soil moisture, and groundwater storage values to the average of the last 3 Decembers
         self.set_vals()
 
     def simulate(self):
         """
         Run simulation using spin-up values.
         """
-        # initialize arrays for simulation from  spin-up
-        self.init_arrays(self.p, self.tmin)
+        # initialize arrays for simulation from spin-up
+        self.init_arrays(self.precip, self.tmin)
 
         # process with first pass parameters
         for i in range(0, self.steps, 1):
@@ -296,7 +312,6 @@ class ABCD:
         """
         Run hydrologic emulator.
         """
-
         # run spin-up
         self.spinup()
 
@@ -304,105 +319,82 @@ class ABCD:
         self.simulate()
 
 
-def _run_basin(basin_num, pars_abcdm, basin_ids, pet, precip, tmin, n_months, spinup_steps, method='dist'):
+def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, spinup_steps, method='dist'):
     """
     Run the ABCD model for each basin.
 
-    :param basin_num:       The number of the target basin
+    :param basin_nums:      The numbers of the target basins (1d NumPy array)
+    :param basin_ids:       Basin ID Map: 67420 x 1, 235 Basins
     :param n_months:        The number of months to process
     :param spinup_steps:    How many times to tile the historic months by
     :param method:          Either 'dist' for distributed, or 'lump' for lumped processing
     :return                 A NumPy array
     """
+    # get the grid cell indices of the target basins (integer 1d array)
+    basin_indices = np.where(np.isin(basin_ids, basin_nums))
 
-    logging.info("\t\tProcessing spin-up and simulation for basin {}".format(basin_num))
+    # pass basin ids to model for setting basin-specific initial values
+    target_basins_ids = basin_ids[basin_indices]
 
-    # import ABCD parameters for the target basin
-    pars = pars_abcdm[basin_num - 1]
+    # import ABCD parameters for the target basins (constant for all months)
+    pars_by_cell = pars_abcdm[basin_ids - 1]
+    pars = pars_by_cell[basin_indices]
 
-    # get the indices for the selected basin
-    basin_idx = np.where(basin_ids == basin_num)
+    # extract data for the selected basins only (over all months)
+    _pet = pet[basin_indices]
+    _precip = precip[basin_indices]
 
-    # extract data for the selected basin only
-    _pet = pet[basin_idx]
-    _precip = precip[basin_idx]
-
-    # tmin is optional, but the snow component of the model will not be used
-    # without it
+    # tmin is optional, but the snow component of the model will not be used without it
     if tmin is None:
         _tmin = tmin
     else:
-        _tmin = tmin[basin_idx]
+        _tmin = tmin[basin_indices]
 
     # instantiate the model
-    he = ABCD(pars, _pet, _precip, _tmin, n_months, spinup_steps, method=method)
+    he = ABCD(pars, _pet, _precip, _tmin, target_basins_ids, n_months, spinup_steps, method=method)
 
     # run it
     he.emulate()
 
     # stack outputs
-    vals = np.hstack([he.pet.T, he.ea.T, he.rsim.T, he.s.T])
+    vals = np.hstack([he.pet.T, he.actual_et.T, he.rsim.T, he.soil_water_storage.T])
 
     return vals
 
 
-def abcd_parallel(num_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps, jobs=-1):
+def abcd_parallel(n_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps, jobs=-1):
     """
-    This model is made to run a basin at a time.  Running them in parallel
-    greatly speeds things up. The user can choose to output just the coordinates
-    and simulated runoff, or the whole suite of outputs from the ABCD model.
+    This model can run any number of basins at a time.  Splitting them into
+    chunks and running them in parallel greatly speeds things up.
 
-    :param num_basins:          How many basin to run
+    :param pars:                Array of abcdm parameters by grid cell
+    :param n_basins:            How many basins to run
     :return:                    A list of NumPy arrays
     """
-    rslts = Parallel(n_jobs=jobs)(delayed(_run_basin)(i, pars, basin_ids, pet, precip, tmin,
-                                                      n_months, spinup_steps) for i in list(range(1, num_basins + 1, 1)))
-    return rslts
+    # rough optimization for dividing basins across threads
+    if jobs < 1:
+        n_chunks = 8
+    else:
+        n_chunks = jobs * 2
 
+    # Split the range of basins into separate chunks for each thread to process
+    min_basin = min(basin_ids)
+    basin_ranges = np.array_split(np.arange(min_basin, min_basin + n_basins), n_chunks)
 
-def abcd_outputs(rslts, n_months, basin_ids, ncells):
-    """
-    Load each saved array of outputs from the ABCD runs and stack them.
+    logging.info("\t\tProcessing spin-up and simulation for basins {}...{}".format(min_basin, n_basins))
 
-    :param rslts:   Python list containing ABCD outputs in order.
-    :return         A NumPy array for coordinates (long, lat) and simulated runoff
-                    with the shape (grid cells, value per month).
-    """
-    _aet = np.zeros(shape=(ncells, n_months))
-    _q = np.zeros(shape=(ncells, n_months))
-    _sav = np.zeros(shape=(ncells, n_months))
-    _pet = np.zeros(shape=(ncells, n_months))
+    rslts = Parallel(n_jobs=jobs, backend="threading")(delayed(_run_basins)
+                                                       (i, pars, basin_ids, pet, precip,
+                                                        tmin, n_months, spinup_steps) for i in basin_ranges)
 
-    # for each file, load it and then stack it
-    for idx, arr in enumerate(rslts):
-        # get basin idx...
-        basin_idx = np.where(basin_ids == idx + 1)
+    out = np.empty((len(basin_ids), n_months * 4))  # 4 output variables for every month
 
-        start = 0
-        end = start + n_months
+    # combine parallel results back in the correct order
+    for i, br in enumerate(basin_ranges):
+        basin_indices = np.where(np.isin(basin_ids, br))
+        out[basin_indices, :] = rslts[i]
 
-        # slice out pet
-        _pet[basin_idx] = arr[:, start:end]
-
-        start = end
-        end = start + n_months
-
-        # slice out aet
-        _aet[basin_idx] = arr[:, start:end]
-
-        start = end
-        end = start + n_months
-
-        # slice out q
-        _q[basin_idx] = arr[:, start:end]
-
-        start = end
-        end = start + n_months
-
-        # slice out soil moisture storage
-        _sav[basin_idx] = arr[:, start:end]
-
-    return _pet, _aet, _q, _sav
+    return out
 
 
 def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, spinup_steps, jobs):
@@ -427,10 +419,10 @@ def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, s
     prm = np.load(calib_file)
 
     # run all basins at once in parallel
-    all_bsns = abcd_parallel(num_basins=n_basins, pars=prm, basin_ids=basin_ids,
-                             pet=pet, precip=precip, tmin=tmin, n_months=n_months, spinup_steps=spinup_steps, jobs=jobs)
+    rslts = abcd_parallel(n_basins=n_basins, pars=prm, basin_ids=basin_ids, pet=pet, precip=precip,
+                          tmin=tmin, n_months=n_months, spinup_steps=spinup_steps, jobs=jobs)
 
     # build array to pass to router
-    _pet, _aet, _q, _sav = abcd_outputs(all_bsns, n_months=n_months, basin_ids=basin_ids, ncells=67420)
+    _pet, _aet, _q, _sav = np.split(rslts, 4, axis=1)
 
     return _pet, _aet, _q, _sav

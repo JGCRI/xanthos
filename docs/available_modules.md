@@ -207,3 +207,4 @@ Config tag:
 | observed | Full path with filename and extension of observed runoff or streamflow dataset; Must be in `basin,year,month,value` CSV format with header. | True |
 | obs_unit | Observed runoff or streamflow units (runoff options:  km3_per_mth, mm_per_mth; streamflow options: m3_per_sec). | True |
 | calib_out_dir | Full path with to directory where output files for KGE and the ABCDM parameters will be saved. | True |
+| calibration_basins | Specific basins to calibrate, specified as a comma-separated list (e.g. 1,5-9,12). | False |
