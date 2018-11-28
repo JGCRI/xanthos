@@ -196,8 +196,8 @@ class Components:
         """Calculate monthly potential evapo-transpiration."""
         if self.s.pet_module == 'hargreaves':
 
-            return pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data.lat_radians, self.mth_solar_dec,
-                                         self.mth_dr, self.mth_days)
+            return pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data.lat_radians,
+                                         self.mth_solar_dec, self.mth_dr, self.mth_days)
         elif self.s.pet_module == 'hs':
 
             return pet_mod.execute(self.s, self.data)
@@ -553,7 +553,7 @@ class Components:
 
     def aggregate_outputs(self):
         """Aggregation by Basin, Country, and/or Region."""
-        if self.s.AggregateRunoffBasin > 0 or self.s.AggregateRunoffCountry > 0 or self.s.AggregateRunoffGCAMRegion > 0:
+        if self.s.AggregateRunoffBasin or self.s.AggregateRunoffCountry or self.s.AggregateRunoffGCAMRegion:
             logging.info("---Start Aggregation:")
             t0 = time.time()
 

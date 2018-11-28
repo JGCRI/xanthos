@@ -170,7 +170,7 @@ class ABCD:
 
     def abcd_dist(self, i, pet, tmin):
         """
-        ABCD Model
+        Run the ABCD model calculations.
 
         @:param i       Current month
         @:param pet     Potential Evapotranspiration
