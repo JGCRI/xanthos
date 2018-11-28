@@ -1,4 +1,4 @@
-'''
+"""
 @date   10/14/2016
 @author: lixi729
 @email: xinya.li@pnl.gov
@@ -7,14 +7,14 @@
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-'''
+"""
 
 import numpy as np
 import scipy.sparse as sparse
 
 
 def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
-    '''
+    """
     L:    flow distance (m)                                        = (N x 1)
     S0:   initial channel storage value for the month (m^3)        = (N x 1)
     F0:   initial channel flow value (instantaneous) for the month (m^3/s) = (N x 1)
@@ -29,11 +29,11 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
     S:     channel storage, unit m3
     Favg:  monthly average channel flow, unit m3/s
     F:     instantaneous channel flow, unit m3/s
-    '''
+    """
 
     N = L.shape[0]  # number of cells
 
-    nt = nday * 24 * 3600 / dt  # number of time steps
+    nt = int(nday * 24 * 3600 / dt)  # number of time steps
 
     # setup
     S = np.copy(S0)

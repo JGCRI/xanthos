@@ -39,8 +39,6 @@ class ConfigReader:
         # COMPONENT MODULE CHECK
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
-
-        # see if modules are in config file
         try:
             r = True
             self.Reference = os.path.join(self.InputFolder, p['RefDir'])
@@ -98,23 +96,11 @@ class ConfigReader:
         except KeyError:
             cal = False
 
-        # -*****************************************************************-
-        # ADD NEW COMPONENT MODULE CHECK HERE
-        #
-        # try:
-        #     new_var = c['NewModule']
-        # except KeyError:
-        #     new_var = False
-        #
-        # -*****************************************************************-
-
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
         # PROJECT LEVEL SETTINGS
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
-
-        # project level settings
         self.ncell = 67420
         self.ngridrow = 360
         self.ngridcol = 720
@@ -137,19 +123,11 @@ class ConfigReader:
         self.CalculateHydropowerActual = int(p['CalculateHydropowerActual'])
         self.calibrate = int(p['Calibrate'])
 
-        # -*****************************************************************-
-        # GET MODULE RUN EXPECTATION FROM CONFIG
-        #
-        # self.RunNewModule = int(p['NewModule'])
-        # -*****************************************************************-
-
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
         # CONFIGURE PET MODULE
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
-
-        # PET config
         if pt:
             self.pet_module = pt['pet_module'].lower()
 
@@ -161,8 +139,8 @@ class ConfigReader:
                 try:
                     self.TemperatureFile = os.path.join(self.pet_dir, pet_mod['TemperatureFile'])
                 except KeyError:
-                    logging.exception(
-                        'File path not provided for the TemperatureFile variable in the PET section of the config file.')
+                    logging.exception("File path not provided for the TemperatureFile "
+                                      "variable in the PET section of the config file.")
                     raise
 
                 try:
@@ -173,8 +151,8 @@ class ConfigReader:
                 try:
                     self.DailyTemperatureRangeFile = os.path.join(self.pet_dir, pet_mod['DailyTemperatureRangeFile'])
                 except KeyError:
-                    logging.exception(
-                        'File path not provided for the DailyTemperatureRangeFile variable in the PET section of the config file.')
+                    logging.exception("File path not provided for the DailyTemperatureRangeFile "
+                                      "variable in the PET section of the config file.")
                     raise
 
                 try:
@@ -225,36 +203,29 @@ class ConfigReader:
                 # climate data
                 self.trn_tas = os.path.join(self.pet_dir, pet_mod['trn_tas'])
 
-            # -*****************************************************************-
-            # CONDITIONAL FOR NEW PET MODULE
-            #
-            # elif self.pet_module == 'new_module':
-            #     pet_mod = pt['hargreaves-samani']
-            #     self.pet_dir = os.path.join(self.PET, pet_mod['pet_dir'])
-            #
-            #     # climate data
-            #     self.hs_tas = os.path.join(self.pet_dir, pet_mod['hs_tas'])
-            #     self.hs_tmin = os.path.join(self.pet_dir, pet_mod['hs_tmin'])
-            #     self.hs_tmax = os.path.join(self.pet_dir, pet_mod['hs_tmax'])
-            # -*****************************************************************-
-
             # use your own PET dataset
             elif self.pet_module == 'none':
                 try:
                     self.pet_file = pt['pet_file']
                 except KeyError:
-                    raise "USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module."
+                    raise ValidationException(
+                        "USAGE: Must provide a pet_file variable in the PET config section that "
+                        "contains the full path to an input PET file if not using an existing module."
+                    )
 
             else:
-                msg = "ERROR: PET module '{0}' not found. Please check spelling and try again.".format(self.pet_module)
-                raise ValidationException(msg)
+                raise ValidationException("ERROR: PET module '{0}' not found. Please check "
+                                          "spelling and try again.".format(self.pet_module))
         else:
             self.pet_module = 'none'
 
             try:
                 self.pet_file = pt['pet_file']
             except KeyError:
-                raise "USAGE: Must provide a pet_file variable in the PET config section that contains the full path to an input PET file if not using an existing module."
+                raise ValidationException(
+                    "USAGE: Must provide a pet_file variable in the PET config section that "
+                    "contains the full path to an input PET file if not using an existing module."
+                )
 
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
@@ -291,14 +262,14 @@ class ConfigReader:
                         self.SavVarName = ro_mod['SavVarName']
 
                     except KeyError:
-                        raise ValidationException(
-                            "Error: ChStorageFile and ChStorageVarName are not defined for Future Mode.")
+                        raise ValidationException("Error: ChStorageFile and ChStorageVarName "
+                                                  "are not defined for Future Mode.")
 
                 try:
                     self.PrecipitationFile = os.path.join(self.ro_model_dir, ro_mod['PrecipitationFile'])
                 except KeyError:
-                    logging.exception(
-                        'File path not provided for the PrecipitationFile variable in the GCAM runoff section of the config file.')
+                    logging.exception("File path not provided for the PrecipitationFile variable "
+                                      "in the GCAM runoff section of the config file.")
                     raise
 
                 try:
@@ -309,8 +280,8 @@ class ConfigReader:
                 try:
                     self.TemperatureFile = os.path.join(self.ro_model_dir, ro_mod['TemperatureFile'])
                 except KeyError:
-                    logging.exception(
-                        'File path not provided for the TemperatureFile variable in the GCAM runoff section of the config file.')
+                    logging.exception("File path not provided for the TemperatureFile "
+                                      "variable in the GCAM runoff section of the config file.")
                     raise
 
                 try:
@@ -322,8 +293,8 @@ class ConfigReader:
                     self.DailyTemperatureRangeFile = os.path.join(
                         self.ro_model_dir, ro_mod['DailyTemperatureRangeFile'])
                 except KeyError:
-                    logging.exception(
-                        'File path not provided for the DailyTemperatureRangeFile variable in the GCAM runoff section of the config file.')
+                    logging.exception("File path not provided for the DailyTemperatureRangeFile "
+                                      "variable in the GCAM runoff section of the config file.")
                     raise
 
                 try:
@@ -342,8 +313,8 @@ class ConfigReader:
                 try:
                     self.PrecipitationFile = ro_mod['PrecipitationFile']
                 except KeyError:
-                    logging.exception(
-                        'File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
+                    logging.exception("File path not provided for the PrecipitationFile "
+                                      "variable in the ABCD runoff section of the config file.")
                     raise
 
                 try:
@@ -361,47 +332,12 @@ class ConfigReader:
                 except KeyError:
                     self.TempMinVarName = None
 
-            # -*****************************************************************-
-            # CONDITIONAL FOR NEW RUNOFF MODULE
-            #
-            # elif self.runoff_module == 'new_module':
-            #
-            #     ro_mod = ro['abcd']
-            #     self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['runoff_dir'])
-            #     self.calib_file = os.path.join(self.ro_model_dir, ro_mod['calib_file'])
-            #     self.runoff_spinup = int(ro_mod['runoff_spinup'])
-            #     self.ro_jobs = int(ro_mod['jobs'])
-            #
-            #     try:
-            #         self.PrecipitationFile = ro_mod['PrecipitationFile']
-            #     except KeyError:
-            #         logging.exception('File path not provided for the PrecipitationFile variable in the ABCD runoff section of the config file.')
-            #         raise
-            #
-            #
-            #     try:
-            #         self.PrecipVarName = ro_mod['PrecipVarName']
-            #     except KeyError:
-            #         self.PrecipVarName = None
-            #
-            #     try:
-            #         self.TempMinFile = ro_mod['TempMinFile']
-            #     except KeyError:
-            #         logging.exception('File path not provided for the TempMinFile variable in the ABCD runoff section of the config file.')
-            #         raise
-            #
-            #     try:
-            #         self.TempMinVarName = ro_mod['TempMinVarName']
-            #     except KeyError:
-            #         self.TempMinVarName = None
-            # -*****************************************************************-
-
             elif self.runoff_module == 'none':
                 pass
 
             else:
-                raise ValidationException(
-                    "ERROR: Runoff module '{0}' not found. Please check spelling and try again.".format(self.runoff_module))
+                raise ValidationException("ERROR: Runoff module '{0}' not found. Please check "
+                                          "spelling and try again.".format(self.runoff_module))
         else:
             self.runoff_module = 'none'
 
@@ -432,35 +368,12 @@ class ConfigReader:
                 except KeyError:
                     self.alt_runoff = None
 
-            # -*****************************************************************-
-            # CONDITIONAL FOR NEW ROUTING MODULE
-            #
-            # elif self.routing_module == 'new_module':
-            #     rt_mod = rt[self.routing_module]
-            #     self.rt_model_dir = os.path.join(self.RoutingDir, rt_mod['routing_dir'])
-            #
-            #     # load built-in files [ channel velocity, flow distance, flow direction ]
-            #     self.strm_veloc = os.path.join(self.rt_model_dir, rt_mod['channel_velocity'])
-            #     self.FlowDis = os.path.join(self.rt_model_dir, rt_mod['flow_distance'])
-            #     self.FlowDir = os.path.join(self.rt_model_dir, rt_mod['flow_direction'])
-            #
-            #     try:
-            #         self.routing_spinup = int(rt_mod['routing_spinup'])
-            #     except KeyError:
-            #         self.routing_spinup = self.nmonths
-            #
-            #     try:
-            #         self.alt_runoff = self.custom_runoff(rt_mod['alt_runoff'])
-            #     except KeyError:
-            #         self.alt_runoff = None
-            # -*****************************************************************-
-
             elif self.routing_module == 'none':
                 pass
 
             else:
-                raise ValidationException(
-                    "ERROR: Routing module '{0}' not found. Please check spelling and try again.".format(self.routing_module))
+                raise ValidationException("ERROR: Routing module '{0}' not found. Please check "
+                                          "spelling and try again.".format(self.routing_module))
 
         else:
             self.routing_module = 'none'
@@ -510,13 +423,13 @@ class ConfigReader:
                 self.TimeSeriesMapID = 999
 
                 try:
-                    l = int(t['MapID'])
-                    self.TimeSeriesMapID = l
+                    map_id = int(t['MapID'])
+                    self.TimeSeriesMapID = map_id
 
-                except:
+                except TypeError:
                     # as list
-                    l = map(int, t['MapID'])
-                    self.TimeSeriesMapID = l
+                    map_id = list(map(int, t['MapID']))
+                    self.TimeSeriesMapID = map_id
 
         # accessible water
         if a:
@@ -531,8 +444,8 @@ class ConfigReader:
                 self.Env_FlowPercent = float(a['Env_FlowPercent'])
 
                 if (self.StartYear > self.GCAM_StartYear) or (self.EndYear < self.GCAM_EndYear):
-                    raise ValidationException(
-                        "Accessible water range of GCAM years are outside the range of years in climate data.")
+                    raise ValidationException("Accessible water range of GCAM years are outside "
+                                              "the range of years in climate data.")
 
         # hydropower potential
         if hp:
@@ -570,17 +483,6 @@ class ConfigReader:
                 except KeyError:
                     self.cal_basins = ['1-{}'.format(self.n_basins)]
 
-        # -*****************************************************************-
-        # CONDITIONAL FOR NEW RUNOFF MODULE
-        #
-        # if new_module:
-        #     if self.calibrate:
-        #         self.set_calibrate = int(cal['set_calibrate'])
-        #         self.cal_observed = cal['observed']
-        #         self.obs_unit = self.ck_obs_unit(self.set_calibrate, cal['obs_unit'])
-        #         self.calib_out_dir = self.create_dir(cal['calib_out_dir'])
-        # -*****************************************************************-
-
     @staticmethod
     def ck_obs_unit(set_calib, unit):
         """
@@ -592,8 +494,8 @@ class ConfigReader:
         if set_calib == 0:
 
             if unit not in valid_runoff:
-                raise ValidationException(
-                    "Calibration data input units '{}' for runoff data not in required units '{}'".format(unit, valid_runoff))
+                raise ValidationException("Calibration data input units '{}' for runoff data "
+                                          "not in required units '{}'".format(unit, valid_runoff))
 
             else:
                 return unit
@@ -601,8 +503,8 @@ class ConfigReader:
         elif set_calib == 1:
 
             if unit not in valid_streamflow:
-                raise ValidationException(
-                    "Calibration data input units '{}' for streamflow data not in required units '{}'".format(unit, valid_streamflow))
+                raise ValidationException("Calibration data input units '{}' for streamflow data "
+                                          "not in required units '{}'".format(unit, valid_streamflow))
 
             else:
                 return unit
@@ -612,8 +514,8 @@ class ConfigReader:
         Check to see if the target year is within the bounds of the data.
         """
         if (yr < self.StartYear) or (yr > self.EndYear):
-            raise ValidationException(
-                "Accessible water year {0} is outside the range of years in the climate data.".format(yr))
+            raise ValidationException("Accessible water year {0} is outside the range "
+                                      "of years in the climate data.".format(yr))
         else:
             return yr
 

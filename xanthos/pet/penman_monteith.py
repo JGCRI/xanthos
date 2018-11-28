@@ -303,7 +303,7 @@ def et_veg(v, nlcs, nmonths, ncells):
     rhrc = np.where(rhrc > rtot, rtot, rhrc)
 
     apres = dz * 86400 * (v.sx * ac + rho * v.cp * (v.esx - vap) * fc / rhrc) * fwet / (
-            (v.sx + p * 0.01 * v.cp * rvc / (v.lambda1 * 0.622 * rhrc)) * v.lambda1)
+        (v.sx + p * 0.01 * v.cp * rvc / (v.lambda1 * 0.622 * rhrc)) * v.lambda1)
 
     ewet_c = np.zeros_like(lai)
     ewet_c = np.where(rh >= 70, apres, ewet_c)
@@ -311,9 +311,9 @@ def et_veg(v, nlcs, nmonths, ncells):
     rasoil = rtot * rr / (rtot + rr)
 
     ewet_soil = 86400 * dz * (v.sx * asoil + rho * v.cp * (1 - fc) * (v.esx - vap) / rasoil) * fwet / (
-            (v.sx + v.gamma * rtot / rasoil) * v.lambda1)
+        (v.sx + v.gamma * rtot / rasoil) * v.lambda1)
     esoilpot = 86400 * dz * (v.sx * asoil + rho * v.cp * (1 - fc) * (v.esx - vap) / rasoil) * (1 - fwet) / (
-            (v.sx + v.gamma * rtot / rasoil) * v.lambda1)
+        (v.sx + v.gamma * rtot / rasoil) * v.lambda1)
 
     beta = np.tile(v.c.beta, (ncells, nmonths, 1))
     beta = np.swapaxes(beta, 0, -1)
@@ -323,7 +323,7 @@ def et_veg(v, nlcs, nmonths, ncells):
 
     # ET from the plants (mm mon-1)
     trans = dz * 86400 * (v.sx * ac + rho * v.cp * (v.esx - vap) * fc / ra) * (1 - fwet) / (
-            (v.sx + v.gamma * (1 + rs / ra)) * v.lambda1)
+        (v.sx + v.gamma * (1 + rs / ra)) * v.lambda1)
     trans = np.where(fc == 0, 0, trans)
 
     eet = trans + ewet_c + esoil
@@ -353,7 +353,7 @@ def et_water(v, nmonths, emiss):
 
     ewetx = rn2x * v.dz * 0.6 / 2845
     ewety = v.dz * 86400 * (v.sx * ax + v.gamma * 6.43 * (0.5 + 0.54 * v.wind2x) * (v.esx - v.vapx)) / (
-                (v.sx + v.gamma) * v.lambda1)
+        (v.sx + v.gamma) * v.lambda1)
     ewet = np.where(v.tairx < -1, ewetx, ewety)
     ewet[ewet < 0.0] = 0.0
 
