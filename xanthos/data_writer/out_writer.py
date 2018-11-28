@@ -137,15 +137,15 @@ def SaveCSV(filename, data, settings):
     if settings.OutputInYear == 1:
         cols = ','.join(['{}'.format(i) for i in range(settings.StartYear, settings.EndYear + 1, 1)])
     else:
-        l = []
+        col_list = []
         for i in range(settings.StartYear, settings.EndYear + 1, 1):
             for m in range(1, 13):
                 if m < 10:
                     mth = '0{}'.format(m)
                 else:
                     mth = m
-                l.append('{}{}'.format(i, mth))
-        cols = ','.join(l)
+                col_list.append('{}{}'.format(i, mth))
+        cols = ','.join(col_list)
 
     # set header
     hdr = 'id,{}'.format(cols)
@@ -189,7 +189,7 @@ def SaveNetCDF(filename, data, Settings, varstr):
 
 def writecsvMap(filename, data, Settings):
     """Write .csv map."""
-    years = map(str, range(Settings.StartYear, Settings.EndYear + 1))
+    years = list(map(str, list(range(Settings.StartYear, Settings.EndYear + 1))))
     headerline = "id," + ",".join([year for year in years])
 
     with open(filename + '.csv', 'w') as outfile:

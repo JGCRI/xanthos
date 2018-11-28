@@ -71,7 +71,7 @@ def AccessibleWater(settings, ref, runoff):
         edf = settings.Env_FlowPercent * np.mean(Map_runoff, axis=1)
 
     else:
-        ValidYears = range(settings.StartYear, settings.EndYear + 1)
+        ValidYears = list(range(settings.StartYear, settings.EndYear + 1))
         hey = ValidYears.index(settings.HistEndYear)
         edf = settings.Env_FlowPercent * np.mean(Map_runoff[:, :(hey + 1)], axis=1)
 
@@ -114,8 +114,8 @@ def RollingWindowFilter(data, window, Dimension=0):
 
 def QInGCAMYears(qs, settings):
     """Create data frame with only target GCAM years."""
-    ValidYears = range(settings.StartYear, settings.EndYear + 1)
-    GCAMYears = range(settings.GCAM_StartYear, settings.GCAM_EndYear + 1, settings.GCAM_YearStep)
+    ValidYears = list(range(settings.StartYear, settings.EndYear + 1))
+    GCAMYears = list(range(settings.GCAM_StartYear, settings.GCAM_EndYear + 1, settings.GCAM_YearStep))
     q_gcam = np.zeros((qs.shape[0], len(GCAMYears)), dtype=float)
 
     for i in range(len(GCAMYears)):
@@ -138,7 +138,7 @@ def accessible_water(qtot, base, efr, res):
 
 def genGCAMOutput(filename, data, bdf, settings):
     """Create data frame containing basin_id, basin_name, and accessible water by year."""
-    years = map(str, range(settings.GCAM_StartYear, settings.GCAM_EndYear + 1, settings.GCAM_YearStep))
+    years = list(map(str, list(range(settings.GCAM_StartYear, settings.GCAM_EndYear + 1, settings.GCAM_YearStep))))
     hdr = "id,name," + ",".join([year for year in years])
 
     maxID = len(bdf)

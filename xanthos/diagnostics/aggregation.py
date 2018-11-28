@@ -44,7 +44,7 @@ def Aggregation(settings, ref, q):
             logging.info("Aggregating by GCAM Region")
             Aggregation['Region_runoff'] = Aggregation_Map(settings, ref.region_ids, ref.region_names, q,
                                                            "GCAMRegion_runoff")
-            logging.info("Country_runoff: unit is ", settings.OutputUnitStr)
+            logging.info("Country_runoff: unit is ".format(settings.OutputUnitStr))
 
     return Aggregation
 

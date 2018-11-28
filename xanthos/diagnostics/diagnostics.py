@@ -45,7 +45,7 @@ def Diagnostics(settings, Q, ref):
 
     VIC = ref.vic
 
-    VICyears = range(1971, 2001)
+    VICyears = list(range(1971, 2001))
     try:
         si = VICyears.index(settings.StartYear)
     except:

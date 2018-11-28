@@ -53,13 +53,21 @@ class Calibrate:
         self.obs_unit = obs_unit
         self.out_dir = out_dir
 
+        # Minimum temperature is optional; if not provided, the snow components
+        # of the model is effectively removed, so remove the model parameter
+        # for snow (M)
+        self.nosnow = self.tmin is None
+
         # set the bounds; if the values are exactly 0 or 1 the model returns nan
         LB = 1e-4
         UB = 1 - LB
         self.bounds = [(LB, UB), (LB, 8 - LB), (LB, UB), (LB, UB), (LB, UB)]
 
+        if self.nosnow:
+            self.bounds.pop()  # remove calibration parameter M
+
         # create arrays to hold outputs
-        self.all_pars = np.zeros((1, 5))
+        self.all_pars = np.zeros((1, len(self.bounds)))
         self.kge_vals = np.zeros(1)
 
         # get grid indices for the current basin
@@ -69,7 +77,12 @@ class Calibrate:
         # transpose data for use in the ABCD model
         self.bsn_PET = self.pet[self.basin_idx]
         self.bsn_P = self.precip[self.basin_idx]
-        self.bsn_TMIN = self.tmin[self.basin_idx]
+
+        # if no tmin provided, just ensure it is larger than the rain threshold
+        if self.nosnow:
+            self.bsn_TMIN = None
+        else:
+            self.bsn_TMIN = self.tmin[self.basin_idx]
 
         # select basin and remove extra years from observed runoff data
         self.bsn_Robs = self.obs[np.where(self.obs[:, 0] == basin_num)][:self.n_months, 1]
@@ -119,9 +132,17 @@ class Calibrate:
 def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup,
                  obs_unit, bsn_areas, basin_idx, arr_shp, routing_func=None):
     """Calculate runoff for a basin."""
+    # The ABCD model can run multiple basins simultaneously, but it initializes
+    # each basin individually. This parameter is used to map basin ids to the
+    # grid cells of the input arrays. For calibration, however, only one basin
+    # is run at a time, so we can map id 0 to all cells.
+    target_basin_ids = np.zeros(len(basin_idx[0]))
+
+    pars = pars[np.newaxis, ...]
+
     # if calibrating against observed runoff
     if set_calibrate == 0:
-        he = ABCD(pars, pet, precip, tmin, n_months, runoff_spinup, method='dist')
+        he = ABCD(pars, pet, precip, tmin, target_basin_ids, n_months, runoff_spinup, method='dist')
         he.emulate()
 
         if obs_unit == 'km3_per_mth':
@@ -134,7 +155,7 @@ def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup
 
     # if calibrating against observed streamflow
     else:
-        he = ABCD(pars, pet, precip, tmin, n_months, runoff_spinup, method='dist')
+        he = ABCD(pars, pet, precip, tmin, target_basin_ids, n_months, runoff_spinup, method='dist')
         he.emulate()
 
         # add rsim data from the basin back into a global array of zeros to be used by the router
@@ -203,10 +224,31 @@ def process_basin(basin_num, settings, data, pet, router_function=None):
     cal.calibrate_basin()
 
 
-def calibrate_all(settings, data, pet, router_function):
-    """Run calibration for ABCD model for all basins in parallel."""
-    for basin_num in range(1, settings.n_basins + 1, 1):
+def expand_str_range(str_ranges):
+    """
+    Expand a list of string ranges into full list of integers.
 
-        logging.info("\tCalibrating Basin:  {}".format(basin_num))
+    Given a list of strings of integers or hyphen-separated integer ranges,
+    expand the values to include the complete range. For example, if str_ranges
+    is ['0-2', '6', '7-9'], this function will return [0, 1, 2, 6, 7, 8, 9].
+
+    :param str_ranges:      List of strings, representing integer ranges
+    """
+    out_list = []
+    for r in str_ranges:
+        if '-' in r:
+            start, end = r.split('-')
+            out_list.extend(range(int(start), int(end) + 1))
+        else:
+            out_list.append(int(r))
+
+    return out_list
+
+
+def calibrate_all(settings, data, pet, router_function):
+    """Run calibration for ABCD model for all basins."""
+    for basin_num in expand_str_range(settings.cal_basins):
+        basin_name = data.basin_names[basin_num - 1]
+        logging.info("\tCalibrating Basin:  {} ({})".format(basin_num, basin_name))
 
         process_basin(basin_num, settings, data, pet, router_function)
