@@ -1,4 +1,6 @@
 """
+Helper functions for reading in numpy arrays.
+
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
@@ -33,8 +35,3 @@ def GetArrayTXT(filename, header_num):
 
     except IOError:
         pass
-
-
-
-
-

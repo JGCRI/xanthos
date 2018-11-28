@@ -1,7 +1,8 @@
 """
 Read in settings from configuration file *.ini.
 
-@author: Xinya Li (xinya.li@pnl.gov) and Chris Vernon (chris.vernon@pnnl.gov)
+@author: Xinya Li (xinya.li@pnl.gov), Chris R. Vernon (chris.vernon@pnnl.gov)
+@Project: Xanthos V2.0
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
@@ -14,14 +15,21 @@ from configobj import ConfigObj
 
 
 class ValidationException(Exception):
+    """Custom exception for invalid Xanthos inputs."""
+
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
 
 
 class ConfigReader:
+    """Read the Xanthos configuration .ini file."""
 
     def __init__(self, ini):
+        """
+        Load values from configuration file.
 
+        :param ini:     path to the config file
+        """
         c = ConfigObj(ini)
 
         p = c['Project']
@@ -485,9 +493,7 @@ class ConfigReader:
 
     @staticmethod
     def ck_obs_unit(set_calib, unit):
-        """
-        Checks the defined unit of the calibration data input.
-        """
+        """Check the defined unit of the calibration data input."""
         valid_runoff = ('km3_per_mth', 'mm_per_mth')
         valid_streamflow = ('m3_per_sec')
 
@@ -510,9 +516,7 @@ class ConfigReader:
                 return unit
 
     def ck_year(self, yr):
-        """
-        Check to see if the target year is within the bounds of the data.
-        """
+        """Check to see if the target year is within the bounds of the data."""
         if (yr < self.StartYear) or (yr > self.EndYear):
             raise ValidationException("Accessible water year {0} is outside the range "
                                       "of years in the climate data.".format(yr))
@@ -521,8 +525,9 @@ class ConfigReader:
 
     def custom_runoff(self, f):
         """
-        Check for custom runoff file name.  If 'none', return None; else
-        return full path to file.
+        Check for custom runoff file name.
+
+        If 'none', return None; else return full path to file.
 
         :param f:
         :return:
@@ -534,17 +539,13 @@ class ConfigReader:
 
     @staticmethod
     def create_dir(pth):
-        """
-        Check to see if the target path is exists.
-        """
+        """Check to see if the target path is exists and create directory."""
         if os.path.isdir(pth) is False:
             os.mkdir(pth)
         return pth
 
     def log_info(self):
-        """
-        Log project-level details.
-        """
+        """Log project-level details."""
         logging.info('ProjectName : {}'.format(self.ProjectName))
         logging.info('InputFolder : {}'.format(self.InputFolder))
         logging.info('OutputFolder: {}'.format(self.OutputFolder))
@@ -569,7 +570,7 @@ class ConfigReader:
 
     def update(self, args):
         """
-        Overwrite configuration options
+        Overwrite configuration options.
 
         :@param args:   Dictionary of parameters, where the key is the parameter name
         """

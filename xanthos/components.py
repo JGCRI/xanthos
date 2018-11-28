@@ -118,9 +118,7 @@ class Components:
         self.ac = None
 
     def import_core(self):
-        """
-        Import desired core modules.
-        """
+        """Import desired core modules."""
         global pet_mod
         global runoff_mod
         global routing_mod
@@ -195,13 +193,11 @@ class Components:
             pass
 
     def calculate_pet(self):
-        """
-        Calculate monthly potential evapo-transpiration.
-        """
+        """Calculate monthly potential evapo-transpiration."""
         if self.s.pet_module == 'hargreaves':
 
-            return pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data.lat_radians, self.mth_solar_dec,
-                                         self.mth_dr, self.mth_days)
+            return pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data.lat_radians,
+                                         self.mth_solar_dec, self.mth_dr, self.mth_days)
         elif self.s.pet_module == 'hs':
 
             return pet_mod.execute(self.s, self.data)
@@ -253,7 +249,9 @@ class Components:
 
     def calculate_routing(self, runoff):
         """
-        Calculate routing.  Routing takes a simulated runoff (Q) from the runoff output and
+        Calculate routing.
+
+        Routing takes a simulated runoff (Q) from the runoff output and
         previous channel storage (chs_prev) from previous channel storage.
 
         :returns:                   ChStorage     : Channel storage (m3)
@@ -310,15 +308,17 @@ class Components:
         :param num_steps:           The number of time steps to process (INT)
         :param pet:                 True if running PET, False if embedded in runoff model
         :param runoff:              True if running Runoff, False if not
-        :param runoff_step:         The time unit as a string; if None the runoff model iterates internally, else 'month'
-        :param routing_num_steps:   The number of steps for to run the routing module; different on spin-up, same as runoff
+        :param runoff_step:         The time unit as a string; if None the runoff model
+                                    iterates internally, else 'month'
+        :param routing_num_steps:   The number of steps for to run the routing module;
+                                    different on spin-up, same as runoff
                                     when running normal.  Specified in months in the config file.
         :param routing:             True if running Routing, False if not
-        :param routing_step:        The time unit as a string; if None the routing model iterates internally, else 'month'
-        :param notify:              A string that is used to add to log print that describes whether the simulation is
-                                    spin-up or regular
+        :param routing_step:        The time unit as a string; if None the routing model
+                                    iterates internally, else 'month'
+        :param notify:              A string that is used to add to log print that describes
+                                    whether the simulation is spin-up or regular
         """
-
         # default to calibration if selected
         if self.s.calibrate == 1:
             self.calibrate()
@@ -498,9 +498,7 @@ class Components:
     # -------------------------------------------------------------------
 
     def accessible_water(self):
-        """
-        Run accessible water module
-        """
+        """Run accessible water module."""
         if self.s.CalculateAccessibleWater:
             logging.info("---Start Accessible Water:")
             t0 = time.time()
@@ -510,9 +508,7 @@ class Components:
             logging.info("---Accessible Water has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def hydropower_potential(self):
-        """
-        Run hydropower potential module.
-        """
+        """Run hydropower potential module."""
         if self.s.CalculateHydropowerPotential:
             logging.info("---Start Hydropower Potential:")
             t0 = time.time()
@@ -522,9 +518,7 @@ class Components:
             logging.info("---Hydropower Potential has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def hydropower_actual(self):
-        """
-        Run hydropower actual module.
-        """
+        """Run hydropower actual module."""
         if self.s.CalculateHydropowerActual:
             logging.info("---Start Hydropower Actual:")
             t0 = time.time()
@@ -534,9 +528,7 @@ class Components:
             logging.info("---Hydropower Actual has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def diagnostics(self):
-        """
-        Run diagnostics.
-        """
+        """Run diagnostics."""
         if self.s.PerformDiagnostics:
             logging.info("---Start Diagnostics:")
             t0 = time.time()
@@ -547,7 +539,9 @@ class Components:
 
     def output_simulation(self):
         """
-        Output simulation results.  This step both converts the data to the user specified format and
+        Output simulation results.
+
+        This step converts the data to the user specified format.
         """
         logging.info("---Output simulation results:")
         t0 = time.time()
@@ -558,10 +552,8 @@ class Components:
         logging.info("---Output finished: %s seconds ---" % (time.time() - t0))
 
     def aggregate_outputs(self):
-        """
-        Aggregation by Basin, Country, and/or Region.
-        """
-        if self.s.AggregateRunoffBasin > 0 or self.s.AggregateRunoffCountry > 0 or self.s.AggregateRunoffGCAMRegion > 0:
+        """Aggregation by Basin, Country, and/or Region."""
+        if self.s.AggregateRunoffBasin or self.s.AggregateRunoffCountry or self.s.AggregateRunoffGCAMRegion:
             logging.info("---Start Aggregation:")
             t0 = time.time()
 
@@ -570,9 +562,7 @@ class Components:
             logging.info("---Aggregation has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def plots(self):
-        """
-        Create time series plots.
-        """
+        """Create time series plots."""
         if self.s.CreateTimeSeriesPlot:
             logging.info("---Creating Time Series Plots:")
             t0 = time.time()
@@ -582,9 +572,7 @@ class Components:
             logging.info("---Plots has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def calibrate(self):
-        """
-        Run calibration to generate parameters for the ABCD model
-        """
+        """Run calibration to generate parameters for the ABCD model."""
         logging.info("---Processing PET...")
         t = time.time()
 

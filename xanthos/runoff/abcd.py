@@ -17,8 +17,8 @@ from joblib import Parallel, delayed
 
 class ABCD:
     """
-    | Hydrology emulator
-    |
+    A hydrology emulator.
+
     | Reference:
     |
     | Liu, Y., Hejazi, M.A., Li, H., Zhang, X., (2017), A Hydrological Emulator for Global
@@ -139,9 +139,7 @@ class ABCD:
         self.rsim = arr
 
     def set_rain_and_snow(self, p, tmin):
-        """
-        Assign rain and snow arrays.
-        """
+        """Assign rain and snow arrays."""
         # we only need rain array if running without snow
         if self.nosnow:
             self.rain = p
@@ -172,7 +170,7 @@ class ABCD:
 
     def abcd_dist(self, i, pet, tmin):
         """
-        ABCD Model
+        Run the ABCD model calculations.
 
         @:param i       Current month
         @:param pet     Potential Evapotranspiration
@@ -230,9 +228,7 @@ class ABCD:
         self.rsim[i, :] = (awet - c_x_awet) + self.d * self.groundwater_storage[i, :]
 
     def init_arrays(self, p, tmin):
-        """
-        Initialize arrays based on spin-up or simulation run status.
-        """
+        """Initialize arrays based on spin-up or simulation run status."""
         # construct simulated runoff, actual evapotranspiration, and snowpack arrays
         self.set_rsim(p, self.inv[0])
         self.set_actual_et(p)
@@ -249,6 +245,8 @@ class ABCD:
 
     def set_vals(self):
         """
+        Set and reset initial values.
+
         Reset initial values for runoff [0], soil moisture [1], and groundwater
         storage [2] based on spin-up as the average of the last three Decembers.
         """
@@ -284,9 +282,7 @@ class ABCD:
         self.groundwater_storage0 = self.inv[2]
 
     def spinup(self):
-        """
-        Run spin-up using initial values.
-        """
+        """Run spin-up using initial values."""
         # initialize arrays for spinup
         self.init_arrays(self.precip0, self.tmin0)
 
@@ -298,9 +294,7 @@ class ABCD:
         self.set_vals()
 
     def simulate(self):
-        """
-        Run simulation using spin-up values.
-        """
+        """Run simulation using spin-up values."""
         # initialize arrays for simulation from spin-up
         self.init_arrays(self.precip, self.tmin)
 
@@ -309,9 +303,7 @@ class ABCD:
             self.abcd_dist(i, self.pet, self.tmin)
 
     def emulate(self):
-        """
-        Run hydrologic emulator.
-        """
+        """Run hydrologic emulator."""
         # run spin-up
         self.spinup()
 
@@ -364,6 +356,8 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
 
 def abcd_parallel(n_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup_steps, jobs=-1):
     """
+    Run ABCD model on basins in parallel.
+
     This model can run any number of basins at a time.  Splitting them into
     chunks and running them in parallel greatly speeds things up.
 
