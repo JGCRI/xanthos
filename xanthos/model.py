@@ -120,6 +120,7 @@ class Xanthos:
 
         else:
             logging.warning("Selected configuration {0} not supported.".format(self.config.mod_cfg))
+            results = None
 
         logging.info("End of {0}".format(self.config.ProjectName))
 
