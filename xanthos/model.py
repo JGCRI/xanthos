@@ -130,7 +130,7 @@ class Xanthos:
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-config_file', type=str, help='Full path with file name to INI configuration file.')
+    parser.add_argument('config_file', type=str, help='Full path with file name to INI configuration file.')
     args = parser.parse_args()
 
     xth = Xanthos(args.config_file)
