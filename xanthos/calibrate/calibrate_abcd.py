@@ -117,28 +117,36 @@ class Calibrate:
         self.all_pars[0, :] = pars
         self.kge_vals[0] = 1 - ed
 
+        par_names = 'abcd' + 'm' * (not self.nosnow)
+
         logging.debug("\t\tFinished calibration for basin {0} which contains "
                       "{1} grid cells.".format(self.basin_num, self.basin_idx[0].shape[0]))
         logging.debug("\t\tPopulation size:  {}".format(popsize))
-        logging.debug("\t\tParameter values (a,b,c,d,m):  {}".format(pars))
+        logging.debug("\t\tParameter values ({}):  {}".format(','.join(list(par_names)), pars))
         logging.debug("\t\tKGE:  {}".format(1 - ed))
         logging.debug("\t\tNumber of function evaluations:  {}".format(nfev))
         logging.debug("\t\tCalibration time (seconds):  {}".format(time.time() - st))
 
         np.save('{}/kge_result_basin_{}.npy'.format(self.out_dir, self.basin_num), self.kge_vals)
-        np.save('{}/abcdm_parameters_basin_{}.npy'.format(self.out_dir, self.basin_num), self.all_pars)
+        np.save('{}/{}_parameters_basin_{}.npy'.format(self.out_dir, par_names, self.basin_num), self.all_pars)
 
 
 def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup,
                  obs_unit, bsn_areas, basin_idx, arr_shp, routing_func=None):
     """Calculate runoff for a basin."""
+    ncell_in_basin = len(basin_idx[0])
+
     # The ABCD model can run multiple basins simultaneously, but it initializes
     # each basin individually. This parameter is used to map basin ids to the
     # grid cells of the input arrays. For calibration, however, only one basin
     # is run at a time, so we can map id 0 to all cells.
-    target_basin_ids = np.zeros(len(basin_idx[0]))
+    target_basin_ids = np.zeros(ncell_in_basin)
 
+    # Although the ABCD model allows unique parameters for each grid cell, this
+    # level of detail is not used. Instead, we spread the a, b, c, d, and m
+    # parameters across all cells in a basin.
     pars = pars[np.newaxis, ...]
+    pars = np.repeat(pars, ncell_in_basin, axis=0)
 
     # if calibrating against observed runoff
     if set_calibrate == 0:
