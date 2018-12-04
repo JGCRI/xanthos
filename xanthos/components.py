@@ -18,7 +18,7 @@ import xanthos.data_reader.data_load as fetch
 import xanthos.utils.general as helper
 import xanthos.utils.math as umth
 import xanthos.calibrate.calibrate_abcd as calib_mod
-from xanthos.data_writer.out_writer import OUTWriter
+from xanthos.data_writer.out_writer import OutWriter
 from xanthos.diagnostics.aggregation import Aggregation
 from xanthos.diagnostics.diagnostics import Diagnostics
 from xanthos.diagnostics.time_series import TimeSeriesPlot
@@ -546,8 +546,9 @@ class Components:
         logging.info("---Output simulation results:")
         t0 = time.time()
 
-        self.q, self.ac = OUTWriter(self.s, self.data.area, self.PET, self.AET, self.Q, self.Sav, self.ChStorage,
-                                    self.Avg_ChFlow)
+        outputs = [self.PET, self.AET, self.Q, self.Sav, self.ChStorage, self.Avg_ChFlow]
+        ow = OutWriter(self.s, self.data.area, outputs)
+        self.q, self.ac = ow.Q, ow.Avg_ChFlow
 
         logging.info("---Output finished: %s seconds ---" % (time.time() - t0))
 
