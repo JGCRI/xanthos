@@ -68,7 +68,7 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
             # PET[:, j] *= conversion
             # AET[:, j] *= conversion
             Q[:, j] *= conversion
-            SAV[:, j] *= conversion
+            # SAV[:, j] *= conversion
             # Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
 
         if Settings.OutputInYear == 1:

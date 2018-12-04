@@ -110,7 +110,7 @@ class Xanthos:
             results = mods.thornthwaite_abcd_mrtm(self.config)
 
         elif self.config.mod_cfg == 'thornthwaite_abcd_none':
-            mods.thornthwaite_abcd_none(self.config)
+            results = mods.thornthwaite_abcd_none(self.config)
 
         elif self.config.mod_cfg == 'none_gwam_mrtm':
             results = mods.none_gwam_mrtm(self.config)
