@@ -1,4 +1,6 @@
 """
+Mathematical helper functions.
+
 Created on Feb 16, 2016
 @author: lixi729
 

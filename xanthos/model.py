@@ -14,8 +14,8 @@ import argparse
 import os
 import sys
 import logging
-from data_reader.ini_reader import ConfigReader
-import configurations as mods
+from xanthos.data_reader.ini_reader import ConfigReader
+import xanthos.configurations as mods
 
 
 class Xanthos:
@@ -92,36 +92,42 @@ class Xanthos:
 
         # run selected model configuration
         if self.config.mod_cfg == 'hargreaves_gwam_mrtm':
-            mods.hargreaves_gwam_mrtm(self.config)
+            results = mods.hargreaves_gwam_mrtm(self.config)
 
         elif self.config.mod_cfg == 'hargreaves_abcd_mrtm':
-            mods.hargreaves_abcd_mrtm(self.config)
+            results = mods.hargreaves_abcd_mrtm(self.config)
 
         elif self.config.mod_cfg == 'pm_gwam_mrtm':
-            mods.pm_gwam_mrtm(self.config)
+            results = mods.pm_gwam_mrtm(self.config)
 
         elif self.config.mod_cfg == 'pm_abcd_mrtm':
-            mods.pm_abcd_mrtm(self.config)
+            results = mods.pm_abcd_mrtm(self.config)
 
         elif self.config.mod_cfg == 'hs_abcd_mrtm':
-            mods.hs_abcd_mrtm(self.config)
+            results = mods.hs_abcd_mrtm(self.config)
 
         elif self.config.mod_cfg == 'thornthwaite_abcd_mrtm':
-            mods.thornthwaite_abcd_mrtm(self.config)
+            results = mods.thornthwaite_abcd_mrtm(self.config)
 
         elif self.config.mod_cfg == 'thornthwaite_abcd_none':
             mods.thornthwaite_abcd_none(self.config)
 
         elif self.config.mod_cfg == 'none_gwam_mrtm':
-            mods.none_gwam_mrtm(self.config)
+            results = mods.none_gwam_mrtm(self.config)
 
         elif self.config.mod_cfg == 'none_abcd_mrtm':
-            mods.none_abcd_mrtm(self.config)
+            results = mods.none_abcd_mrtm(self.config)
 
         elif self.config.mod_cfg == 'none_none_mrtm':
-            mods.none_none_mrtm(self.config)
+            results = mods.none_none_mrtm(self.config)
+
+        else:
+            logging.warning("Selected configuration {0} not supported.".format(self.config.mod_cfg))
+            results = None
 
         self.cleanup()
+
+        return results
 
     def cleanup(self):
         """Close log files."""
@@ -137,7 +143,7 @@ class Xanthos:
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-config_file', type=str, help='Full path with file name to INI configuration file.')
+    parser.add_argument('config_file', type=str, help='Full path with file name to INI configuration file.')
     args = parser.parse_args()
 
     xth = Xanthos(args.config_file)

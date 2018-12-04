@@ -1,5 +1,5 @@
 """
-Hargreaves-Samani PET
+Hargreaves-Samani PET.
 
 @author   Yaling Liu
 @email:   cauliuyaling@gmail.com
@@ -18,7 +18,7 @@ import numpy as np
 def days_per_month(start_year, end_year):
     """Get days per month as list. Account for leap years."""
     l = []
-    yrs = range(start_year, end_year + 1, 1)
+    yrs = list(range(start_year, end_year + 1, 1))
 
     for yr in yrs:
 

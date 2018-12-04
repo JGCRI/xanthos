@@ -1,36 +1,37 @@
 """
+Perform diagnostics.
+
+Perform diagnostics by comparing the estimates of average total annual
+runoff (km^3/yr) of this study to other models.
+
+Estimates of average total annual runoff (km^3/yr)
+The comparison data file needs to be preprocessed.
+Dimension: (67420, 1)
+Unit: km3/year
+
+Runoff
+- VIC     The major comparison
+- WBM     Ref comparison: WBM (Fekete et al., 2000) and WBMc (Fekete et al., 2000)
+            are also used as additional comparisons (2 column csv files)
+- UNH     Ref comparison: UNH-GRDC 1986-1995
+
 Created on Jan 5, 2017
 @author: lixi729
 @Project: Xanthos V1.0
 
-
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-
-
-Perform diagnostics by comparing the estimates of average total annual runoff (km^3/yr) of this study to other models.
-
-# Estimates of average total annual runoff (km^3/yr)
-# The comparison data file needs to be preprocessed.
-# Dimension: (67420, 1)
-# Unit: km3/year
-#
-# Runoff
-# - VIC     The major comparison
-# - WBM     Ref comparison: WBM (Fekete et al., 2000) and WBMc (Fekete et al., 2000) are also used as additional comparisons (2 column csv files)
-# - UNH     Ref comparison: UNH-GRDC 1986-1995
 """
 
 import numpy as np
 import os
 import pandas as pd
-
-
 # import matplotlib.pyplot as plt
 
 
 def Diagnostics(settings, Q, ref):
+    """Aggregate and write results based on user settings."""
     area = ref.area
 
     if not settings.PerformDiagnostics:
@@ -44,7 +45,7 @@ def Diagnostics(settings, Q, ref):
 
     VIC = ref.vic
 
-    VICyears = range(1971, 2001)
+    VICyears = list(range(1971, 2001))
     try:
         si = VICyears.index(settings.StartYear)
     except:
@@ -69,7 +70,8 @@ def Diagnostics(settings, Q, ref):
     for i in range(temp2.shape[0]):
         wbmc[int(temp2[i, 0]) - 1] = temp2[i, 1]
 
-    # Only basins/countries/regions for which all four models have values are used to estimate the RMSE values
+    # Only basins/countries/regions for which all four models have
+    # values are used to estimate the RMSE values
 
     # Basin Based
     if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 1:
@@ -118,10 +120,10 @@ def Write_Diagnostics(settings, ref, scale, q, qq, wbm, wbmc, UNH, plotname):
     ScaleNames = np.insert(names, 0, 'Global')
 
     fname = "Diagnostics_Runoff_{}_Scale_km3peryr".format(scale)
-    writecsvDiagnostics(os.path.join(settings.OutputFolder, fname), qs, plotname, ScaleNames)
-    outputname = os.path.join(settings.OutputFolder, fname)
+    output_name = os.path.join(settings.OutputFolder, fname)
+    writecsvDiagnostics(output_name, qs, plotname, ScaleNames)
 
-    # Plot_Diagnostics(qs[1:, :], outputname, scale, plotname)
+    # Plot_Diagnostics(qs[1:, :], output_name, scale, plotname)
 
     for i in range(qs.shape[0]):
         if not (qs[i, 0] > 0 and qs[i, 1] > 0 and qs[i, 2] > 0 and qs[i, 3] > 0 and qs[i, 4] > 0):
@@ -139,7 +141,6 @@ def writecsvDiagnostics(filename, data, ComparisonDataName, Names):
         filename = filename + '.csv'
 
     df.to_csv(filename, index=False)
-
 
 #    with open(filename + '.csv', 'w') as outfile:
 #        np.savetxt(outfile, newdata, delimiter=',', header=headerline, fmt='%s')

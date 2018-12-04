@@ -1,16 +1,44 @@
+"""
+Calibrate the ABCD model.
+
+@author   Caleb Braun, Chris R. Vernon
+@email:   caleb.braun@pnnl.gov
+@Project: Xanthos 2.0
+
+License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
+
+Copyright (c) 2018, Battelle Memorial Institute
+"""
+
 import numpy as np
 import logging
 import time
 from scipy.optimize import differential_evolution
-
 from xanthos.runoff.abcd import ABCD
 
 
 class Calibrate:
+    """Calibrate the ABCD runoff module."""
 
-    def __init__(self, basin_num, basin_ids, basin_areas, precip, pet, obs, tmin, n_months, runoff_spinup,
-                 set_calibrate, obs_unit, out_dir, router_func=None):
+    def __init__(self, basin_num, basin_ids, basin_areas, precip, pet, obs,
+                 tmin, n_months, runoff_spinup, set_calibrate, obs_unit,
+                 out_dir, router_func=None):
+        """Initialize calibration data and parameters.
 
+        :param basin_num:      basin number as an integer
+        :param basin_ids:      an array of basin ids per grid cell that are associated with the basin
+        :param basin_areas:    an array of basin areas per grid cell that are associated with the basin
+        :param precip:         precipitation in mm/month
+        :param pet:            PET in mm/month
+        :param obs:            Observed runoff in mm/month
+        :param tmin:           minimum temperature in degrees C
+        :param n_months:       the number of months in processing period
+        :param runoff_spinup:  the number of months from time 0 in the input data to use as spin up
+        :param set_calibrate:  0 to calibrate to observed runoff, 1 to calibrate to observed streamflow
+        :param obs_unit:       the unit of the input data
+        :param out_dir:        calibrated parameters output directory
+        :param router_func:    objective function for calibrating routing
+        """
         self.basin_num = basin_num
         self.basin_ids = basin_ids
         self.basin_areas = basin_areas
@@ -59,34 +87,29 @@ class Calibrate:
         # select basin and remove extra years from observed runoff data
         self.bsn_Robs = self.obs[np.where(self.obs[:, 0] == basin_num)][:self.n_months, 1]
 
-    def calibrate_basin(self, popsize=15):
-        """
-        This function is to calibrate the distributed ABCD model against the target global hydrological model (GHM) to
-        obtain optimized parameters (a, b, c, d, m).
+    def calibrate_basin(self, popsize=15, polish=False):
+        """Calibrate a basin.
 
-        :param basin_num:               basin number as an integer
-        :param basin_ids:               an array of basin ids per grid cell that are associated with the basin
-        :param basin_areas:             an array of basin areas per grid cell that are associated with the basin
-        :param P:                       precipitation in mm/month
-        :param PET:                     PET in mm/month
-        :param Robs:                    Observed runoff in mm/month
-        :param TMIN:                    minimum temperature in degrees C
-        :param n_months:                the number of months in processing period
-        :param spinup_steps:            the number of months from time 0 in the input data to use as spin up
-        :param popsize:                 default 15; the number of random samples you are taking in each generation.  Higher
-                                        should be better but takes longer
-        :param polish:                  default False; if True, uses the LBGFT at end to see if result can be improved
-        :return:
+        This function is to calibrate the distributed ABCD model against
+        the target global hydrological model (GHM) to obtain optimized
+        parameters (a, b, c, d, m).
+
+        :param popsize:     default 15; the number of random samples you are taking in each generation.  Higher
+                            should be better but takes longer
+        :param polish:      default False; if True, uses the LBGFT at end to see if result can be improved
         """
         # record how long each basin takes to solve
         st = time.time()
-        pars = differential_evolution(objective_kge,
-                    bounds=self.bounds,
-                    args=(basin_runoff, self.set_calibrate, self.bsn_PET, self.bsn_P, self.bsn_TMIN, self.n_months,
-                          self.runoff_spinup, self.obs_unit, self.bsn_areas, self.bsn_Robs, self.basin_idx, self.precip.shape,
-                          self.router_func),
-                    popsize=popsize,
-                    polish=False)
+        pars = differential_evolution(
+            objective_kge,
+            bounds=self.bounds,
+            args=(basin_runoff, self.set_calibrate, self.bsn_PET, self.bsn_P,
+                  self.bsn_TMIN, self.n_months, self.runoff_spinup,
+                  self.obs_unit, self.bsn_areas, self.bsn_Robs, self.basin_idx,
+                  self.precip.shape, self.router_func),
+            popsize=popsize,
+            polish=polish
+        )
 
         # extract calibrated parameters for A,B,C,D,M; KGE values
         pars, ed, nfev = pars.x, pars.fun, pars.nfev
@@ -94,27 +117,40 @@ class Calibrate:
         self.all_pars[0, :] = pars
         self.kge_vals[0] = 1 - ed
 
-        logging.debug("\t\tFinished calibration for basin {0} which contains {1} grid cells.".format(self.basin_num, self.basin_idx[0].shape[0]))
+        par_names = 'abcd' + 'm' * (not self.nosnow)
+
+        logging.debug("\t\tFinished calibration for basin {0} which contains "
+                      "{1} grid cells.".format(self.basin_num, self.basin_idx[0].shape[0]))
         logging.debug("\t\tPopulation size:  {}".format(popsize))
-        logging.debug("\t\tParameter values (a,b,c,d,m):  {}".format(pars))
+        logging.debug("\t\tParameter values ({}):  {}".format(','.join(list(par_names)), pars))
         logging.debug("\t\tKGE:  {}".format(1 - ed))
         logging.debug("\t\tNumber of function evaluations:  {}".format(nfev))
         logging.debug("\t\tCalibration time (seconds):  {}".format(time.time() - st))
 
         np.save('{}/kge_result_basin_{}.npy'.format(self.out_dir, self.basin_num), self.kge_vals)
-        np.save('{}/abcdm_parameters_basin_{}.npy'.format(self.out_dir, self.basin_num), self.all_pars)
+        np.save('{}/{}_parameters_basin_{}.npy'.format(self.out_dir, par_names, self.basin_num), self.all_pars)
 
 
-def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup, obs_unit, bsn_areas, basin_idx, arr_shp, routing_func=None):
-    """
-    Calc
+def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup,
+                 obs_unit, bsn_areas, basin_idx, arr_shp, routing_func=None):
+    """Calculate runoff for a basin."""
+    ncell_in_basin = len(basin_idx[0])
 
-    :return:
-    """
+    # The ABCD model can run multiple basins simultaneously, but it initializes
+    # each basin individually. This parameter is used to map basin ids to the
+    # grid cells of the input arrays. For calibration, however, only one basin
+    # is run at a time, so we can map id 0 to all cells.
+    target_basin_ids = np.zeros(ncell_in_basin)
+
+    # Although the ABCD model allows unique parameters for each grid cell, this
+    # level of detail is not used. Instead, we spread the a, b, c, d, and m
+    # parameters across all cells in a basin.
+    pars = pars[np.newaxis, ...]
+    pars = np.repeat(pars, ncell_in_basin, axis=0)
 
     # if calibrating against observed runoff
     if set_calibrate == 0:
-        he = ABCD(pars, pet, precip, tmin, n_months, runoff_spinup, method='dist')
+        he = ABCD(pars, pet, precip, tmin, target_basin_ids, n_months, runoff_spinup, method='dist')
         he.emulate()
 
         if obs_unit == 'km3_per_mth':
@@ -127,7 +163,7 @@ def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup
 
     # if calibrating against observed streamflow
     else:
-        he = ABCD(pars, pet, precip, tmin, n_months, runoff_spinup, method='dist')
+        he = ABCD(pars, pet, precip, tmin, target_basin_ids, n_months, runoff_spinup, method='dist')
         he.emulate()
 
         # add rsim data from the basin back into a global array of zeros to be used by the router
@@ -136,7 +172,10 @@ def basin_runoff(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup
 
         return routing_func(rsim)
 
-def objective_kge(pars, model_func, set_calibrate, pet, precip, tmin, n_months, runoff_spinup, obs_unit, bsn_areas, bsn_Robs, basin_idx, arr_shp, routing_func=None):
+
+def objective_kge(pars, model_func, set_calibrate, pet, precip, tmin, n_months,
+                  runoff_spinup, obs_unit, bsn_areas, bsn_Robs, basin_idx,
+                  arr_shp, routing_func=None):
     """
     Kling-Gupta efficiency between simulated and observed.
 
@@ -150,7 +189,8 @@ def objective_kge(pars, model_func, set_calibrate, pet, precip, tmin, n_months, 
     :param spinup_steps:        number of months from time 0 of the input data to use as spin up
     :return efficiency:         KGE
     """
-    modelled = model_func(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup, obs_unit, bsn_areas, basin_idx, arr_shp, routing_func)
+    modelled = model_func(pars, set_calibrate, pet, precip, tmin, n_months, runoff_spinup,
+                          obs_unit, bsn_areas, basin_idx, arr_shp, routing_func)
     observed = bsn_Robs
 
     # Calculate KGE
@@ -174,10 +214,7 @@ def objective_kge(pars, model_func, set_calibrate, pet, precip, tmin, n_months, 
 
 
 def process_basin(basin_num, settings, data, pet, router_function=None):
-    """
-    Process single basin.
-    """
-
+    """Process single basin."""
     cal = Calibrate(basin_num=basin_num,
                     set_calibrate=settings.set_calibrate,
                     obs_unit=settings.obs_unit,
@@ -195,12 +232,31 @@ def process_basin(basin_num, settings, data, pet, router_function=None):
     cal.calibrate_basin()
 
 
-def calibrate_all(settings, data, pet, router_function):
+def expand_str_range(str_ranges):
     """
-    Run calibration for ABCD model for all basins in parallel.
-    """
-    for basin_num in range(settings.cal_basin_start, settings.cal_basin_end + 1, 1):
+    Expand a list of string ranges into full list of integers.
 
-        logging.info("\tCalibrating Basin:  {}".format(basin_num))
+    Given a list of strings of integers or hyphen-separated integer ranges,
+    expand the values to include the complete range. For example, if str_ranges
+    is ['0-2', '6', '7-9'], this function will return [0, 1, 2, 6, 7, 8, 9].
+
+    :param str_ranges:      List of strings, representing integer ranges
+    """
+    out_list = []
+    for r in str_ranges:
+        if '-' in r:
+            start, end = r.split('-')
+            out_list.extend(range(int(start), int(end) + 1))
+        else:
+            out_list.append(int(r))
+
+    return out_list
+
+
+def calibrate_all(settings, data, pet, router_function):
+    """Run calibration for ABCD model for all basins."""
+    for basin_num in expand_str_range(settings.cal_basins):
+        basin_name = data.basin_names[basin_num - 1]
+        logging.info("\tCalibrating Basin:  {} ({})".format(basin_num, basin_name))
 
         process_basin(basin_num, settings, data, pet, router_function)

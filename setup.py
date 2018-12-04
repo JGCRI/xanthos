@@ -7,7 +7,6 @@ License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
 """
-import sys
 
 
 class VersionError(Exception):
@@ -15,15 +14,11 @@ class VersionError(Exception):
         Exception.__init__(self, *args, **kwargs)
 
 
-py_version = '{0}.{1}'.format(sys.version_info.major, sys.version_info.minor)
-if py_version != '2.7':
-    raise VersionError("Xanthos must be ran using Python 2.7.  You are using Python {0}.".format(py_version))
-
-
 try:
     from setuptools import setup, find_packages
 except ImportError:
-    raise("Must have setuptools installed to run setup.py. Please install and try again.")
+    print("Must have setuptools installed to run setup.py. Please install and try again.")
+    raise
 
 
 def readme():
@@ -38,7 +33,7 @@ def get_requirements():
 
 setup(
     name='xanthos',
-    version='2.0.0',
+    version='2.1.0',
     packages=find_packages(),
     url='https://github.com/jgcri/xanthos',
     license='BSD 2-Clause',
@@ -46,5 +41,6 @@ setup(
     author_email='chris.vernon@pnnl.gov; xinya.li@pnl.gov',
     description='A global hydrologic model for GCAM',
     long_description=readme(),
-    install_requires=get_requirements()
+    install_requires=get_requirements(),
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4',
 )
