@@ -36,28 +36,28 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
 
     if Settings.OutputInYear == 1:
         ny = int(Settings.EndYear - Settings.StartYear + 1)
-        # pet = np.zeros((Settings.ncell, ny), dtype=float)
-        # aet = np.zeros((Settings.ncell, ny), dtype=float)
+        pet = np.zeros((Settings.ncell, ny), dtype=float)
+        aet = np.zeros((Settings.ncell, ny), dtype=float)
         q = np.zeros((Settings.ncell, ny), dtype=float)
-        # sav = np.zeros((Settings.ncell, ny), dtype=float)
-        # ac = np.zeros((Settings.ncell, ny), dtype=float)
+        sav = np.zeros((Settings.ncell, ny), dtype=float)
+        ac = np.zeros((Settings.ncell, ny), dtype=float)
 
         for i in range(ny):
-            # pet[:, i] = np.sum(PET[:, i * 12:(i + 1) * 12], axis=1)
-            # aet[:, i] = np.sum(AET[:, i * 12:(i + 1) * 12], axis=1)
+            pet[:, i] = np.sum(PET[:, i * 12:(i + 1) * 12], axis=1)
+            aet[:, i] = np.sum(AET[:, i * 12:(i + 1) * 12], axis=1)
             q[:, i] = np.sum(Q[:, i * 12:(i + 1) * 12], axis=1)
-            # sav[:, i] = np.sum(SAV[:, i * 12:(i + 1) * 12], axis=1)
-            # ac[:, i] = np.sum(Avg_ChFlow[:, i * 12:(i + 1) * 12], axis=1)
+            sav[:, i] = np.sum(SAV[:, i * 12:(i + 1) * 12], axis=1)
+            ac[:, i] = np.sum(Avg_ChFlow[:, i * 12:(i + 1) * 12], axis=1)
 
-        del PET, AET, Q, SAV  # , Avg_ChFlow
+        del PET, AET, Q, SAV, Avg_ChFlow
 
-        # PET = np.copy(pet)
-        # AET = np.copy(aet)
+        PET = np.copy(pet)
+        AET = np.copy(aet)
         Q = np.copy(q)
-        # SAV = np.copy(sav)
-        # Avg_ChFlow = np.copy(ac)
+        SAV = np.copy(sav)
+        Avg_ChFlow = np.copy(ac)
 
-        # del pet, aet, q, sav, ac
+        del pet, aet, q, sav, ac
 
         logging.debug("Output data annually")
 
@@ -65,11 +65,11 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
         conversion = area / 1e6  # mm -> km3
 
         for j in range(Q.shape[1]):
-            # PET[:, j] *= conversion
-            # AET[:, j] *= conversion
+            PET[:, j] *= conversion
+            AET[:, j] *= conversion
             Q[:, j] *= conversion
-            # SAV[:, j] *= conversion
-            # Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
+            SAV[:, j] *= conversion
+            Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
 
         if Settings.OutputInYear == 1:
             Settings.OutputUnitStr = "km3peryear"
@@ -85,11 +85,11 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
 
     logging.debug("Output dimension is {}".format(Q.shape))
 
-    # SaveData(Settings, 'pet', PET, flag)
-    # SaveData(Settings, 'aet', AET, flag)
+    SaveData(Settings, 'pet', PET, flag)
+    SaveData(Settings, 'aet', AET, flag)
     SaveData(Settings, 'q', Q, flag)
-    # SaveData(Settings, 'soilmoisture', SAV, flag)
-    # SaveData(Settings, 'avgchflow', Avg_ChFlow, flag)
+    SaveData(Settings, 'soilmoisture', SAV, flag)
+    SaveData(Settings, 'avgchflow', Avg_ChFlow, flag)
 
     if Settings.HistFlag == 'True':
         logging.info("The following two files are saved as initialization data sets (latest month) for future mode:")
