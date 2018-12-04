@@ -122,7 +122,7 @@ class LoadData:
             self.elev = np.nan_to_num(np.load(self.s.pm_elev))
 
         elif self.s.pet_module == 'thornthwaite':
-            self.tair = self.load_to_array(self.s.trn_tas, 'trn_tas', nan_to_num=True)
+            self.tair = self.load_to_array(self.s.trn_tas, 'trn_tas', nan_to_num=True, warn_nan=True)
 
         elif self.s.pet_module == 'none':
             # load user supplied PET data
@@ -135,7 +135,7 @@ class LoadData:
 
         elif self.s.runoff_module == 'abcd':
             # monthly precipitation mm/mth
-            self.precip = self.load_to_array(self.s.PrecipitationFile, varname=self.s.PrecipVarName)
+            self.precip = self.load_to_array(self.s.PrecipitationFile, varname=self.s.PrecipVarName, warn_nan=True)
 
             # monthly average minimum daily temperature degree C (optional)
             if self.s.TempMinFile is None:
@@ -143,7 +143,8 @@ class LoadData:
                     'TempMinFile variable not found for the ABCD runoff module; Snowmelt will not be accounted for.')
                 self.tmin = None
             else:
-                self.tmin = self.load_to_array(self.s.TempMinFile, varname=self.s.TempMinVarName, nan_to_num=True)
+                self.tmin = self.load_to_array(self.s.TempMinFile, varname=self.s.TempMinVarName,
+                                               nan_to_num=True, warn_nan=True)
 
         # Area value for each land grid cell: 67420 x 1, convert from ha to km2
         self.area = self.load_data(self.s.Area) * 0.01
@@ -279,7 +280,7 @@ class LoadData:
             region = f.read().split('\n')
             return np.array([i.split(',') for i in region])[:, 0]
 
-    def load_to_array(self, f, varname=None, neg_to_zero=False, nan_to_num=False):
+    def load_to_array(self, f, varname=None, neg_to_zero=False, nan_to_num=False, warn_nan=False):
         """
         Load and validate monthly input data.
 
@@ -301,14 +302,17 @@ class LoadData:
         else:
             arr = self.load_data(f, 0, varname)
 
+        if varname is None:
+            varname = os.path.splitext(os.path.basename(f))[0]
+
         if neg_to_zero:
             arr[np.where(arr < 0)] = 0
 
+        if warn_nan and np.any(np.isnan(arr)):
+            logging.warning("NaNs found in input file {}".format(varname))
+
         if nan_to_num:
             arr = np.nan_to_num(arr)
-
-        if varname is None:
-            varname = os.path.splitext(os.path.basename(f))[0]
 
         return self.validate(arr, text=varname)
 
@@ -328,11 +332,6 @@ class LoadData:
 
         if not arr.shape[1] == self.s.nmonths:
             raise ValidationException(err.format(text, self.s.nmonths, arr.shape[1]))
-
-        # TODO: Can this be removed? self.s.nmonths is divisible by 12 by default,
-        #       so the above check would also check this as well, right?
-        if not arr.shape[1] % 12 == 0:
-            raise ValidationException("Error: Number of months in data can not be converted into integral years.")
 
         return arr
 
