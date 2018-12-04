@@ -64,12 +64,12 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
     if Settings.OutputUnit == 1:  # convert the original unit mm/month to new unit km3/month
         conversion = area / 1e6  # mm -> km3
 
-        for j in range(PET.shape[1]):
+        for j in range(Q.shape[1]):
             PET[:, j] *= conversion
             AET[:, j] *= conversion
             Q[:, j] *= conversion
             SAV[:, j] *= conversion
-            # Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
+            Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
 
         if Settings.OutputInYear == 1:
             Settings.OutputUnitStr = "km3peryear"
@@ -83,7 +83,7 @@ def OUTWriter(Settings, area, PET, AET, Q, SAV, ChStorage, Avg_ChFlow):
 
     logging.debug("Unit is {}".format(Settings.OutputUnitStr))
 
-    logging.debug("Output dimension is {}".format(PET.shape))
+    logging.debug("Output dimension is {}".format(Q.shape))
 
     SaveData(Settings, 'pet', PET, flag)
     SaveData(Settings, 'aet', AET, flag)
