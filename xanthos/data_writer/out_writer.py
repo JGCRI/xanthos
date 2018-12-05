@@ -174,7 +174,14 @@ class OutWriter:
 
     def save_parquet(self, filename, df, varstr):
         """Write pandas DataFrame to parquet file."""
+        from fastparquet import write as fp_write
+
         filename += ".parquet"
+
+        year_range = range(self.start_year, self.end_year + 1, 1)
+        df.columns = [str(y) for y in year_range]
+
+        fp_write(filename, df, has_nulls=False)
 
     def agg_to_year(self, df):
         """Aggregate an array(cells x months) to(cells x years)."""
