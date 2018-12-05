@@ -69,7 +69,8 @@ class OutWriter:
             conversion = grid_areas / 1e6  # mm -> km3
             self.outputs = [df.multiply(conversion, axis=0) for df in self.outputs]
 
-        map(self.write_data, self.output_names, self.outputs)
+        for var, data in zip(self.output_names, self.outputs):
+            self.write_data(var, data)
 
         # if settings.OutputInYear:
         #     ny = int(settings.EndYear - settings.StartYear + 1)
@@ -135,7 +136,7 @@ class OutWriter:
         elif self.out_format == FORMAT_CSV:
             self.save_csv(filename, data)
         elif self.out_format == FORMAT_MAT:
-            self.save_mat(filename, data)
+            self.save_mat(filename, data, var)
         elif self.out_format == FORMAT_PARQUET:
             # not yet implemented
             pass
