@@ -541,14 +541,22 @@ class Components:
         """
         Output simulation results.
 
-        This step converts the data to the user specified format.
+        This step converts the data to the user-specified format.
         """
         logging.info("---Output simulation results:")
         t0 = time.time()
 
-        outputs = [self.PET, self.AET, self.Q, self.Sav, self.ChStorage, self.Avg_ChFlow]
-        ow = OutWriter(self.s, self.data.area, outputs)
-        self.q, self.ac = ow.Q, ow.Avg_ChFlow
+        all_outputs = {
+            'pet': self.PET,
+            'aet': self.AET,
+            'q': self.Q,
+            'soilmoisture': self.Sav,
+            'avgchflow': self.Avg_ChFlow
+        }
+
+        OW = OutWriter(self.s, self.data.area, all_outputs)
+        self.q = OW.outputs[OW.output_names.index('q')]
+        self.ac = OW.outputs[OW.output_names.index('avgchflow')]
 
         logging.info("---Output finished: %s seconds ---" % (time.time() - t0))
 
@@ -558,7 +566,8 @@ class Components:
             logging.info("---Start Aggregation:")
             t0 = time.time()
 
-            Aggregation(self.s, self.data, self.q)
+            # TODO: update to work with pandas
+            # Aggregation(self.s, self.data, self.q)
 
             logging.info("---Aggregation has finished successfully: %s seconds ------" % (time.time() - t0))
 
