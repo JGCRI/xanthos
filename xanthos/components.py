@@ -555,8 +555,15 @@ class Components:
         }
 
         OW = OutWriter(self.s, self.data.area, all_outputs)
-        self.q = OW.outputs[OW.output_names.index('q')]
-        self.ac = OW.outputs[OW.output_names.index('avgchflow')]
+        try:
+            self.q = OW.outputs[OW.output_names.index('q')]
+        except ValueError:
+            self.q = self.Q
+
+        try:
+            self.ac = OW.outputs[OW.output_names.index('avgchflow')]
+        except ValueError:
+            self.ac = self.Avg_ChFlow
 
         logging.info("---Output finished: %s seconds ---" % (time.time() - t0))
 

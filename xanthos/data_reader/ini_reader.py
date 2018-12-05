@@ -132,6 +132,9 @@ class ConfigReader:
 
         self.nmonths = (self.EndYear - self.StartYear + 1) * 12
         self.OutputUnitStr = '{}per{}'.format(('mm', 'km3')[self.OutputUnit], ('month', 'year')[self.OutputInYear])
+        # Better to use this instead with force_list():
+        #   http://www.voidspace.org.uk/python/articles/configobj.shtml#validation
+        self.output_vars = [self.output_vars] if not isinstance(self.output_vars, list) else self.output_vars
 
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------

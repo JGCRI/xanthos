@@ -37,9 +37,17 @@ class OutWriter:
     """Write out main Xanthos output variables."""
 
     def __init__(self, settings, grid_areas, all_outputs):
+        """
+        Format and call appropriate writer for output variables.
+
+        :param settings:        parsed settings from input configuration file
+        :param grid_areas:      map of basin indices to grid cell area, in km2 (numpy array)
+        :param all_outputs:     dictionary mapping all output names (strings) to their values (numpy arrays)
+        """
         self.output_names = settings.output_vars
         self.outputs = [pd.DataFrame(all_outputs[out_name]) for out_name in self.output_names]
 
+        # output options
         self.proj_name = settings.ProjectName
         self.out_folder = settings.OutputFolder
         self.out_format = settings.OutputFormat
@@ -50,16 +58,16 @@ class OutWriter:
         self.start_year = settings.StartYear
         self.end_year = settings.EndYear
 
+        # parameter checks
+        if self.out_format not in [FORMAT_NETCDF, FORMAT_CSV, FORMAT_MAT, FORMAT_PARQUET]:
+            logging.warning("Output format {} is invalid; writing output as .csv".format(self.out_format))
+            self.out_format = FORMAT_CSV
+
         try:
             SO = self.outputs[self.output_names.index('soilmoisture')]
             self.SO = np.copy(SO)
         except ValueError:
             self.SO = None
-
-        if self.out_format == FORMAT_NETCDF:
-            logging.debug("Save in NetCDF files")
-        else:
-            logging.debug("Save in CSV files")
 
         if self.output_in_year:
             logging.debug("Outputting data annually")
@@ -69,57 +77,11 @@ class OutWriter:
             conversion = grid_areas / 1e6  # mm -> km3
             self.outputs = [df.multiply(conversion, axis=0) for df in self.outputs]
 
-        for var, data in zip(self.output_names, self.outputs):
-            self.write_data(var, data)
-
-        # if settings.OutputInYear:
-        #     ny = int(settings.EndYear - settings.StartYear + 1)
-        #     pet = np.zeros((settings.ncell, ny), dtype=float)
-        #     aet = np.zeros((settings.ncell, ny), dtype=float)
-        #     q = np.zeros((settings.ncell, ny), dtype=float)
-        #     sav = np.zeros((settings.ncell, ny), dtype=float)
-        #     ac = np.zeros((settings.ncell, ny), dtype=float)
-        #
-        #     for i in range(ny):
-        #         pet[:, i] = np.sum(self.PET[:, i * 12:(i + 1) * 12], axis=1)
-        #         aet[:, i] = np.sum(self.AET[:, i * 12:(i + 1) * 12], axis=1)
-        #         q[:, i] = np.sum(self.Q[:, i * 12:(i + 1) * 12], axis=1)
-        #         sav[:, i] = np.sum(self.SAV[:, i * 12:(i + 1) * 12], axis=1)
-        #         ac[:, i] = np.sum(self.Avg_ChFlow[:, i * 12:(i + 1) * 12], axis=1)
-        #
-        #     PET = np.copy(pet)
-        #     AET = np.copy(aet)
-        #     Q = np.copy(q)
-        #     SAV = np.copy(sav)
-        #     Avg_ChFlow = np.copy(ac)
-
-        # if settings.OutputUnit == UNIT_KM3_MTH:  # convert the original unit mm/month to new unit km3/month
-        #     conversion = self.grid_areas / 1e6  # mm -> km3
-        #
-        #     for j in range(Q.shape[1]):
-        #         PET[:, j] *= conversion
-        #         AET[:, j] *= conversion
-        #         Q[:, j] *= conversion
-        #         SAV[:, j] *= conversion
-        #         Avg_ChFlow[:, j] = Avg_ChFlow[:, j] * conversion
-        #
         logging.debug("Unit is {}".format(settings.OutputUnitStr))
-
         logging.debug("Output dimension is {}".format(self.outputs[0].shape))
 
-        # self.write_data(settings, 'pet', PET, self.out_format)
-        # self.write_data(settings, 'aet', AET, self.out_format)
-        # self.write_data(settings, 'q', Q, self.out_format)
-        # self.write_data(settings, 'soilmoisture', SAV, self.out_format)
-        # self.write_data(settings, 'avgchflow', Avg_ChFlow, self.out_format)
-
-        # if settings.HistFlag == 'True':
-        #     logging.info("The following two files are saved as initialization data sets (latest month) for future mode:")
-        #     logging.info("ChStorage: monthly output, unit is m^3, dimension is {}".format(self.ChStorage.shape))
-        #     settings.OutputNameStr = self.ChStorageNameStr
-        #
-        #     logging.info("Soil column moisture: monthly output, unit is mm/month, dimension is {}".format(SO.shape))
-        #     settings.OutputNameStr = self.ChStorageNameStr
+        for var, data in zip(self.output_names, self.outputs):
+            self.write_data(var, data)
 
     def write_data(self, var, data):
         """Save output data as a NetCDF or .csv, .mat, or parquet file."""
@@ -133,25 +95,29 @@ class OutWriter:
 
         if self.out_format == FORMAT_NETCDF:
             self.save_netcdf(filename, data, var)
+
         elif self.out_format == FORMAT_CSV:
             self.save_csv(filename, data)
+
         elif self.out_format == FORMAT_MAT:
             self.save_mat(filename, data, var)
+
         elif self.out_format == FORMAT_PARQUET:
-            # not yet implemented
-            pass
+            self.save_parquet(filename, data, var)
 
     def save_mat(self, filename, data, varstr):
-        """Save output data in the .mat format."""
-        filename = filename + ".mat"
+        """Write output data in the .mat format."""
+        filename += ".mat"
+
         spio.savemat(filename, {varstr: data})
 
     def save_csv(self, filename, df):
-        """Write numpy array as a csv."""
-        # add in index as basin or grid cell number
-        df.insert(loc=0, column='id', value=df.index.copy()+1)
-
+        """Write pandas DataFrame as a .csv file."""
         filename += ".csv"
+
+        # add in index as basin or grid cell number
+        df.insert(loc=0, column='id', value=df.index.copy() + 1)
+
         year_range = range(self.start_year, self.end_year + 1, 1)
 
         if self.output_in_year:
@@ -179,7 +145,8 @@ class OutWriter:
 
     def save_netcdf(self, filename, data, varstr):
         """Write numpy array as a NetCDF."""
-        filename = filename + ".nc"
+        filename += ".nc"
+
         # open
         datagrp = spio.netcdf.netcdf_file(filename, 'w')
         (nrows, ncols) = data.shape
@@ -205,6 +172,10 @@ class OutWriter:
         # close
         datagrp.close()
 
+    def save_parquet(self, filename, df, varstr):
+        """Write pandas DataFrame to parquet file."""
+        filename += ".parquet"
+
     def agg_to_year(self, df):
-        """Aggregate an array (cells x months) to (cells x years)."""
+        """Aggregate an array(cells x months) to(cells x years)."""
         return df.groupby(np.arange(len(df.columns)) // NMONTHS, axis=1).sum()
