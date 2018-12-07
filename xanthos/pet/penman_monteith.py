@@ -1,3 +1,4 @@
+from __future__ import division
 """
 Calculate Monthly PET using the Penman Monteith Method.
 
@@ -11,16 +12,6 @@ Copyright (c) 2017, Battelle Memorial Institute
 import logging
 import calendar
 import numpy as np
-import sys
-
-
-class VersionError(Exception):
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
-
-if sys.version_info[0] > 2:
-    raise VersionError("The Penman-Monteith PET model must be ran using Python 2.  You are using Python 3.")
 
 
 class SetData:
