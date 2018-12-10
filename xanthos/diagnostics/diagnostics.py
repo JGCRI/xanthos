@@ -32,31 +32,23 @@ import pandas as pd
 
 def Diagnostics(settings, Q, ref):
     """Aggregate and write results based on user settings."""
-    area = ref.area
-
     if not settings.PerformDiagnostics:
         return
 
+    # The name to use for plotting and comparison data output
+    REF_DATA_NAME = 'VIC_1971-2000'
+
+    area = ref.area
+
     # Diagnostics requested, so prepare the data
-    ny = int(settings.EndYear - settings.StartYear + 1)
+    nyear = int(settings.EndYear - settings.StartYear + 1)
 
     # convert the original unit mm/month to new unit km3/year
-    q = np.sum(Q[:, :], axis=1) / ny * area / 1e6
+    q = np.sum(Q[:, :], axis=1) / nyear * area / 1e6
 
     VIC = ref.vic
 
-    VICyears = list(range(1971, 2001))
-    try:
-        si = VICyears.index(settings.StartYear)
-    except:
-        si = 0
-    try:
-        ei = VICyears.index(settings.EndYear) + 1
-    except:
-        ei = 30
-
-    qq = np.sum(VIC[:, si:ei], axis=1) / (ei - si)
-    plotname = 'VIC_' + str(VICyears[si]) + '-' + str(VICyears[ei - 1])
+    qq = np.mean(VIC, axis=1)
 
     UNH = ref.unh
 
@@ -75,20 +67,20 @@ def Diagnostics(settings, Q, ref):
 
     # Basin Based
     if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 1:
-        Write_Diagnostics(settings, ref, 'Basin', q, qq, wbm, wbmc, UNH, plotname)
+        Write_Diagnostics(settings, ref, 'Basin', q, qq, wbm, wbmc, UNH, REF_DATA_NAME)
 
     # Country Based
     if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 2:
-        Write_Diagnostics(settings, ref, 'Country', q, qq, wbm, wbmc, UNH, plotname)
+        Write_Diagnostics(settings, ref, 'Country', q, qq, wbm, wbmc, UNH, REF_DATA_NAME)
 
     # Region Based
     if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 3:
-        Write_Diagnostics(settings, ref, 'Region', q, qq, wbm, wbmc, UNH, plotname)
+        Write_Diagnostics(settings, ref, 'Region', q, qq, wbm, wbmc, UNH, REF_DATA_NAME)
 
 
-def Aggregation_Diagnostics(settings, Map, runoff):
-    NB = max(Map)
-    Map_runoff = np.zeros((NB,), dtype=float)
+def Aggregation_Diagnostics(settings, id_map, runoff):
+    nregions = len(np.unique(id_map))
+    Map_runoff = np.zeros((nregions,), dtype=float)
 
     for index in range(0, settings.ncell):
         if not np.isnan(runoff[index]) and Map[index] > 0:
@@ -99,51 +91,47 @@ def Aggregation_Diagnostics(settings, Map, runoff):
 
 def Write_Diagnostics(settings, ref, scale, q, qq, wbm, wbmc, UNH, plotname):
     if scale == 'Region':
-        ids = ref.region_ids
-        names = ref.region_names
+        id_map = ref.region_ids
+        name_map = ref.region_names
     elif scale == 'Basin':
-        ids = ref.basin_ids
-        names = ref.basin_names
+        id_map = ref.basin_ids
+        name_map = ref.basin_names
     elif scale == 'Country':
-        ids = ref.country_ids
-        names = ref.country_names
+        id_map = ref.country_ids
+        name_map = ref.country_names
     else:
         raise ValueError("Scale for diagnostics must be Region, Basin, or Country")
 
-    qs = np.zeros((max(ids), 5), dtype=float)
-    qs[:, 0] = Aggregation_Diagnostics(settings, ids, q)
-    qs[:, 1] = Aggregation_Diagnostics(settings, ids, qq)
-    qs[:, 2] = Aggregation_Diagnostics(settings, ids, wbm)
-    qs[:, 3] = Aggregation_Diagnostics(settings, ids, wbmc)
-    qs[:, 4] = Aggregation_Diagnostics(settings, ids, UNH)
-    qs = np.insert(qs, 0, np.sum(qs, axis=0), axis=0)  # add global
-    ScaleNames = np.insert(names, 0, 'Global')
+    runoff_df = pd.DataFrame({
+        'xanthos': q,
+        plotname: qq,
+        'WBM': wbm,
+        'WBMc': wbmc,
+        'UNH_1986-1995': UNH
+    })
 
-    fname = "Diagnostics_Runoff_{}_Scale_km3peryr".format(scale)
-    output_name = os.path.join(settings.OutputFolder, fname)
-    writecsvDiagnostics(output_name, qs, plotname, ScaleNames)
+    # Aggregate all grid cells using the id map
+    runoff_df['id'] = id_map
+    agg_df = runoff_df.groupby('id', as_index=False).sum()
+
+    # Map on the region/basin/country names, keeping all names even where there are no values
+    names_df = pd.DataFrame(name_map, columns=['name'])
+    agg_df = names_df.merge(agg_df, 'left', left_index=True, right_on='id')
+    agg_df.set_index('id', inplace=True)
+
+    # Add global total as top row
+    agg_df.loc[-1, 'name'] = 'Global'
+    agg_df.loc[-1, 1:] = agg_df.sum(numeric_only=True)
+    agg_df.index = agg_df.index + 1
+    agg_df = agg_df.sort_index()
+
+    file_name = "Diagnostics_Runoff_{}_Scale_km3peryr.csv".format(scale)
+    output_name = os.path.join(settings.OutputFolder, file_name)
+
+    # Write out as .csv, replacing nan values with zero
+    agg_df.to_csv(output_name, na_rep=0, index=False)
 
     # Plot_Diagnostics(qs[1:, :], output_name, scale, plotname)
-
-    for i in range(qs.shape[0]):
-        if not (qs[i, 0] > 0 and qs[i, 1] > 0 and qs[i, 2] > 0 and qs[i, 3] > 0 and qs[i, 4] > 0):
-            qs[i, :] = 0
-
-
-def writecsvDiagnostics(filename, data, ComparisonDataName, Names):
-    hdr = "name,xanthos," + ComparisonDataName + ",WBM,WBMc,UNH_1986-1995"
-    newdata = np.insert(data.astype(str), 0, Names, axis=1)
-
-    df = pd.DataFrame(newdata)
-    df.columns = hdr.split(',')
-
-    if filename[-4:] != '.csv':
-        filename = filename + '.csv'
-
-    df.to_csv(filename, index=False)
-
-#    with open(filename + '.csv', 'w') as outfile:
-#        np.savetxt(outfile, newdata, delimiter=',', header=headerline, fmt='%s')
 
 
 def Plot_Diagnostics(data, outputname, titlestr, ComparisonDataName):
