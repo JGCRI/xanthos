@@ -1,27 +1,14 @@
 """
-Perform diagnostics.
-
-Perform diagnostics by comparing the estimates of average total annual
-runoff (km^3/yr) of this study to other models.
-
-Estimates of average total annual runoff (km^3/yr)
-The comparison data file needs to be preprocessed.
-Dimension: (67420, 1)
-Unit: km3/year
-
-Runoff
-- VIC     The major comparison
-- WBM     Ref comparison: WBM (Fekete et al., 2000) and WBMc (Fekete et al., 2000)
-            are also used as additional comparisons (2 column csv files)
-- UNH     Ref comparison: UNH-GRDC 1986-1995
+Module to create diagnostic files and charts.
 
 Created on Jan 5, 2017
-@author: lixi729
-@Project: Xanthos V1.0
+Modified on Dec 10, 2018
+@authors: lixi729, Caleb Braun
+@Project: Xanthos V2.2
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
-Copyright (c) 2017, Battelle Memorial Institute
+Copyright (c) 2018, Battelle Memorial Institute
 """
 
 import numpy as np
@@ -30,124 +17,139 @@ import pandas as pd
 # import matplotlib.pyplot as plt
 
 
-def Diagnostics(settings, Q, ref):
-    """Aggregate and write results based on user settings."""
-    if not settings.PerformDiagnostics:
-        return
+class Diagnostics:
+    """
+    Perform diagnostics by comparing the estimates of average total annual
+    runoff (km^3/yr) of xanthos to other models.
 
-    # The name to use for plotting and comparison data output
-    REF_DATA_NAME = 'VIC_1971-2000'
+    Estimates of average total annual runoff (km^3/yr)
+    The comparison data file needs to be preprocessed.
+    Dimension: (67420, 1)
+    Unit: km3/year
 
-    area = ref.area
+    Runoff
+    - VIC     The major comparison
+    - WBM     Ref comparison: WBM (Fekete et al., 2000) and WBMc (Fekete et al., 2000)
+              are also used as additional comparisons (2 column csv files)
+    - UNH     Ref comparison: UNH-GRDC 1986-1995
+    """
+    def __init__(self, settings, xanthos_q, ref):
+        """
+        Aggregate and write results based on user settings.
 
-    # Diagnostics requested, so prepare the data
-    nyear = int(settings.EndYear - settings.StartYear + 1)
+        :param settings:        parsed settings from input configuration file
+        :param xanthos_q:       runoff from a xanthos run
+        :param ref:             parsed reference data
+        """
+        if not settings.PerformDiagnostics:
+            return
 
-    # convert the original unit mm/month to new unit km3/year
-    q = np.sum(Q[:, :], axis=1) / nyear * area / 1e6
+        # The name to use for plotting and comparison data output
+        self.REF_DATA_NAME = 'VIC_1971-2000'
 
-    VIC = ref.vic
+        self.output_folder = settings.OutputFolder
 
-    qq = np.mean(VIC, axis=1)
+        area = ref.area
 
-    UNH = ref.unh
+        # Diagnostics requested, so prepare the data
+        nyear = int(settings.EndYear - settings.StartYear + 1)
 
-    temp1 = ref.wbmd
-    temp2 = ref.wbmc
-    wbm = np.zeros((settings.ncell), dtype=float)
-    wbmc = np.zeros((settings.ncell), dtype=float)
-    for i in range(temp1.shape[0]):
-        wbm[int(temp1[i, 0]) - 1] = temp1[i, 1]
+        # convert the original unit mm/month to new unit km3/year
+        q = np.sum(xanthos_q[:, :], axis=1) / nyear * area / 1e6
 
-    for i in range(temp2.shape[0]):
-        wbmc[int(temp2[i, 0]) - 1] = temp2[i, 1]
+        VIC = ref.vic
 
-    # Only basins/countries/regions for which all four models have
-    # values are used to estimate the RMSE values
+        qq = np.mean(VIC, axis=1)
 
-    # Basin Based
-    if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 1:
-        Write_Diagnostics(settings, ref, 'Basin', q, qq, wbm, wbmc, UNH, REF_DATA_NAME)
+        UNH = ref.unh
 
-    # Country Based
-    if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 2:
-        Write_Diagnostics(settings, ref, 'Country', q, qq, wbm, wbmc, UNH, REF_DATA_NAME)
+        temp1 = ref.wbmd
+        temp2 = ref.wbmc
+        wbm = np.zeros((settings.ncell), dtype=float)
+        wbmc = np.zeros((settings.ncell), dtype=float)
+        for i in range(temp1.shape[0]):
+            wbm[int(temp1[i, 0]) - 1] = temp1[i, 1]
 
-    # Region Based
-    if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 3:
-        Write_Diagnostics(settings, ref, 'Region', q, qq, wbm, wbmc, UNH, REF_DATA_NAME)
+        for i in range(temp2.shape[0]):
+            wbmc[int(temp2[i, 0]) - 1] = temp2[i, 1]
 
+        # Only basins/countries/regions for which all four models have
+        # values are used to estimate the RMSE values
 
-def Aggregation_Diagnostics(settings, id_map, runoff):
-    nregions = len(np.unique(id_map))
-    Map_runoff = np.zeros((nregions,), dtype=float)
+        # Basin Based
+        if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 1:
+            self.write_diagnostics('Basin', ref.basin_ids, ref.basin_names, q, qq, wbm, wbmc, UNH)
 
-    for index in range(0, settings.ncell):
-        if not np.isnan(runoff[index]) and Map[index] > 0:
-            Map_runoff[Map[index] - 1] += runoff[index]
+        # Country Based
+        if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 2:
+            self.write_diagnostics('Country', ref.country_ids, ref.country_names, q, qq, wbm, wbmc, UNH)
 
-    return Map_runoff
+        # Region Based
+        if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 3:
+            self.write_diagnostics('Region', ref.region_ids, ref.region_names, q, qq, wbm, wbmc, UNH)
 
+    def write_diagnostics(self, scale, id_map, name_map, q, qq, wbm, wbmc, UNH):
+        """
+        Combine reference data sets to write out diagnostic files.
 
-def Write_Diagnostics(settings, ref, scale, q, qq, wbm, wbmc, UNH, plotname):
-    if scale == 'Region':
-        id_map = ref.region_ids
-        name_map = ref.region_names
-    elif scale == 'Basin':
-        id_map = ref.basin_ids
-        name_map = ref.basin_names
-    elif scale == 'Country':
-        id_map = ref.country_ids
-        name_map = ref.country_names
-    else:
-        raise ValueError("Scale for diagnostics must be Region, Basin, or Country")
+        :param scale:       level of aggregation for diagnostics, one of 'Basin', 'Country', or 'Region'
+        :param id_map:      map of grid cells to basin/country/region ids
+        :param name_map:    map of aggregation region ids to names
+        :param q:           xanthos runoff
+        :param qq:          reference runoff
+        :param wbm:         WBM runoff
+        :param wbmc:        WBMc runoff
+        :param UNH:         UNH runoff (1986-1995)
+        """
+        if scale not in ['Basin', 'Country', 'Region']:
+            raise ValueError("Scale for diagnostics must be Region, Basin, or Country")
 
-    runoff_df = pd.DataFrame({
-        'xanthos': q,
-        plotname: qq,
-        'WBM': wbm,
-        'WBMc': wbmc,
-        'UNH_1986-1995': UNH
-    })
+        runoff_df = pd.DataFrame({
+            'xanthos': q,
+            self.REF_DATA_NAME: qq,
+            'WBM': wbm,
+            'WBMc': wbmc,
+            'UNH_1986-1995': UNH
+        })
 
-    # Aggregate all grid cells using the id map
-    runoff_df['id'] = id_map
-    agg_df = runoff_df.groupby('id', as_index=False).sum()
+        # Aggregate all grid cells using the id map
+        runoff_df['id'] = id_map
+        agg_df = runoff_df.groupby('id', as_index=False).sum()
 
-    # Map on the region/basin/country names, keeping all names even where there are no values
-    names_df = pd.DataFrame(name_map, columns=['name'])
-    agg_df = names_df.merge(agg_df, 'left', left_index=True, right_on='id')
-    agg_df.set_index('id', inplace=True)
+        # Map on the region/basin/country names, keeping all names even where there are no values
+        names_df = pd.DataFrame({'name': name_map})
+        agg_df = names_df.merge(agg_df, 'left', left_index=True, right_on='id')
+        agg_df.set_index('id', inplace=True)
 
-    # Add global total as top row
-    agg_df.loc[-1, 'name'] = 'Global'
-    agg_df.loc[-1, 1:] = agg_df.sum(numeric_only=True)
-    agg_df.index = agg_df.index + 1
-    agg_df = agg_df.sort_index()
+        # Add global total as top row
+        agg_df.loc[-1, 'name'] = 'Global'
+        agg_df.loc[-1, 1:] = agg_df.sum(numeric_only=True)
+        agg_df.index = agg_df.index + 1
+        agg_df = agg_df.sort_index()
 
-    file_name = "Diagnostics_Runoff_{}_Scale_km3peryr.csv".format(scale)
-    output_name = os.path.join(settings.OutputFolder, file_name)
+        file_name = 'Diagnostics_Runoff_{}_Scale_km3peryr'.format(scale)
+        output_name = os.path.join(self.output_folder, file_name)
 
-    # Write out as .csv, replacing nan values with zero
-    agg_df.to_csv(output_name, na_rep=0, index=False)
+        # Write out as .csv, replacing nan values with zero
+        agg_df.to_csv(output_name + '.csv', na_rep=0, index=False)
 
-    # Plot_Diagnostics(qs[1:, :], output_name, scale, plotname)
+        # self.plot_diagnostics(qs[1:, :], output_name, scale)
 
-
-def Plot_Diagnostics(data, outputname, titlestr, ComparisonDataName):
-    fig = plt.figure()
-    ax = plt.gca()
-    ax.loglog([0.01, 100000], [0.01, 100000], 'grey')
-    ax.scatter(data[:, 0], data[:, 1], c='black', alpha=0.5, edgecolors='none', label=ComparisonDataName)
-    ax.scatter(data[:, 0], data[:, 2], c='Red', alpha=0.5, edgecolors='none', label='WBM')
-    ax.scatter(data[:, 0], data[:, 3], c='Blue', alpha=0.5, edgecolors='none', label='WBMc')
-    ax.scatter(data[:, 0], data[:, 4], c='green', alpha=0.5, edgecolors='none', label='UNH/GRDC_1986-1995')
-    ax.set_yscale('log')
-    ax.set_xscale('log')
-    ax.axis([0.01, 1e5, 0.01, 1e5])
-    ax.legend(loc='lower right', bbox_to_anchor=(1, 0), fontsize=10)
-    plt.title('Hydro Model Diagnostics at ' + titlestr + ' Scale', fontsize=12, fontweight='bold')
-    plt.xlabel(r'This Study Estimated Averaged Annual Runoff ($km^3$/yr)', fontsize=12)
-    plt.ylabel(r'Averaged Annual Runoff ($km^3$/yr)', fontsize=12)
-    fig.savefig(outputname + '.png', dpi=300)
-    plt.close(fig)
+    def plot_diagnostics(self, data, outputname, titlestr):
+        """Plot diagnostics."""
+        fig = plt.figure()
+        ax = plt.gca()
+        ax.loglog([0.01, 100000], [0.01, 100000], 'grey')
+        ax.scatter(data[:, 0], data[:, 1], c='black', alpha=0.5, edgecolors='none', label=self.REF_DATA_NAME)
+        ax.scatter(data[:, 0], data[:, 2], c='Red', alpha=0.5, edgecolors='none', label='WBM')
+        ax.scatter(data[:, 0], data[:, 3], c='Blue', alpha=0.5, edgecolors='none', label='WBMc')
+        ax.scatter(data[:, 0], data[:, 4], c='green', alpha=0.5, edgecolors='none', label='UNH/GRDC_1986-1995')
+        ax.set_yscale('log')
+        ax.set_xscale('log')
+        ax.axis([0.01, 1e5, 0.01, 1e5])
+        ax.legend(loc='lower right', bbox_to_anchor=(1, 0), fontsize=10)
+        plt.title('Hydro Model Diagnostics at ' + titlestr + ' Scale', fontsize=12, fontweight='bold')
+        plt.xlabel(r'This Study Estimated Averaged Annual Runoff ($km^3$/yr)', fontsize=12)
+        plt.ylabel(r'Averaged Annual Runoff ($km^3$/yr)', fontsize=12)
+        fig.savefig(outputname + '.png', dpi=300)
+        plt.close(fig)
