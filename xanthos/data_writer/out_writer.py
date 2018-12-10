@@ -47,16 +47,23 @@ class OutWriter:
         self.output_names = settings.output_vars
         self.outputs = [pd.DataFrame(all_outputs[out_name]) for out_name in self.output_names]
 
+        # array for converting basin values from mm to km3
+        self.conversion_mm_km3 = grid_areas / 1e6
+
         # output options
         self.proj_name = settings.ProjectName
         self.out_folder = settings.OutputFolder
         self.out_format = settings.OutputFormat
+        self.out_unit = settings.OutputUnit
         self.out_unit_str = settings.OutputUnitStr
         self.output_in_year = settings.OutputInYear
         self.ChStorageNameStr = settings.OutputNameStr
 
-        self.start_year = settings.StartYear
-        self.end_year = settings.EndYear
+        year_range = range(settings.StartYear, settings.EndYear + 1)
+        if self.output_in_year:
+            self.time_steps = [str(y) for y in year_range]
+        else:
+            self.time_steps = ['{}{:02}'.format(y, mth) for y in year_range for mth in range(1, NMONTHS + 1)]
 
         # parameter checks
         if self.out_format not in [FORMAT_NETCDF, FORMAT_CSV, FORMAT_MAT, FORMAT_PARQUET]:
@@ -64,42 +71,74 @@ class OutWriter:
             self.out_format = FORMAT_CSV
 
         try:
-            SO = self.outputs[self.output_names.index('soilmoisture')]
+            SO = self.get('soilmoisture')
             self.SO = np.copy(SO)
         except ValueError:
             self.SO = None
+
+    def get(self, varstr):
+        """Get an output variable from its name."""
+        return self.outputs[self.output_names.index(varstr)]
+
+
+    def write(self):
 
         if self.output_in_year:
             logging.debug("Outputting data annually")
             self.outputs = [self.agg_to_year(df) for df in self.outputs]
 
-        if settings.OutputUnit == UNIT_KM3_MTH:
-            conversion = grid_areas / 1e6  # mm -> km3
-            self.outputs = [df.multiply(conversion, axis=0) for df in self.outputs]
+        if self.out_unit == UNIT_KM3_MTH:
+            self.outputs = [df.multiply(self.conversion_mm_km3, axis=0) for df in self.outputs]
 
-        logging.debug("Unit is {}".format(settings.OutputUnitStr))
+        logging.debug("Unit is {}".format(self.out_unit_str))
         logging.debug("Output dimension is {}".format(self.outputs[0].shape))
 
         for var, data in zip(self.output_names, self.outputs):
-            self.write_data(var, data)
+            if var == 'avgchflow':
+                unit = 'm3persec'
+            else:
+                unit = self.out_unit_str
 
-    def write_data(self, var, data):
+            filename = '{}_{}_{}'.format(var, unit, self.proj_name)
+            filename = os.path.join(self.out_folder, filename)
+
+            self.write_data(filename, var, data, col_names=self.time_steps)
+
+    def write_aggregates(self, ref, df, basin, country, region):
+        filename = '{}_{}_{}'.format('{}', self.out_unit_str, self.proj_name)
+        filepath = os.path.join(self.out_folder, filename)
+
+        if basin:
+            logging.info("Aggregating by Basin")
+            varstr = 'Basin_runoff'
+            bsn_agg = self.agg_spatial(df, ref.basin_ids, ref.basin_names)
+            self.write_data(filepath.format(varstr), varstr, bsn_agg)
+
+        if country:
+            logging.info("Aggregating by Country")
+            varstr = 'Country_runoff'
+            ctry_agg = self.agg_spatial(df, ref.country_ids, ref.country_names)
+            self.write_data(filepath.format(varstr), varstr, ctry_agg)
+
+        if region:
+            logging.info("Aggregating by GCAM Region")
+            varstr = 'GCAMRegion_runoff'
+            rgn_agg = self.agg_spatial(df, ref.region_ids, ref.region_names)
+            self.write_data(filepath.format(varstr), varstr, rgn_agg)
+
+        logging.info("Aggregated unit is {}".format(self.out_unit_str))
+
+    def write_data(self, filename, var, data, col_names=None):
         """Save output data as a NetCDF or .csv, .mat, or parquet file."""
-        if var == 'avgchflow':
-            unit = 'm3persec'
-        else:
-            unit = self.out_unit_str
-
-        filename = '{}_{}_{}'.format(var, unit, '_'.join(self.proj_name.split(' ')))
-        filename = os.path.join(self.out_folder, filename)
-
         if self.out_format == FORMAT_NETCDF:
             self.save_netcdf(filename, data, var)
 
         elif self.out_format == FORMAT_CSV:
-            self.save_csv(filename, data)
+            filename += ".csv"
+            self.save_csv(filename, data, col_names)
 
         elif self.out_format == FORMAT_MAT:
+            filename += ".mat"
             self.save_mat(filename, data, var)
 
         elif self.out_format == FORMAT_PARQUET:
@@ -107,39 +146,19 @@ class OutWriter:
 
     def save_mat(self, filename, data, varstr):
         """Write output data in the .mat format."""
-        filename += ".mat"
-
         spio.savemat(filename, {varstr: data})
 
-    def save_csv(self, filename, df):
+    def save_csv(self, filename, df, col_names=None, add_id=True):
         """Write pandas DataFrame as a .csv file."""
-        filename += ".csv"
+        if col_names is None:
+            col_names = list(df.columns)
 
-        # add in index as basin or grid cell number
-        df.insert(loc=0, column='id', value=df.index.copy() + 1)
+        if add_id:
+            # add in index as region, basin, country or grid cell id number
+            df.insert(loc=0, column='id', value=df.index.copy() + 1)
+            col_names = ['id'] + col_names
 
-        year_range = range(self.start_year, self.end_year + 1, 1)
-
-        if self.output_in_year:
-            cols = ','.join(['{}'.format(i) for i in year_range])
-        else:
-            col_list = []
-            for i in year_range:
-                for m in range(1, NMONTHS + 1):
-                    if m < 10:
-                        mth = '0{}'.format(m)
-                    else:
-                        mth = m
-                    col_list.append('{}{}'.format(i, mth))
-            cols = ','.join(col_list)
-
-        # set header
-        hdr = 'id,{}'.format(cols)
-
-        try:
-            df.columns = hdr.split(',')
-        except ValueError:
-            raise
+        df.columns = col_names
 
         df.to_csv(filename, index=False)
 
@@ -178,11 +197,25 @@ class OutWriter:
 
         filename += ".parquet"
 
-        year_range = range(self.start_year, self.end_year + 1, 1)
-        df.columns = [str(y) for y in year_range]
+        df.columns = self.time_steps
 
         fp_write(filename, df, has_nulls=False)
 
     def agg_to_year(self, df):
-        """Aggregate an array(cells x months) to(cells x years)."""
+        """Aggregate a DataFrame (cells x months) to (cells x years)."""
         return df.groupby(np.arange(len(df.columns)) // NMONTHS, axis=1).sum()
+
+    def agg_spatial(self, df, id_map, name_map):
+        """Aggregate a DataFrame (cells x time) to (geographic area x time)."""
+        # Convert to DataFrame for joining
+        names_df = pd.DataFrame({'name': name_map})
+
+        # Aggregate all grid cells using the id map
+        df['id'] = id_map
+        agg_df = df.groupby('id', as_index=False).sum()
+
+        # Map on the region/basin/country names, keeping all names even where there are no values
+        agg_df = names_df.merge(agg_df, 'left', left_index=True, right_on='id')
+        agg_df.set_index('id', inplace=True)
+
+        return agg_df
