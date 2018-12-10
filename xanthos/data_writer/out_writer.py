@@ -1,19 +1,15 @@
 """
 Module to write output data files.
 
-Output settings:
-OutputFormat:  = 0(default, netcdf file); = 1(csv file)
-OutputUnit:    = 0(default, mm); = 1(km3)
-OutputInYear:  = 0(default, per month); = 1(per year, the output will combine 12-month results into annual result)
-
 Created on Oct 11, 2016
+Modified on Dec 10, 2018
 
-@author: lixi729
-@Project: Xanthos V1.0
+@author: lixi729, Caleb Braun
+@Project: Xanthos V2.2
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
-Copyright (c) 2017, Battelle Memorial Institute
+Copyright (c) 2018, Battelle Memorial Institute
 """
 
 import os
@@ -34,11 +30,18 @@ NMONTHS = 12
 
 
 class OutWriter:
-    """Write out main Xanthos output variables."""
+    """
+    Write out main Xanthos output variables.
+
+    Output settings:
+        OutputFormat  =  0 (default, netcdf file); 1 (csv file); 2 (mat file); 3 (parquet file)
+        OutputUnit    =  0 (default, mm); 1 (km3)
+        OutputInYear  =  0 (default, per month); 1 (per year, 12-month results combine into annual result)
+    """
 
     def __init__(self, settings, grid_areas, all_outputs):
         """
-        Format and call appropriate writer for output variables.
+        Initialize necessary settings for writing output variables.
 
         :param settings:        parsed settings from input configuration file
         :param grid_areas:      map of basin indices to grid cell area, in km2 (numpy array)
@@ -70,19 +73,12 @@ class OutWriter:
             logging.warning("Output format {} is invalid; writing output as .csv".format(self.out_format))
             self.out_format = FORMAT_CSV
 
-        try:
-            SO = self.get('soilmoisture')
-            self.SO = np.copy(SO)
-        except ValueError:
-            self.SO = None
-
     def get(self, varstr):
         """Get an output variable from its name."""
         return self.outputs[self.output_names.index(varstr)]
 
-
     def write(self):
-
+        """Format and call appropriate writer for output variables."""
         if self.output_in_year:
             logging.debug("Outputting data annually")
             self.outputs = [self.agg_to_year(df) for df in self.outputs]
@@ -105,6 +101,15 @@ class OutWriter:
             self.write_data(filename, var, data, col_names=self.time_steps)
 
     def write_aggregates(self, ref, df, basin, country, region):
+        """
+        Spatially aggregate runoff and write out results.
+
+        :param ref:         parsed reference data
+        :param df:          pandas DataFrame of values to aggregate and output
+        :param basin:       bool - aggregate by basin?
+        :param country:     bool - aggregate by country?
+        :param region:      bool - aggregate by GCAM region?
+        """
         filename = '{}_{}_{}'.format('{}', self.out_unit_str, self.proj_name)
         filepath = os.path.join(self.out_folder, filename)
 

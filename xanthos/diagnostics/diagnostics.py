@@ -3,7 +3,8 @@ Module to create diagnostic files and charts.
 
 Created on Jan 5, 2017
 Modified on Dec 10, 2018
-@authors: lixi729, Caleb Braun
+
+@author: lixi729, Caleb Braun
 @Project: Xanthos V2.2
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
