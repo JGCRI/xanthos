@@ -111,7 +111,7 @@ class OutWriter:
         if basin:
             logging.info("Aggregating by Basin")
             varstr = 'Basin_runoff'
-            bsn_agg = self.agg_spatial(df, ref.basin_ids, ref.basin_names)
+            bsn_agg = self.agg_spatial(df, ref.basin_ids, ref.basin_names, inc_name_idx=True)
             self.write_data(filepath.format(varstr), varstr, bsn_agg)
 
         if country:
@@ -123,7 +123,7 @@ class OutWriter:
         if region:
             logging.info("Aggregating by GCAM Region")
             varstr = 'GCAMRegion_runoff'
-            rgn_agg = self.agg_spatial(df, ref.region_ids, ref.region_names)
+            rgn_agg = self.agg_spatial(df, ref.region_ids, ref.region_names, inc_name_idx=True)
             self.write_data(filepath.format(varstr), varstr, rgn_agg)
 
         logging.info("Aggregated unit is {}".format(self.out_unit_str))
@@ -153,14 +153,14 @@ class OutWriter:
         if col_names is None:
             col_names = list(df.columns)
 
-        if add_id:
-            # add in index as region, basin, country or grid cell id number
-            df.insert(loc=0, column='id', value=df.index.copy() + 1)
-            col_names = ['id'] + col_names
-
         df.columns = col_names
 
-        df.to_csv(filename, index=False)
+        if add_id:
+            # add in index as region, basin, country or grid cell id number
+            df.to_csv(filename, index_label='id')
+        else:
+            df.to_csv(filename, index=False)
+
 
     def save_netcdf(self, filename, data, varstr):
         """Write numpy array as a NetCDF."""
@@ -205,10 +205,12 @@ class OutWriter:
         """Aggregate a DataFrame (cells x months) to (cells x years)."""
         return df.groupby(np.arange(len(df.columns)) // NMONTHS, axis=1).sum()
 
-    def agg_spatial(self, df, id_map, name_map):
+    def agg_spatial(self, df, id_map, name_map, inc_name_idx=False):
         """Aggregate a DataFrame (cells x time) to (geographic area x time)."""
         # Convert to DataFrame for joining
         names_df = pd.DataFrame({'name': name_map})
+        if inc_name_idx:
+            names_df.index = names_df.index + 1
 
         # Aggregate all grid cells using the id map
         df['id'] = id_map
