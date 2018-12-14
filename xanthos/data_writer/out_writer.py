@@ -147,7 +147,7 @@ class OutWriter:
             self.save_mat(filename, data, var)
 
         elif self.out_format == FORMAT_PARQUET:
-            self.save_parquet(filename, data, var)
+            self.save_parquet(filename, data, col_names)
 
     def save_mat(self, filename, data, varstr):
         """Write output data in the .mat format."""
@@ -165,7 +165,6 @@ class OutWriter:
             df.to_csv(filename, index_label='id')
         else:
             df.to_csv(filename, index=False)
-
 
     def save_netcdf(self, filename, data, varstr):
         """Write numpy array as a NetCDF."""
@@ -196,15 +195,17 @@ class OutWriter:
         # close
         datagrp.close()
 
-    def save_parquet(self, filename, df, varstr):
+    def save_parquet(self, filename, df, col_names=None):
         """Write pandas DataFrame to parquet file."""
         from fastparquet import write as fp_write
 
         filename += ".parquet"
+        append = os.path.exists(filename)
 
-        df.columns = self.time_steps
+        if col_names is not None:
+            df.columns = col_names
 
-        fp_write(filename, df, has_nulls=False)
+        fp_write(filename, df, row_group_offsets=len(df), file_scheme='hive', has_nulls=False, append=append)
 
     def agg_to_year(self, df):
         """Aggregate a DataFrame (cells x months) to (cells x years)."""
