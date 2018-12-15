@@ -113,11 +113,10 @@ class ConfigReader:
         self.ngridrow = 360
         self.ngridcol = 720
         self.n_basins = int(p['n_basins'])
-        self.OutputUnitStr = None
         self.HistFlag = p['HistFlag']
         self.StartYear = int(p['StartYear'])
         self.EndYear = int(p['EndYear'])
-        self.nmonths = (self.EndYear - self.StartYear + 1) * 12
+        self.output_vars = p['output_vars']
         self.OutputFormat = int(p['OutputFormat'])
         self.OutputUnit = int(p['OutputUnit'])
         self.OutputInYear = int(p['OutputInYear'])
@@ -130,6 +129,12 @@ class ConfigReader:
         self.CalculateHydropowerPotential = int(p['CalculateHydropowerPotential'])
         self.CalculateHydropowerActual = int(p['CalculateHydropowerActual'])
         self.calibrate = int(p['Calibrate'])
+
+        self.nmonths = (self.EndYear - self.StartYear + 1) * 12
+        self.OutputUnitStr = '{}per{}'.format(('mm', 'km3')[self.OutputUnit], ('month', 'year')[self.OutputInYear])
+        # Better to use this instead with force_list():
+        #   http://www.voidspace.org.uk/python/articles/configobj.shtml#validation
+        self.output_vars = [self.output_vars] if not isinstance(self.output_vars, list) else self.output_vars
 
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------

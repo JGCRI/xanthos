@@ -68,9 +68,6 @@ def hargreaves_gwam_mrtm(config, spinup=True):
     # output simulation data
     c.output_simulation()
 
-    # aggregate outputs
-    c.aggregate_outputs()
-
     # create time series plots
     c.plots()
 
@@ -120,9 +117,6 @@ def hargreaves_abcd_mrtm(config):
 
     # output simulation data
     c.output_simulation()
-
-    # aggregate outputs
-    c.aggregate_outputs()
 
     # create time series plots
     c.plots()
@@ -174,9 +168,6 @@ def thornthwaite_abcd_mrtm(config):
     # output simulation data
     c.output_simulation()
 
-    # aggregate outputs
-    c.aggregate_outputs()
-
     # create time series plots
     c.plots()
 
@@ -225,9 +216,6 @@ def thornthwaite_abcd_none(config):
     # output simulation data
     c.output_simulation()
 
-    # aggregate outputs
-    c.aggregate_outputs()
-
     # create time series plots
     c.plots()
 
@@ -269,9 +257,6 @@ def none_none_mrtm(config):
 
     # output simulation data
     c.output_simulation()
-
-    # aggregate outputs
-    c.aggregate_outputs()
 
     return c
 
@@ -318,9 +303,6 @@ def none_abcd_mrtm(config):
 
     # output simulation data
     c.output_simulation()
-
-    # aggregate outputs
-    c.aggregate_outputs()
 
     # create time series plots
     c.plots()
@@ -371,9 +353,6 @@ def pm_abcd_mrtm(config):
     # output simulation data
     c.output_simulation()
 
-    # aggregate outputs
-    c.aggregate_outputs()
-
     # create time series plots
     c.plots()
 
@@ -422,9 +401,6 @@ def hs_abcd_mrtm(config):
 
     # output simulation data
     c.output_simulation()
-
-    # aggregate outputs
-    c.aggregate_outputs()
 
     # create time series plots
     c.plots()

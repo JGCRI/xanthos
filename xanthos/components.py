@@ -18,8 +18,7 @@ import xanthos.data_reader.data_load as fetch
 import xanthos.utils.general as helper
 import xanthos.utils.math as umth
 import xanthos.calibrate.calibrate_abcd as calib_mod
-from xanthos.data_writer.out_writer import OUTWriter
-from xanthos.diagnostics.aggregation import Aggregation
+from xanthos.data_writer.out_writer import OutWriter
 from xanthos.diagnostics.diagnostics import Diagnostics
 from xanthos.diagnostics.time_series import TimeSeriesPlot
 from xanthos.accessible.accessible import AccessibleWater
@@ -541,25 +540,36 @@ class Components:
         """
         Output simulation results.
 
-        This step converts the data to the user specified format.
+        This step converts the data to a pandas DataFrame in the user-specified format.
         """
         logging.info("---Output simulation results:")
         t0 = time.time()
 
-        self.q, self.ac = OUTWriter(self.s, self.data.area, self.PET, self.AET, self.Q, self.Sav, self.ChStorage,
-                                    self.Avg_ChFlow)
+        all_outputs = {
+            'pet': self.PET,
+            'aet': self.AET,
+            'q': self.Q,
+            'soilmoisture': self.Sav,
+            'avgchflow': self.Avg_ChFlow
+        }
+
+        output_writer = OutWriter(self.s, self.data.area, all_outputs)
+        output_writer.write()
+
+        try:
+            self.q = output_writer.get('q')
+        except ValueError:
+            self.q = self.Q
+
+        try:
+            self.ac = output_writer.get('avgchflow')
+        except ValueError:
+            self.ac = self.Avg_ChFlow
+
+        output_writer.write_aggregates(self.data, self.q, self.s.AggregateRunoffBasin, self.s.AggregateRunoffCountry,
+                                       self.s.AggregateRunoffGCAMRegion)
 
         logging.info("---Output finished: %s seconds ---" % (time.time() - t0))
-
-    def aggregate_outputs(self):
-        """Aggregation by Basin, Country, and/or Region."""
-        if self.s.AggregateRunoffBasin or self.s.AggregateRunoffCountry or self.s.AggregateRunoffGCAMRegion:
-            logging.info("---Start Aggregation:")
-            t0 = time.time()
-
-            Aggregation(self.s, self.data, self.q)
-
-            logging.info("---Aggregation has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def plots(self):
         """Create time series plots."""
