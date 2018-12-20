@@ -19,8 +19,6 @@ import logging
 import numpy as np
 from scipy import io as sio
 
-from xanthos.utils.numpy_parser import GetArrayCSV, GetArrayTXT
-
 
 class ValidationException(Exception):
     """Exception for invalid configuration options."""
@@ -333,11 +331,19 @@ class LoadData:
         if not arr.shape[1] == self.s.nmonths:
             raise ValidationException(err.format(text, self.s.nmonths, arr.shape[1]))
 
+        # TODO: Can this be removed? self.s.nmonths is divisible by 12 by default,
+        #       so the above check would also check this as well, right?
+        if not arr.shape[1] % 12 == 0:
+            raise ValidationException("Error: Number of months in data can not be converted into integral years.")
+
         return arr
 
     @staticmethod
-    def load_data(fn, headerNum=0, key=" "):
+    def load_data(fn, header_num=0, key=" "):
         """Load grid data stored in files defined in GRID_CONSTANTS."""
+        if not os.path.isfile(fn):
+            raise IOError("Error: File does not exist:", fn)
+
         # for MATLAB files
         if fn.endswith('.mat'):
             data = sio.loadmat(fn)[key]
@@ -348,31 +354,22 @@ class LoadData:
 
         # for text files
         elif fn.endswith('.txt'):
-
-            if not os.path.isfile(fn):
-                raise IOError("Error: File does not exist:", fn)
-
             try:
-                data = GetArrayTXT(fn, headerNum)
-
+                a = np.__version__
+                if int(a.split('.')[1]) >= 10:
+                    data = np.genfromtxt(fn, delimiter=" ", skip_header=header_num, filling_values="0")
+                else:
+                    data = np.genfromtxt(fn, delimiter=" ", skiprows=header_num, filling_values="0")
             except:
                 with open(fn, 'r') as f:
                     data = np.array(f.read().splitlines())
 
         # for CSV files
         elif fn.endswith('.csv'):
-
-            if not os.path.isfile(fn):
-                raise IOError("Error: File does not exist:", fn)
-
-            data = GetArrayCSV(fn, headerNum)
+            data = np.genfromtxt(fn, delimiter=",", skip_header=header_num, filling_values="0")
 
         # for NetCDF classic files
         elif fn.endswith('.nc'):
-
-            if not os.path.isfile(fn):
-                raise IOError("Error: File does not exist:", fn)
-
             datagrp = sio.netcdf.netcdf_file(fn, 'r', mmap=False)
 
             # copy() added to handle numpy 'ValueError:assignment destination is read-only' for non-contiguous memory
@@ -383,6 +380,9 @@ class LoadData:
                 data = datagrp.variables[key][:].copy()
 
             datagrp.close()
+
+        else:
+            raise RuntimeError("File {} has unrecognized extension".format(fn))
 
         return data
 
@@ -557,7 +557,7 @@ def check_climate_data(data, n_cells, n_months, text):
     return data
 
 
-def load_const_griddata(fn, headerNum=0, key=" "):
+def load_const_griddata(fn, header_num=0, key=" "):
     """Load constant grid data stored in files defined in GRID_CONSTANTS."""
     # for MATLAB files
     if fn.endswith('.mat'):
@@ -570,23 +570,19 @@ def load_const_griddata(fn, headerNum=0, key=" "):
     # for text files
     elif fn.endswith('.txt'):
 
-        if not os.path.isfile(fn):
-            raise IOError("Error: File does not exist:", fn)
-
         try:
-            data = GetArrayTXT(fn, headerNum)
-
+            a = np.__version__
+            if int(a.split('.')[1]) >= 10:
+                data = np.genfromtxt(fn, delimiter=" ", skip_header=header_num, filling_values="0")
+            else:
+                data = np.genfromtxt(fn, delimiter=" ", skiprows=header_num, filling_values="0")
         except:
             with open(fn, 'r') as f:
                 data = np.array(f.read().splitlines())
 
     # for CSV files
     elif fn.endswith('.csv'):
-
-        if not os.path.isfile(fn):
-            raise IOError("Error: File does not exist:", fn)
-
-        data = GetArrayCSV(fn, headerNum)
+        data = np.genfromtxt(fn, delimiter=",", skip_header=header_num, filling_values="0")
 
     # for NetCDF classic files
     elif fn.endswith('.nc'):
@@ -605,6 +601,9 @@ def load_const_griddata(fn, headerNum=0, key=" "):
             data = datagrp.variables[key][:].copy()
 
         datagrp.close()
+
+    else:
+        raise RuntimeError("File {} has unrecognized extension".format(fn))
 
     return data
 
