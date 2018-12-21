@@ -368,8 +368,8 @@ class ConfigReader:
 
                 # load built-in files [ channel velocity, flow distance, flow direction ]
                 self.strm_veloc = os.path.join(self.rt_model_dir, rt_mod['channel_velocity'])
-                self.FlowDis = os.path.join(self.rt_model_dir, rt_mod['flow_distance'])
-                self.FlowDir = os.path.join(self.rt_model_dir, rt_mod['flow_direction'])
+                self.flow_distance = os.path.join(self.rt_model_dir, rt_mod['flow_distance'])
+                self.flow_direction = os.path.join(self.rt_model_dir, rt_mod['flow_direction'])
 
                 try:
                     self.routing_spinup = int(rt_mod['routing_spinup'])

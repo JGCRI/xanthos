@@ -16,7 +16,6 @@ import logging
 
 import xanthos.data_reader.data_load as fetch
 import xanthos.utils.general as helper
-import xanthos.utils.math as umth
 import xanthos.calibrate.calibrate_abcd as calib_mod
 from xanthos.data_writer.out_writer import OutWriter
 from xanthos.diagnostics.diagnostics import Diagnostics
@@ -52,9 +51,6 @@ class Components:
 
         # index arrays
         self.yr_imth_dys = helper.set_month_arrays(self.s.nmonths, self.s.StartYear, self.s.EndYear)
-        self.map_index = umth.sub2ind([self.s.ngridrow, self.s.ngridcol],
-                                      self.data.coords[:, 4].astype(int) - 1,
-                                      self.data.coords[:, 3].astype(int) - 1)
 
         # pet
         if self.s.pet_module == 'hargreaves':
@@ -260,9 +256,10 @@ class Components:
         if self.s.routing_module == 'mrtm':
 
             # load routing data
-            self.flow_dist = fetch.load_routing_data(self.s.FlowDis, self.s.ngridrow, self.s.ngridcol,
+            self.flow_dist = fetch.load_routing_data(self.s.flow_distance, self.s.ngridrow, self.s.ngridcol,
                                                      self.map_index, rep_val=1000)
-            self.flow_dir = fetch.load_routing_data(self.s.FlowDir, self.s.ngridrow, self.s.ngridcol, self.map_index)
+            self.flow_dir = fetch.load_routing_data(self.s.flow_direction, self.s.ngridrow, self.s.ngridcol,
+                                                    self.map_index)
             self.instream_flow = np.zeros((self.s.ncell,), dtype=float)
             self.str_velocity = fetch.load_routing_data(self.s.strm_veloc, self.s.ngridrow, self.s.ngridcol,
                                                         self.map_index, rep_val=0)
