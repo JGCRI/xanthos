@@ -29,7 +29,7 @@ class ValidationException(Exception):
         Exception.__init__(self, *args, **kwargs)
 
 
-class LoadData:
+class DataLoader:
     """Load system-wide input data."""
 
     def __init__(self, config_obj):
@@ -344,7 +344,7 @@ class LoadData:
         """
         Check array size of input and check to make sure the total number of months can be split into years.
 
-        :param data:            input array
+        :param arr:             input array
         :param text:            name of target variable
         """
         err = "Error: Inconsistent {0} data grid size. Expecting size: {1}. Received size: {2}"

@@ -1,7 +1,7 @@
 """
 Components for use in model configurations.
 
-@author   Chris R. Vernon , lixi729
+@author   Chris R. Vernon, lixi729
 @email:   chris.vernon@pnnl.gov; xinya.li@pnl.gov
 @Project: Xanthos 2.0
 
@@ -14,7 +14,6 @@ import numpy as np
 import time
 import logging
 
-import xanthos.data_reader.data_load as fetch
 import xanthos.utils.general as helper
 import xanthos.calibrate.calibrate_abcd as calib_mod
 from xanthos.data_writer.out_writer import OutWriter
@@ -23,7 +22,7 @@ from xanthos.diagnostics.time_series import TimeSeriesPlot
 from xanthos.accessible.accessible import AccessibleWater
 from xanthos.hydropower.potential import HydropowerPotential
 from xanthos.hydropower.actual import HydropowerActual
-from xanthos.data_reader.data_load import LoadData
+from xanthos.data_reader.data_load import DataLoader
 
 
 class Components:
@@ -47,7 +46,7 @@ class Components:
         self.import_core()
 
         # load data
-        self.data = LoadData(config)
+        self.data = DataLoader(config)
 
         # index arrays
         self.yr_imth_dys = helper.set_month_arrays(self.s.nmonths, self.s.StartYear, self.s.EndYear)
@@ -254,19 +253,16 @@ class Components:
                                     instream_flow : Streamflow (m3/s)
         """
         if self.s.routing_module == 'mrtm':
+            # initialize routing data
+            self.flow_dist = self.s.flow_dist
+            self.flow_dir = self.s.flow_dir
+            self.instream_flow = self.s.instream_flow
+            self.str_velocity = self.s.str_velocity
 
-            # load routing data
-            self.flow_dist = fetch.load_routing_data(self.s.flow_distance, self.s.ngridrow, self.s.ngridcol,
-                                                     self.map_index, rep_val=1000)
-            self.flow_dir = fetch.load_routing_data(self.s.flow_direction, self.s.ngridrow, self.s.ngridcol,
-                                                    self.map_index)
-            self.instream_flow = np.zeros((self.s.ncell,), dtype=float)
-            self.str_velocity = fetch.load_routing_data(self.s.strm_veloc, self.s.ngridrow, self.s.ngridcol,
-                                                        self.map_index, rep_val=0)
             self.dsid = routing_mod.downstream(self.data.coords, self.flow_dir, self.s)
             self.upid = routing_mod.upstream(self.data.coords, self.dsid, self.s)
             self.um = routing_mod.upstream_genmatrix(self.upid)
-            self.chs_prev = fetch.load_chs_data(self.s)
+            self.chs_prev = self.s.chs_prev
 
             # process spin up for channel storage from historic period
             for nm in range(0, self.s.routing_spinup, 1):
@@ -280,7 +276,7 @@ class Components:
                 # update channel storage (chs) arrays for next step
                 self.chs_prev = np.copy(self.ChStorage[:, nm])
 
-            # run routing simumlation
+            # run routing simulation
             for nm in range(self.s.nmonths):
                 # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
                 sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
@@ -301,9 +297,11 @@ class Components:
         """
         Run model simulation for a defined configuration.
 
-        :param num_steps:           The number of time steps to process (INT)
         :param pet:                 True if running PET, False if embedded in runoff model
+        :param pet_num_steps:       The number of steps for to run the PET module;
+        :param pet_step:            The time unit as a string;
         :param runoff:              True if running Runoff, False if not
+        :param runoff_num_steps:    The number of steps for to run the runoff module;
         :param runoff_step:         The time unit as a string; if None the runoff model
                                     iterates internally, else 'month'
         :param routing_num_steps:   The number of steps for to run the routing module;
