@@ -98,6 +98,9 @@ class OutWriter:
             filename = '{}_{}_{}'.format(var, unit, self.proj_name)
             filename = os.path.join(self.out_folder, filename)
 
+            # Outputs are by grid cell and grid cell ids start at 1
+            data.index = data.index + 1
+
             self.write_data(filename, var, data, col_names=self.time_steps)
 
     def write_aggregates(self, ref, df, basin, country, region):
