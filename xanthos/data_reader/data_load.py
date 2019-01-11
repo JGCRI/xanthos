@@ -394,13 +394,13 @@ class DataLoader:
             datagrp = sio.netcdf.netcdf_file(fn, 'r', mmap=False)
 
             # copy() added to handle numpy 'ValueError:assignment destination is read-only' for non-contiguous memory
-            try:
-                data = datagrp.variables[key][:, :].copy()
-
-            except:
-                data = datagrp.variables[key][:].copy()
+            data = datagrp.variables[key][:].copy()
 
             datagrp.close()
+
+            # we only support data in little-endian format, so convert it if the NetCDF is big-endian
+            if data.dtype.byteorder == ">":
+                data = data.byteswap().newbyteorder()
 
         else:
             raise RuntimeError("File {} has unrecognized extension".format(fn))
