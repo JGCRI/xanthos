@@ -79,7 +79,7 @@ class Diagnostics:
 
         # Basin Based
         if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 1:
-            self.write_diagnostics('Basin', ref.basin_ids, ref.basin_names, q, qq, wbm, wbmc, UNH)
+            self.write_diagnostics('Basin', ref.basin_ids, ref.basin_names, q, qq, wbm, wbmc, UNH, 1)
 
         # Country Based
         if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 2:
@@ -87,31 +87,33 @@ class Diagnostics:
 
         # Region Based
         if settings.DiagnosticScale == 0 or settings.DiagnosticScale == 3:
-            self.write_diagnostics('Region', ref.region_ids, ref.region_names, q, qq, wbm, wbmc, UNH)
+            self.write_diagnostics('Region', ref.region_ids, ref.region_names, q, qq, wbm, wbmc, UNH, 1)
 
-    def write_diagnostics(self, scale, id_map, name_map, q, qq, wbm, wbmc, UNH):
+    def write_diagnostics(self, scale, id_map, name_map, q, qq, wbm, wbmc, UNH, name_map_offset=0):
         """
         Combine reference data sets to write out diagnostic files.
 
-        :param scale:       level of aggregation for diagnostics, one of 'Basin', 'Country', or 'Region'
-        :param id_map:      map of grid cells to basin/country/region ids
-        :param name_map:    map of aggregation region ids to names
-        :param q:           xanthos runoff
-        :param qq:          reference runoff
-        :param wbm:         WBM runoff
-        :param wbmc:        WBMc runoff
-        :param UNH:         UNH runoff (1986-1995)
+        :param scale:           level of aggregation for diagnostics, one of 'Basin', 'Country', or 'Region'
+        :param id_map:          map of grid cells to basin/country/region ids
+        :param name_map:        map of aggregation region ids to names
+        :param q:               xanthos runoff
+        :param qq:              reference runoff
+        :param wbm:             WBM runoff
+        :param wbmc:            WBMc runoff
+        :param UNH:             UNH runoff (1986-1995)
+        :param name_map_offset: how much to offset the names id values from their index, default 0
         """
         if scale not in ['Basin', 'Country', 'Region']:
             raise ValueError("Scale for diagnostics must be Region, Basin, or Country")
 
+        # Columns must be explicitly specified to keep non-alphabetical order for Python versions < 3.6
         runoff_df = pd.DataFrame({
             'xanthos': q,
             self.REF_DATA_NAME: qq,
             'WBM': wbm,
             'WBMc': wbmc,
             'UNH_1986-1995': UNH
-        })
+        }, columns=['xanthos', self.REF_DATA_NAME, 'WBM', 'WBMc', 'UNH_1986-1995'])
 
         # Aggregate all grid cells using the id map
         runoff_df['id'] = id_map
@@ -119,6 +121,7 @@ class Diagnostics:
 
         # Map on the region/basin/country names, keeping all names even where there are no values
         names_df = pd.DataFrame({'name': name_map})
+        names_df.index += name_map_offset
         agg_df = names_df.merge(agg_df, 'left', left_index=True, right_on='id')
         agg_df.set_index('id', inplace=True)
 
