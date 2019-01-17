@@ -8,4 +8,4 @@ cache: pip
 install:
   - pip install .
 script:
-  - travis_wait 30 python -m unittest discover
+  - travis_wait 35 python -m unittest discover

@@ -85,7 +85,7 @@ def execute(tas, lat_radians, start_yr, end_yr):
     i = np.copy(tas)
 
     # Monthly Thornthwaite Heat Index formula:
-    i = np.power((i / 5), 1.514)
+    i = np.power((i / 5.0), 1.514)
 
     # Aggregate to Annual Heat Index
     I = np.add.reduceat(i, np.arange(0, i.shape[1], NMONTHS), axis=1)
