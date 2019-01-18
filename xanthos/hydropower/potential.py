@@ -51,7 +51,7 @@ def HydropowerPotential(settings, q_grids):
 
     outdf_hyd = techpot.T
     outdf_hyd.reset_index(inplace=True)
-    outdf_hyd.rename({'regID': 'region'}, axis='columns', inplace=True)
+    outdf_hyd.rename(columns={'regID': 'region'}, inplace=True)
     pd.DataFrame.to_csv(outdf_hyd, filename_techpot, index=False)
 
     # TECHNICAL, EXPLOITABLE POTENTIAL
@@ -63,7 +63,7 @@ def HydropowerPotential(settings, q_grids):
 
     outdf_expl = techpot_expl_.T
     outdf_expl.reset_index(inplace=True)
-    outdf_expl.rename({'index': 'region'}, axis='columns', inplace=True)
+    outdf_expl.rename(columns={'index': 'region'}, inplace=True)
     pd.DataFrame.to_csv(outdf_expl, filename_techpot_expl, index=False)
 
 

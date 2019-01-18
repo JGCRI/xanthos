@@ -10,6 +10,9 @@
 # ignore .mat files
 *.mat
 
+# log files
+*.log
+
 # ignore build
 build
 dist

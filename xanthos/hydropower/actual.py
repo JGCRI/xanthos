@@ -205,5 +205,5 @@ class HydropowerActual:
 #        df.columns = cols
         odf = self.hydro_gcam_regions_EJ.T
         odf.reset_index(inplace=True)
-        odf.rename({'index': 'region'}, axis='columns', inplace=True)
+        odf.rename(columns={'index': 'region'}, inplace=True)
         pd.DataFrame.to_csv(odf, self.filename_hydro, index=False)

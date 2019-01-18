@@ -37,7 +37,8 @@ def calc_daylight_hours(mth_days, lat_radians):
 
     # Sum daylight hours for each month, then divde by month length for mean
     daylight_hours = sunset_hour_angle * (HOURS_IN_DY / np.pi)
-    month_indices = np.cumsum(mth_days) - mth_days[0]
+    month_indices = np.roll(np.cumsum(mth_days), 1)
+    month_indices[0] = 0
     mthly_daylight_hours = np.add.reduceat(daylight_hours, month_indices, axis=1) / mth_days
 
     return mthly_daylight_hours
@@ -63,7 +64,7 @@ def execute(tas, lat_radians, start_yr, end_yr):
     a  = (6.75 x 10-7) * I^3 - (7.71 x 10-5) * I^2 + (1.792 x 10-2) * I + 0.49239
 
     For more information, see Thornthwaite (1948), available here:
-        https://unc.live/2QdZGNw
+        https://doi.org/10.2307/210739
 
     :param tas:             Numpy array of mean daily air temperature in deg C
     :param lat_radians:     Vector of latitude in radians for each cell in tas
@@ -84,7 +85,7 @@ def execute(tas, lat_radians, start_yr, end_yr):
     i = np.copy(tas)
 
     # Monthly Thornthwaite Heat Index formula:
-    i = np.power((i / 5), 1.514)
+    i = np.power((i / 5.0), 1.514)
 
     # Aggregate to Annual Heat Index
     I = np.add.reduceat(i, np.arange(0, i.shape[1], NMONTHS), axis=1)
