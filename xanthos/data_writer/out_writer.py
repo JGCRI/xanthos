@@ -99,7 +99,7 @@ class OutWriter:
             filename = os.path.join(self.out_folder, filename)
 
             # Outputs are by grid cell and grid cell ids start at 1
-            data.index = data.index + 1
+            data.index += 1
 
             self.write_data(filename, var, data, col_names=self.time_steps)
 
