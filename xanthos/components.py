@@ -360,13 +360,11 @@ class Components:
                 t = time.time()
 
                 for nm in range(runoff_num_steps):
-
                     # calculate runoff and generate monthly potential ET, actual ET, runoff, and soil moisture
-                    if runoff:
-                        self.calculate_runoff(nm)
+                    self.calculate_runoff(nm)
 
-                        # update soil moisture (sav) array for next step
-                        self.sm_prev = np.copy(self.Sav[:, nm])
+                    # update soil moisture (sav) array for next step
+                    self.sm_prev = np.copy(self.Sav[:, nm])
 
                 logging.info("\tRunoff processed in {} seconds---".format(time.time() - t))
 
@@ -445,7 +443,6 @@ class Components:
             logging.info("---{} in progress... ".format(notify))
             t0 = time.time()
 
-            # TODO: why are these different cases?
             # calculate PET
             if pet:
                 logging.info("\tProcessing PET...")
@@ -458,8 +455,7 @@ class Components:
 
             # for the case where the user provides a PET dataset
             else:
-                # load user provided data
-                pet_out = self.calculate_pet()
+                pet_out = self.calculate_pet()  # loads user provided data
 
             # calculate runoff for all basins all months
             if runoff:
