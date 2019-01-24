@@ -294,26 +294,20 @@ class Components:
 
             return self.Avg_ChFlow
 
-    def simulation(self, pet=True, pet_num_steps=0, pet_step='month',
-                   runoff=True, runoff_num_steps=0, runoff_step='month',
-                   routing=True, routing_num_steps=0, routing_step='month',
+    def simulation(self, run_pet, run_runoff, run_routing, pet_num_steps=0, runoff_num_steps=0, routing_num_steps=0,
                    notify='simulation'):
         """
         Run model simulation for a defined configuration.
 
-        :param pet:                 True if running PET, False if embedded in runoff model
-        :param pet_num_steps:       The number of steps for to run the PET module;
-        :param pet_step:            The time unit as a string;
-        :param runoff:              True if running Runoff, False if not
-        :param runoff_num_steps:    The number of steps for to run the runoff module;
-        :param runoff_step:         The time unit as a string; if None the runoff model
-                                    iterates internally, else 'month'
-        :param routing_num_steps:   The number of steps for to run the routing module;
-                                    different on spin-up, same as runoff
-                                    when running normal.  Specified in months in the config file.
-        :param routing:             True if running Routing, False if not
-        :param routing_step:        The time unit as a string; if None the routing model
-                                    iterates internally, else 'month'
+        :param run_pet:             Boolean - True to run PET module, False to load PET from file
+        :param run_runoff:          Boolean - True to run runoff module
+        :param run_routing:         Boolean - True to run routing module
+        :param pet_num_steps:       The number of time steps for running the PET module; if 0, the
+                                    PET module should iterate internally
+        :param runoff_num_steps:    The number of time steps for running the runoff module; if 0,
+                                    the runoff module should iterate internally
+        :param routing_num_steps:   The number of time steps for running the routing module; if 0,
+                                    the routing module should iterate internally
         :param notify:              A string that is used to add to log print that describes
                                     whether the simulation is spin-up or regular
         """
@@ -322,28 +316,20 @@ class Components:
             self.calibrate()
             return
 
-        # pass simulation if there are no steps to process
-        if (pet_num_steps + runoff_num_steps + routing_num_steps) == 0:
-            return
+        logging.info("---{} in progress...".format(notify))
+        t0 = time.time()
 
-        # --------------------------------------------------
-        # USED FOR THE FOLLOWING CONFIGURATIONS:
-        #
-        # hargreaves-gwam-mrtm
-        # --------------------------------------------------
-        if (pet_step == 'month') and (runoff_step == 'month') and (routing_step == 'month'):
+        # Run PET
+        if run_pet:
+            logging.info("\tProcessing PET...")
+            t = time.time()
 
-            logging.info("---{} in progress...".format(notify))
-            t0 = time.time()
-
-            if pet:
-
-                logging.info("\tProcessing PET...")
-                t = time.time()
+            # Calculate PET step by step
+            if pet_num_steps > 0:
                 pet_out = np.zeros_like(self.data.precip)
 
                 for nm in range(pet_num_steps):
-                    # set up climate data for processing
+                    # set up climate data for processing (used by hargreaves)
                     self.prep_arrays(nm)
 
                     # set up PET data for processing
@@ -352,139 +338,49 @@ class Components:
                     # calculate pet
                     pet_out[:, nm] = self.calculate_pet()
 
-                logging.info("\tPET processed in {} seconds---".format(time.time() - t))
-
-            # for the case where the user provides a PET dataset
+            # Calculate PET all at once
             else:
-                # load user provided data
                 pet_out = self.calculate_pet()
 
-            if runoff:
+            logging.info("\tPET processed in {} seconds---".format(time.time() - t))
 
-                logging.info("\tProcessing Runoff...")
-                t = time.time()
+        # Otherwise calculate_pet() will load user-provided PET dataset
+        else:
+            pet_out = self.calculate_pet()
 
+        # Process runoff
+        if run_runoff:
+            logging.info("\tProcessing Runoff...")
+            t = time.time()
+
+            # Calculate runoff step by step (GWAM)
+            if runoff_num_steps > 0:
                 for nm in range(runoff_num_steps):
                     self.pet_t = pet_out[:, nm]
 
                     # calculate runoff and generate monthly potential ET, actual ET, runoff, and soil moisture
-                    self.calculate_runoff(nm)
+                    self.calculate_runoff(step_num=nm)
 
                     # update soil moisture (sav) array for next step
                     self.sm_prev = np.copy(self.Sav[:, nm])
 
-                logging.info("\tRunoff processed in {} seconds---".format(time.time() - t))
+            # Calculate runoff all at once (ABCD)
+            else:
+                self.calculate_runoff(pet=pet_out)
+
+            logging.info("\tRunoff processed in {} seconds---".format(time.time() - t))
+
+        # Process routing (only MRTM currently implemented -- don't allow timestep iteration)
+        if run_routing:
+            logging.info("\tProcessing Routing...")
+            t = time.time()
 
             # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-            if routing:
+            self.calculate_routing(self.Q)
 
-                logging.info("\tProcessing Routing...")
-                t = time.time()
+            logging.info("\tRouting processed in {} seconds---".format(time.time() - t))
 
-                # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-                self.calculate_routing(self.Q)
-
-                logging.info("\tRouting processed in {} seconds---".format(time.time() - t))
-
-            logging.info("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
-
-        # --------------------------------------------------
-        # USED FOR THE FOLLOWING CONFIGURATIONS:
-        #
-        # hargreaves-abcd-mrtm
-        # --------------------------------------------------
-        elif (pet_step == 'month') and (runoff_step is None) and (routing_step == 'month'):
-
-            logging.info("---{} in progress... ".format(notify))
-            t0 = time.time()
-
-            # calculate PET
-            if pet:
-                logging.info("\tProcessing PET...")
-                t = time.time()
-                pet_out = np.zeros_like(self.data.precip)
-
-                for nm in range(pet_num_steps):
-                    # set up PET data for processing
-                    self.prep_pet(nm)
-
-                    # calculate pet
-                    pet_out[:, nm] = self.calculate_pet()
-
-                logging.info("\tPET processed in {} seconds---".format(time.time() - t))
-
-            # for the case where the user provides a PET dataset
-            else:
-                # load user provided data
-                pet_out = self.calculate_pet()
-
-            # calculate runoff for all basins all months
-            if runoff:
-                logging.info("\tProcessing Runoff...")
-                t = time.time()
-
-                self.calculate_runoff(pet=pet_out)
-
-                logging.info("\tRunoff processed in {} seconds---".format(time.time() - t))
-
-            # process routing
-            if routing:
-
-                logging.info("\tProcessing Routing...")
-                t = time.time()
-
-                # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
-                self.calculate_routing(self.Q)
-
-                logging.info("\tRouting processed in {} seconds---".format(time.time() - t))
-
-            logging.info("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
-
-        # --------------------------------------------------
-        # USED FOR THE FOLLOWING CONFIGURATIONS:
-        #
-        # pm-abcd-mrtm
-        # --------------------------------------------------
-        elif (pet_step is None) and (runoff_step is None) and (routing_step == 'month'):
-
-            logging.info("---{} in progress... ".format(notify))
-            t0 = time.time()
-
-            # calculate PET
-            if pet:
-                logging.info("\tProcessing PET...")
-                t = time.time()
-
-                # calculate pet
-                pet_out = self.calculate_pet()
-
-                logging.info("\tPET processed in {} seconds---".format(time.time() - t))
-
-            # for the case where the user provides a PET dataset
-            else:
-                pet_out = self.calculate_pet()  # loads user provided data
-
-            # calculate runoff for all basins all months
-            if runoff:
-                logging.info("\tProcessing Runoff...")
-                t = time.time()
-
-                self.calculate_runoff(pet=pet_out)
-
-                logging.info("\tRunoff processed in {} seconds---".format(time.time() - t))
-
-            # process routing
-            if routing:
-
-                logging.info("\tProcessing Routing...")
-                t = time.time()
-
-                # process spin up for channel storage from historic period
-                self.calculate_routing(self.Q)
-
-                logging.info("\tRouting processed in {} seconds---".format(time.time() - t))
-
-            logging.info("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
+        logging.info("---{0} has finished successfully: {1} seconds ---".format(notify, time.time() - t0))
 
     # -------------------------------------------------------------------
     # -------------------------------------------------------------------
