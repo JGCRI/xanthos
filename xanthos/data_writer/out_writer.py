@@ -47,7 +47,7 @@ class OutWriter:
         :param grid_areas:      map of basin indices to grid cell area, in km2 (numpy array)
         :param all_outputs:     dictionary mapping all output names (strings) to their values (numpy arrays)
         """
-        self.output_names = settings.output_vars
+        self.output_names = [oname for oname in settings.output_vars if oname in all_outputs.keys()]
         self.outputs = [pd.DataFrame(all_outputs[out_name]) for out_name in self.output_names]
 
         # array for converting basin values from mm to km3
@@ -79,6 +79,11 @@ class OutWriter:
 
     def write(self):
         """Format and call appropriate writer for output variables."""
+        # output_names will be an empty list if no outputs were requested
+        if not self.output_names:
+            logging.debug("No valid output variables specified")
+            return
+
         if self.output_in_year:
             logging.debug("Outputting data annually")
             self.outputs = [self.agg_to_year(df) for df in self.outputs]
