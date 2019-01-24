@@ -149,14 +149,14 @@ class DataLoader:
             self.precip = self.load_to_array(self.s.PrecipitationFile, var_name=self.s.PrecipVarName)
 
             # Max Soil Moisture Map (mm/month): 67420 x 1
-            self.max_soil_moist = self.load_data(self.s.MaxSoilMois, 1)
+            self.max_soil_moist = self.load_data(self.s.max_soil_moisture, 1)
 
             # Water Bodies: assign MSM = 999, 306 x 2, Col 1 is the cell number in 67420
-            self.lakes_msm = self.load_data(self.s.LakesMSM).astype(int)
+            self.lakes_msm = self.load_data(self.s.lakes_msm).astype(int)
             self.lakes_msm[:, 0] -= 1
 
             # Additional water bodies: assign MSM = 999, 421 x 2,  Col 1 is the cell number in 67420
-            self.addit_water_msm = self.load_data(self.s.AdditWaterMSM).astype(int)
+            self.addit_water_msm = self.load_data(self.s.addit_water_msm).astype(int)
             self.addit_water_msm[:, 0] -= 1
 
             # create a matrix (MSMC: Maximum Soil Moisture Capacity) with all data
@@ -178,7 +178,6 @@ class DataLoader:
             # load soil moisture file if running future
             if self.s.HistFlag.lower() == "true":
                 self.sm_prev = 0.5 * self.soil_moisture
-
             else:
                 self.sm_prev = self.load_soil_data()
 

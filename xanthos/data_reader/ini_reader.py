@@ -146,7 +146,7 @@ class ConfigReader:
 
             if self.pet_module == 'hargreaves':
                 pet_mod = pt['hargreaves']
-                self.pet_dir = os.path.join(self.PET, pt['pet_dir'])
+                self.pet_dir = os.path.join(self.PET, pet_mod['pet_dir'])
 
                 # climate data
                 try:
@@ -250,14 +250,14 @@ class ConfigReader:
 
             if self.runoff_module == 'gwam':
 
-                ro_mod = ro['GWAM']
+                ro_mod = ro['gwam']
                 self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['runoff_dir'])
                 self.runoff_spinup = int(ro_mod['runoff_spinup'])
 
                 # built in files
-                self.MaxSoilMois = os.path.join(self.ro_model_dir, ro_mod['MaxSoilMois'])
-                self.LakesMSM = os.path.join(self.ro_model_dir, ro_mod['LakesMSM'])
-                self.AdditWaterMSM = os.path.join(self.ro_model_dir, ro_mod['AdditWaterMSM'])
+                self.max_soil_moisture = os.path.join(self.ro_model_dir, ro_mod['max_soil_moisture'])
+                self.lakes_msm = os.path.join(self.ro_model_dir, ro_mod['lakes_msm'])
+                self.addit_water_msm = os.path.join(self.ro_model_dir, ro_mod['addit_water_msm'])
 
                 # channel storage file full path name with extension if running future
                 self.ChStorageFile = None
@@ -282,38 +282,13 @@ class ConfigReader:
                     self.PrecipitationFile = os.path.join(self.ro_model_dir, ro_mod['PrecipitationFile'])
                 except KeyError:
                     logging.exception("File path not provided for the PrecipitationFile variable "
-                                      "in the GCAM runoff section of the config file.")
+                                      "in the GWAM runoff section of the config file.")
                     raise
 
                 try:
                     self.PrecipVarName = ro_mod['PrecipVarName']
                 except KeyError:
                     self.PrecipVarName = None
-
-                try:
-                    self.TemperatureFile = os.path.join(self.ro_model_dir, ro_mod['TemperatureFile'])
-                except KeyError:
-                    logging.exception("File path not provided for the TemperatureFile "
-                                      "variable in the GCAM runoff section of the config file.")
-                    raise
-
-                try:
-                    self.TempVarName = ro_mod['TempVarName']
-                except KeyError:
-                    self.TempVarName = None
-
-                try:
-                    self.DailyTemperatureRangeFile = os.path.join(
-                        self.ro_model_dir, ro_mod['DailyTemperatureRangeFile'])
-                except KeyError:
-                    logging.exception("File path not provided for the DailyTemperatureRangeFile "
-                                      "variable in the GCAM runoff section of the config file.")
-                    raise
-
-                try:
-                    self.DTRVarName = ro_mod['DTRVarName']
-                except KeyError:
-                    self.DTRVarName = None
 
             elif self.runoff_module == 'abcd':
 

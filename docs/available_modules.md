@@ -100,9 +100,11 @@ Config tag:
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | runoff_dir | The directory name of the runoff module chosen where its input files are stored | True |
-| PrecipitationFile | File name and extension to input mean monthly preciptation file in mm/month.  Array must be 2-D, where (gridcell_idx, month_idx).  File can be a NumPy array file (.npy) or a NetCDF Classic file (.nc). | True |
+| PrecipitationFile | File name and extension to input mean monthly precipitation file in mm/month.  Array must be 2-D, where (gridcell_idx, month_idx).  File can be a NumPy array file (.npy) or a NetCDF Classic file (.nc). | True |
 | PrecipVarName | If file is a NetCDF file, this is the variable name of precipitation. | False |
-
+| max_soil_moisture | File of maximum soil moisture (gridcells x 1) in mm/month. | True |
+| lakes_msm | File of water bodies: assign MSM = 999, 306 x 2, Col 1 is the cell number in 67420. | True |
+| addit_water_msm | File of additional water bodies: assign MSM = 999, 421 x 2, Col 1 is the cell number in 67420. | True |
 
 ## Routing
 Config tag:

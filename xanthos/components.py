@@ -72,9 +72,8 @@ class Components:
 
         # runoff
         if self.s.runoff_module == 'gwam':
-            self.soil_moisture = None
-            self.grid_area = None
-            self.sm_prev = None
+            self.soil_moisture = self.data.soil_moisture
+            self.sm_prev = self.data.sm_prev
 
         elif self.s.runoff_module == 'abcd':
             pass
@@ -209,11 +208,17 @@ class Components:
         elif self.s.pet_module == 'none':
             return self.data.pet_out
 
-    def calculate_runoff(self, nm=None, pet=None):
+    def calculate_runoff(self, step_num=None, pet=None):
         """
         Calculate runoff.
 
-        Runoff takes a feedback of soil moisture content (sm_prev).  This is updated for each iteration of a month.
+        GWAM iterates monthly and takes a feedback of soil moisture content
+        (sm_prev).  This is updated for each iteration of a month.
+
+        ABCD iterates internally.
+
+        :param step_num:        Integer for iteration time step (required for GWAM)
+        :param pet:             Array of PET (required for ABCD)
 
         :returns:               PET : Potential Evapotranspiration (mm/month)
                                 AET : Actual Evapotranspiration (mm/month)
@@ -221,10 +226,9 @@ class Components:
                                 Sav : Soil Moisture content (mm/month)
         """
         if self.s.runoff_module == 'gwam':
-
             rg = runoff_mod.runoffgen(self.pet_t, self.P, self.s, self.soil_moisture, self.sm_prev)
 
-            self.PET[:, nm], self.AET[:, nm], self.Q[:, nm], self.Sav[:, nm] = rg
+            self.PET[:, step_num], self.AET[:, step_num], self.Q[:, step_num], self.Sav[:, step_num] = rg
 
         elif self.s.runoff_module == 'abcd':
 
@@ -336,6 +340,7 @@ class Components:
 
                 logging.info("\tProcessing PET...")
                 t = time.time()
+                pet_out = np.zeros_like(self.data.precip)
 
                 for nm in range(pet_num_steps):
                     # set up climate data for processing
@@ -345,14 +350,14 @@ class Components:
                     self.prep_pet(nm)
 
                     # calculate pet
-                    self.calculate_pet()
+                    pet_out[:, nm] = self.calculate_pet()
 
                 logging.info("\tPET processed in {} seconds---".format(time.time() - t))
 
             # for the case where the user provides a PET dataset
             else:
                 # load user provided data
-                self.calculate_pet()
+                pet_out = self.calculate_pet()
 
             if runoff:
 
@@ -360,6 +365,8 @@ class Components:
                 t = time.time()
 
                 for nm in range(runoff_num_steps):
+                    self.pet_t = pet_out[:, nm]
+
                     # calculate runoff and generate monthly potential ET, actual ET, runoff, and soil moisture
                     self.calculate_runoff(nm)
 
