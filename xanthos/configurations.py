@@ -120,6 +120,9 @@ class ConfigRunner:
         # accessible water module
         c.accessible_water()
 
+        # drought module
+        c.drought()
+
         # hydropower potential
         c.hydropower_potential()
 

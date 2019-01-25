@@ -390,7 +390,7 @@ class Components:
     # -------------------------------------------------------------------
     def drought(self):
         """Run drought module."""
-        if self.s.drought_stats:
+        if self.s.CalculateDroughtStats:
             logging.info("---Start Drought Statistics:")
             t0 = time.time()
 

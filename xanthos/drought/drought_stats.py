@@ -4,7 +4,7 @@ output.
 
 Created on January 21, 2019
 
-@author: Robert Link (robert.link@pnnl.gov)
+@author: Robert Link (robert.link@pnnl.gov), Caleb Braun (caleb.braun@pnnl.gov)
 @Project: Xanthos V2.0
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
@@ -13,6 +13,8 @@ Copyright (c) 2019, Battelle Memorial Institute
 """
 
 import numpy as np
+import logging
+import os
 
 
 class DroughtStats:
@@ -20,7 +22,50 @@ class DroughtStats:
 
     def __init__(self, settings, runoff, soil_moisture):
         """Run drought statistics based on given configuration settings."""
-        threshvals = self.getthresh(runoff.T, 12)
+        # The calculations expect the output variable to be (ntime x ngrid), so
+        # we need to transpose
+        if settings.drought_var == 'q':
+            hydroout = runoff.T
+        elif settings.drought_var == 'soilmoisture':
+            hydroout = soil_moisture.T
+        else:
+            raise ValueError("Invalid drought variable specified (must be 'q' or 'soil_moisture')")
+
+        output_path = os.path.join(settings.OutputFolder, "drought_{}_{}.npy".format("{}", settings.ProjectName))
+
+        # Calculate thresholds if they're not provided, otherwise compute statistics
+        if settings.drought_file is None:
+            logging.info("\tCalculating drought thresholds")
+            thresholds = self.calculate_thresholds(hydroout, settings)
+            np.save(output_path.format("thresholds"), thresholds)
+        else:
+            logging.info("\tCalculating drought statistics")
+            threshvals = np.load(settings.drought_file)
+            severity, intensity, duration = self.droughtstats(hydroout, threshvals)
+            np.save(output_path.format("severity"), severity)
+            np.save(output_path.format("intensity"), intensity)
+            np.save(output_path.format("duration"), duration)
+
+    def calculate_thresholds(self, histout, settings):
+        """Calculate historical drought thresholds.
+
+        :param histout:     matrix[ntime x ngrid] of hydrological outputs.
+        :param settings:    main configuration settings
+        :return:            array of quantiles
+        """
+        # Get subset of data over which we're calculating the thresholds
+        MONTHS_IN_YEAR = 12
+        syear = settings.threshold_start_year
+        eyear = settings.threshold_end_year
+        smonth = (syear - settings.StartYear) * MONTHS_IN_YEAR
+        emonth = (eyear + 1 - syear) * MONTHS_IN_YEAR
+
+        print(histout.shape)
+        print(smonth, emonth)
+
+        histout = histout[smonth:emonth, :]
+
+        return self.getthresh(histout, settings.threshold_nper)
 
     def droughtstats(self, hydroout, threshvals):
         """Compute Severity, Intensity, and Duration statistics for a matrix of hydrological output.

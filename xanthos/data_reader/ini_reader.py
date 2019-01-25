@@ -130,6 +130,7 @@ class ConfigReader:
         self.AggregateRunoffGCAMRegion = int(p['AggregateRunoffGCAMRegion'])
         self.PerformDiagnostics = int(p['PerformDiagnostics'])
         self.CreateTimeSeriesPlot = int(p['CreateTimeSeriesPlot'])
+        self.CalculateDroughtStats = int(p['CalculateDroughtStats'])
         self.CalculateAccessibleWater = int(p['CalculateAccessibleWater'])
         self.CalculateHydropowerPotential = int(p['CalculateHydropowerPotential'])
         self.CalculateHydropowerActual = int(p['CalculateHydropowerActual'])
