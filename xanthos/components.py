@@ -23,6 +23,7 @@ from xanthos.accessible.accessible import AccessibleWater
 from xanthos.hydropower.potential import HydropowerPotential
 from xanthos.hydropower.actual import HydropowerActual
 from xanthos.data_reader.data_load import DataLoader
+from xanthos.drought.drought_stats import DroughtStats
 
 
 class Components:
@@ -387,6 +388,15 @@ class Components:
     # OPTIONAL POST-PROCESSING MODULE METHODS
     # -------------------------------------------------------------------
     # -------------------------------------------------------------------
+    def drought(self):
+        """Run drought module."""
+        if self.s.drought_stats:
+            logging.info("---Start Drought Statistics:")
+            t0 = time.time()
+
+            DroughtStats(self.s, self.Q, self.Sav)
+
+            logging.info("---Drought Statistics has finished successfully: %s seconds ------" % (time.time() - t0))
 
     def accessible_water(self):
         """Run accessible water module."""
