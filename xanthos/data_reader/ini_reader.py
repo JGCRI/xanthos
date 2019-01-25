@@ -83,6 +83,11 @@ class ConfigReader:
             timeseries_config = False
 
         try:
+            drought_config = c['Drought']
+        except KeyError:
+            drought_config = False
+
+        try:
             acc_water_config = c['AccessibleWater']
             self.AccWatDir = os.path.join(self.InputFolder, p['AccWatDir'])
         except KeyError:
@@ -168,6 +173,10 @@ class ConfigReader:
         # plots
         if timeseries_config and self.CreateTimeSeriesPlot:
             self.configure_timeseries_plot(timeseries_config)
+
+        # drought statistics
+        if drought_config and self.CalculateDroughtStats:
+            self.configure_drought_stats(drought_config)
 
         # accessible water
         if acc_water_config and self.CalculateAccessibleWater:
@@ -446,6 +455,19 @@ class ConfigReader:
             # as list
             map_id = list(map(int, timeseries_config['MapID']))
             self.TimeSeriesMapID = map_id
+
+    def configure_drought_stats(self, drought_config):
+        """Configure accessible water post-processing module."""
+        self.drought_var = drought_config['drought_var']
+        self.drought_file = drought_config.get('drought_file')  # optional
+
+        # If no drought file is given, calculate threshold values
+        if self.drought_file is None:
+            self.threshold_nper = int(drought_config['threshold_nper'])
+            self.threshold_start_year = int(drought_config['threshold_start_year'])
+            self.threshold_end_year = int(drought_config['threshold_end_year'])
+            if (self.StartYear > self.threshold_start_year) or (self.EndYear < self.threshold_end_year):
+                raise ValidationException("Drought threshold year range is outside the output year range.")
 
     def configure_acc_water(self, acc_water_config):
         """Configure accessible water post-processing module."""
