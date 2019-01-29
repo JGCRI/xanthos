@@ -31,6 +31,7 @@ class DroughtStats:
         else:
             raise ValueError("Invalid drought variable specified (must be 'q' or 'soil_moisture')")
 
+        # Create a template for drought output files
         output_path = os.path.join(settings.OutputFolder, "drought_{}_{}.npy".format("{}", settings.ProjectName))
 
         # Calculate thresholds if they're not provided, otherwise compute statistics
@@ -98,8 +99,8 @@ class DroughtStats:
         Intensity is the average severity over a drought period.  I = S/D.  It is
         defined to be (you guessed it) zero for a grid cell not currently under
         drought conditions.
-        """
 
+        """
         S = np.empty_like(hydroout)
         I = np.empty_like(hydroout)
         D = np.empty_like(hydroout)
