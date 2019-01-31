@@ -32,16 +32,16 @@ class DroughtStats:
             raise ValueError("Invalid drought variable specified (must be 'q' or 'soil_moisture')")
 
         # Create a template for drought output files
-        output_path = os.path.join(settings.OutputFolder, "drought_{}_{}.npy".format("{}", settings.ProjectName))
+        output_path = os.path.join(settings.OutputFolder, "drought_{}_{}.npy".format("{}", settings.OutputNameStr))
 
         # Calculate thresholds if they're not provided, otherwise compute statistics
-        if settings.drought_file is None:
+        if settings.drought_thresholds is None:
             logging.info("\tCalculating drought thresholds")
             thresholds = self.calculate_thresholds(hydroout, settings)
             np.save(output_path.format("thresholds"), thresholds)
         else:
             logging.info("\tCalculating drought statistics")
-            threshvals = np.load(settings.drought_file)
+            threshvals = np.load(settings.drought_thresholds)
             severity, intensity, duration = self.droughtstats(hydroout, threshvals)
             np.save(output_path.format("severity"), severity)
             np.save(output_path.format("intensity"), intensity)
@@ -60,9 +60,6 @@ class DroughtStats:
         eyear = settings.threshold_end_year
         smonth = (syear - settings.StartYear) * MONTHS_IN_YEAR
         emonth = (eyear + 1 - syear) * MONTHS_IN_YEAR
-
-        print(histout.shape)
-        print(smonth, emonth)
 
         histout = histout[smonth:emonth, :]
 
@@ -155,4 +152,5 @@ class DroughtStats:
 
         histout = np.reshape(histout, (nyear, nper, ngrid))
 
-        return np.quantile(histout, quantile, axis=0)
+        # Equivalent to np.quantile(histout, quantile, axis=0) in numpy versions >= 1.15.0
+        return np.percentile(histout, quantile * 100, axis=0)

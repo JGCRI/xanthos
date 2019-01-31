@@ -460,10 +460,10 @@ class ConfigReader:
     def configure_drought_stats(self, drought_config):
         """Configure accessible water post-processing module."""
         self.drought_var = drought_config['drought_var']
-        self.drought_file = drought_config.get('drought_file')  # optional
+        self.drought_thresholds = drought_config.get('drought_thresholds')  # optional
 
         # If no drought file is given, calculate threshold values
-        if self.drought_file is None:
+        if self.drought_thresholds is None:
             self.threshold_nper = int(drought_config['threshold_nper'])
             self.threshold_start_year = int(drought_config['threshold_start_year'])
             self.threshold_end_year = int(drought_config['threshold_end_year'])
