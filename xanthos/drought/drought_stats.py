@@ -13,8 +13,10 @@ Copyright (c) 2019, Battelle Memorial Institute
 """
 
 import numpy as np
+import pandas as pd
 import logging
 import os
+from xanthos.data_writer.out_writer import OutWriter
 
 
 class DroughtStats:
@@ -32,20 +34,25 @@ class DroughtStats:
             raise ValueError("Invalid drought variable specified (must be 'q' or 'soil_moisture')")
 
         # Create a template for drought output files
-        output_path = os.path.join(settings.OutputFolder, "drought_{}_{}.npy".format("{}", settings.OutputNameStr))
+        output_path = os.path.join(settings.OutputFolder, "drought_{}_{}".format("{}", settings.OutputNameStr))
+
+        # Initialize an empty OutWriter so that outputs will be in correct format
+        out_writer = OutWriter(settings, 0, {})
 
         # Calculate thresholds if they're not provided, otherwise compute statistics
         if settings.drought_thresholds is None:
             logging.info("\tCalculating drought thresholds")
             thresholds = self.calculate_thresholds(hydroout, settings)
-            np.save(output_path.format("thresholds"), thresholds)
+            out_writer.write_data(output_path.format("thresholds"), "thresholds", thresholds)
         else:
             logging.info("\tCalculating drought statistics")
             threshvals = np.load(settings.drought_thresholds)
             severity, intensity, duration = self.droughtstats(hydroout, threshvals)
-            np.save(output_path.format("severity"), severity)
-            np.save(output_path.format("intensity"), intensity)
-            np.save(output_path.format("duration"), duration)
+
+            # Convert to the standard Xanthos output format and write out
+            for varname, arr in zip(["severity", "intensity", "duration"], [severity, intensity, duration]):
+                df = pd.DataFrame(arr.T, columns=[str(x) for x in range(arr.shape[0])])
+                out_writer.write_data(output_path.format(varname), varname, df)
 
     def calculate_thresholds(self, histout, settings):
         """Calculate historical drought thresholds.
