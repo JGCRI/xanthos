@@ -5,7 +5,7 @@ output.
 Created on January 21, 2019
 
 @author: Robert Link (robert.link@pnnl.gov), Caleb Braun (caleb.braun@pnnl.gov)
-@Project: Xanthos V2.0
+@Project: Xanthos V2.3
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
@@ -36,12 +36,12 @@ class DroughtStats:
         """Run drought statistics based on given configuration settings."""
         # The calculations expect the output variable to be (ntime x ngrid), so
         # we need to transpose
-        if settings.drought_var == 'q':
+        if settings.drought_var.lower() == 'q':
             hydroout = runoff.T
-        elif settings.drought_var == 'soilmoisture':
+        elif settings.drought_var.lower() == 'soilmoisture':
             hydroout = soil_moisture.T
         else:
-            raise ValueError("Invalid drought variable specified (must be 'q' or 'soil_moisture')")
+            raise ValueError("Invalid drought variable specified (must be 'q' or 'soilmoisture')")
 
         # Create a template for drought output files
         output_path = os.path.join(settings.OutputFolder, "drought_{}_{}".format("{}", settings.OutputNameStr))
@@ -53,7 +53,7 @@ class DroughtStats:
         if settings.drought_thresholds is None:
             logging.info("\tCalculating drought thresholds")
             thresholds = self.calculate_thresholds(hydroout, settings)
-            out_writer.write_data(output_path.format("thresholds"), "thresholds", thresholds)
+            np.save(output_path.format("thresholds"), thresholds)
         else:
             logging.info("\tCalculating drought statistics")
             threshvals = np.load(settings.drought_thresholds)
