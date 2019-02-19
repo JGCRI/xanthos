@@ -20,7 +20,17 @@ from xanthos.data_writer.out_writer import OutWriter
 
 
 class DroughtStats:
-    """Analyze drought impacts based on runoff or soil moisture."""
+    """
+    Analyze drought impacts based on runoff or soil moisture.
+
+    Drought metrics based on work done by Sheffield and Wood (2008).
+
+    Sheffield, J. and Eric F. Wood (2008) “Projected changes in drought
+      occurrence under future global warming from multi-model,
+      multi-scenario, IPCC AR4 simulations”, _Clim Dyn_ 31: 79--105,
+      doi:10.1007/s00382-007-0340-z
+    """
+    MONTHS_IN_YEAR = 12
 
     def __init__(self, settings, runoff, soil_moisture):
         """Run drought statistics based on given configuration settings."""
@@ -54,7 +64,8 @@ class DroughtStats:
                 df = pd.DataFrame(arr.T, columns=[str(x) for x in range(arr.shape[0])])
                 out_writer.write_data(output_path.format(varname), varname, df)
 
-    def calculate_thresholds(self, histout, settings):
+    @classmethod
+    def calculate_thresholds(cls, histout, settings):
         """Calculate historical drought thresholds.
 
         :param histout:     matrix[ntime x ngrid] of hydrological outputs.
@@ -62,15 +73,14 @@ class DroughtStats:
         :return:            array of quantiles
         """
         # Get subset of data over which we're calculating the thresholds
-        MONTHS_IN_YEAR = 12
         syear = settings.threshold_start_year
         eyear = settings.threshold_end_year
-        smonth = (syear - settings.StartYear) * MONTHS_IN_YEAR
-        emonth = (eyear + 1 - syear) * MONTHS_IN_YEAR
+        smonth = (syear - settings.StartYear) * cls.MONTHS_IN_YEAR
+        emonth = (eyear + 1 - syear) * cls.MONTHS_IN_YEAR
 
         histout = histout[smonth:emonth, :]
 
-        return self.getthresh(histout, settings.threshold_nper)
+        return cls.getthresh(cls, histout, settings.threshold_nper)
 
     def droughtstats(self, hydroout, threshvals):
         """Compute Severity, Intensity, and Duration statistics for a matrix of hydrological output.
@@ -103,7 +113,6 @@ class DroughtStats:
         Intensity is the average severity over a drought period.  I = S/D.  It is
         defined to be (you guessed it) zero for a grid cell not currently under
         drought conditions.
-
         """
         S = np.empty_like(hydroout)
         I = np.empty_like(hydroout)
@@ -114,7 +123,7 @@ class DroughtStats:
 
         isdrought = hydroout[0, :] < threshvals[0, :]
         D[0, :] = np.where(isdrought, 1.0, 0.0)
-        I[0, :] = S[0, :] = np.where(isdrought, (threshvals[0, :] - hydroout[0, :])/threshvals[0, :], 0.0)
+        I[0, :] = S[0, :] = np.where(isdrought, (threshvals[0, :] - hydroout[0, :]) / threshvals[0, :], 0.0)
 
         ntime = hydroout.shape[0]
         nthresh = threshvals.shape[0]
@@ -134,7 +143,7 @@ class DroughtStats:
 
             isdrought = hydro < thresh
             dt = np.where(isdrought, dtm1+1, 0.0)
-            st = np.where(isdrought, stm1 + (thresh - hydro)/thresh, 0.0)
+            st = np.where(isdrought, stm1 + (thresh - hydro) / thresh, 0.0)
             it = np.where(isdrought, st / dt, 0.0)
 
         return (S, I, D)
@@ -151,7 +160,6 @@ class DroughtStats:
 
         The array passed as histout should contain only values from the reference
         period, from which drought thresholds will be calculated.
-
         """
         (ntime, ngrid) = histout.shape
         # Check that ntime is a multiple of nper
