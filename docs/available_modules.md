@@ -157,6 +157,20 @@ Create time series plots of runoff.
 | -------- | ----------- | -------- |
 | MapID | Define the level of plotting:  999 = plot all; 0 = only global total; 1 = only by basin id | True |
 
+## Drought
+Config tag:
+```ini
+[Drought]
+```
+
+| Variable | Description | Required |
+| -------- | ----------- | -------- |
+| drought_var | Which output variable to use, either 'q' (runoff) or 'soilmoisture' (soil moisture). | True |
+| drought_thresholds | Path to NumPy array of quantile-based drought thresholds. If provided, Severity, Intensity, and Duration statistics are calculated. If not provided, the following three parameters are required, and thresholds are calculated. | False |
+| threshold_start_year | First year for which to calculate drought thresholds. | False |
+| threshold_end_year | Last year for which to calculate drought thresholds. | False |
+| threshold_nper | Number of periods to calculate thresholds for.  Generally either 1 (single threshold for all periods), or 12 (thresholds by month) | False |
+
 ## Accessible Water
 Config tag:
 ```ini
