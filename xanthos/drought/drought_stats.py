@@ -118,8 +118,7 @@ class DroughtStats:
         I = np.empty_like(hydroout)
         D = np.empty_like(hydroout)
 
-        # Handle the first case specially, since there won't be a previous time
-        # step.
+        # Handle the first case specially, since there won't be a previous time step.
 
         isdrought = hydroout[0, :] < threshvals[0, :]
         D[0, :] = np.where(isdrought, 1.0, 0.0)
