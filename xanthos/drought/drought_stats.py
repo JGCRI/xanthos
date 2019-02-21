@@ -25,9 +25,9 @@ class DroughtStats:
 
     Drought metrics based on work done by Sheffield and Wood (2008).
 
-    Sheffield, J. and Eric F. Wood (2008) “Projected changes in drought
+    Sheffield, J. and Eric F. Wood (2008) "Projected changes in drought
       occurrence under future global warming from multi-model,
-      multi-scenario, IPCC AR4 simulations”, _Clim Dyn_ 31: 79--105,
+      multi-scenario, IPCC AR4 simulations", _Clim Dyn_ 31: 79--105,
       doi:10.1007/s00382-007-0340-z
     """
     MONTHS_IN_YEAR = 12
