@@ -90,25 +90,6 @@ class DataLoader:
             self.hs_tmax = self.load_to_array(self.s.hs_tmax)
 
         elif self.s.pet_module == 'pm':
-
-            # latent heat of vaporization (J kg-1)
-            self.lambda1 = 2.46e6
-
-            # specific heat capacity of air(J kg-1 k-1)
-            self.Cp = 1006
-
-            # Stephan-Boltzmann constant (J m-2 K-4 d-1)
-            self.sigma = 4.9e-3
-
-            # Stephan-Boltzmann constant (J m-2 K-4 s-1)
-            self.sigma2 = 5.67e-8
-
-            # Psychrometric constant (mbar k-1),mbar degree-1 is same meaning with mbar k-1
-            self.gamma = 0.67
-
-            # extinction coefficient
-            self.k = -0.5
-
             # values from literature
             ETpara = np.genfromtxt(self.s.pm_params, delimiter=',')
             self.cL = ETpara[:, 0]
@@ -168,14 +149,14 @@ class DataLoader:
             self.precip = self.load_to_array(self.s.PrecipitationFile, var_name=self.s.PrecipVarName)
 
             # Max Soil Moisture Map (mm/month): 67420 x 1
-            self.max_soil_moist = self.load_data(self.s.MaxSoilMois, 1)
+            self.max_soil_moist = self.load_data(self.s.max_soil_moisture, 1)
 
             # Water Bodies: assign MSM = 999, 306 x 2, Col 1 is the cell number in 67420
-            self.lakes_msm = self.load_data(self.s.LakesMSM).astype(int)
+            self.lakes_msm = self.load_data(self.s.lakes_msm).astype(int)
             self.lakes_msm[:, 0] -= 1
 
             # Additional water bodies: assign MSM = 999, 421 x 2,  Col 1 is the cell number in 67420
-            self.addit_water_msm = self.load_data(self.s.AdditWaterMSM).astype(int)
+            self.addit_water_msm = self.load_data(self.s.addit_water_msm).astype(int)
             self.addit_water_msm[:, 0] -= 1
 
             # create a matrix (MSMC: Maximum Soil Moisture Capacity) with all data
@@ -197,7 +178,6 @@ class DataLoader:
             # load soil moisture file if running future
             if self.s.HistFlag.lower() == "true":
                 self.sm_prev = 0.5 * self.soil_moisture
-
             else:
                 self.sm_prev = self.load_soil_data()
 
@@ -219,11 +199,13 @@ class DataLoader:
         # ====================================================
         if self.s.routing_module == 'mrtm':
             map_index = sub2ind([self.s.ngridrow, self.s.ngridcol],
-                                 self.coords[:, 4].astype(int) - 1,
-                                 self.coords[:, 3].astype(int) - 1)
-            self.flow_dist = self.load_routing_data(self.s.flow_distance, self.s.ngridrow, self.s.ngridcol, map_index, rep_val=1000)
+                                self.coords[:, 4].astype(int) - 1,
+                                self.coords[:, 3].astype(int) - 1)
+            self.flow_dist = self.load_routing_data(
+                self.s.flow_distance, self.s.ngridrow, self.s.ngridcol, map_index, rep_val=1000)
             self.flow_dir = self.load_routing_data(self.s.flow_direction, self.s.ngridrow, self.s.ngridcol, map_index)
-            self.str_velocity = self.load_routing_data(self.s.strm_veloc, self.s.ngridrow, self.s.ngridcol, map_index, rep_val=0)
+            self.str_velocity = self.load_routing_data(
+                self.s.strm_veloc, self.s.ngridrow, self.s.ngridcol, map_index, rep_val=0)
 
             self.instream_flow = np.zeros((self.s.ncell,), dtype=float)
             self.chs_prev = self.load_chs_data()
@@ -454,4 +436,3 @@ class DataLoader:
                 return self.load_data(self.s.ChStorageFile, 0, self.s.ChStorageVarName)[:, -1]
         except AttributeError:
             return np.zeros((self.s.ncell,), dtype=float)
-

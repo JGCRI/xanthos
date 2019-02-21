@@ -72,14 +72,13 @@ class SetData:
         alpd = np.tile(alpx, (self.ncells, 1, 1))
         self.alpha = np.swapaxes(alpd, 0, -2)
 
-        self.lambda1 = 2.46e6
-        self.gamma = 0.67
-
-        # Stephan-Boltzmann constant (J m-2 K-4 d-1)
-        self.sigma = 4.9e-3
-        self.cp = 1006
-        self.sigma2 = 5.67e-8
-        self.k = -0.5
+        # PENMAN-MONTEITH CONSTANTS
+        self.lambda1 = 2.46e6   # latent heat of vaporization (J kg-1)
+        self.cp = 1006          # specific heat capacity of air (J kg-1 k-1)
+        self.sigma = 4.9e-3     # Stephan-Boltzmann constant (J m-2 K-4 d-1)
+        self.sigma2 = 5.67e-8   # Stephan-Boltzmann constant (J m-2 K-4 s-1)
+        self.gamma = 0.67       # Psychrometric constant (mbar k-1),mbar degree-1 is same meaning with mbar k-1
+        self.k = -0.5           # extinction coefficient
 
         self.esx = np.tile(6.10588 * np.exp(17.32491 * self.c.tair / (self.c.tair + 238.102)), (self.nlcs, 1, 1))
 

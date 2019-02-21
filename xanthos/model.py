@@ -15,7 +15,7 @@ import os
 import sys
 import logging
 from xanthos.data_reader.ini_reader import ConfigReader
-import xanthos.configurations as mods
+from xanthos.configurations import ConfigRunner
 
 
 class Xanthos:
@@ -90,40 +90,8 @@ class Xanthos:
 
         self.config.log_info()
 
-        # run selected model configuration
-        if self.config.mod_cfg == 'hargreaves_gwam_mrtm':
-            results = mods.hargreaves_gwam_mrtm(self.config)
-
-        elif self.config.mod_cfg == 'hargreaves_abcd_mrtm':
-            results = mods.hargreaves_abcd_mrtm(self.config)
-
-        elif self.config.mod_cfg == 'pm_gwam_mrtm':
-            results = mods.pm_gwam_mrtm(self.config)
-
-        elif self.config.mod_cfg == 'pm_abcd_mrtm':
-            results = mods.pm_abcd_mrtm(self.config)
-
-        elif self.config.mod_cfg == 'hs_abcd_mrtm':
-            results = mods.hs_abcd_mrtm(self.config)
-
-        elif self.config.mod_cfg == 'thornthwaite_abcd_mrtm':
-            results = mods.thornthwaite_abcd_mrtm(self.config)
-
-        elif self.config.mod_cfg == 'thornthwaite_abcd_none':
-            results = mods.thornthwaite_abcd_none(self.config)
-
-        elif self.config.mod_cfg == 'none_gwam_mrtm':
-            results = mods.none_gwam_mrtm(self.config)
-
-        elif self.config.mod_cfg == 'none_abcd_mrtm':
-            results = mods.none_abcd_mrtm(self.config)
-
-        elif self.config.mod_cfg == 'none_none_mrtm':
-            results = mods.none_none_mrtm(self.config)
-
-        else:
-            logging.warning("Selected configuration {0} not supported.".format(self.config.mod_cfg))
-            results = None
+        config_runner = ConfigRunner(self.config)
+        results = config_runner.run()
 
         self.cleanup()
 

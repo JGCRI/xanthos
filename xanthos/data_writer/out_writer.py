@@ -22,6 +22,7 @@ FORMAT_NETCDF = 0
 FORMAT_CSV = 1
 FORMAT_MAT = 2
 FORMAT_PARQUET = 3
+FORMAT_NPY = 4
 
 UNIT_MM_MTH = 0
 UNIT_KM3_MTH = 1
@@ -47,7 +48,7 @@ class OutWriter:
         :param grid_areas:      map of basin indices to grid cell area, in km2 (numpy array)
         :param all_outputs:     dictionary mapping all output names (strings) to their values (numpy arrays)
         """
-        self.output_names = settings.output_vars
+        self.output_names = [oname for oname in settings.output_vars if oname in all_outputs.keys()]
         self.outputs = [pd.DataFrame(all_outputs[out_name]) for out_name in self.output_names]
 
         # array for converting basin values from mm to km3
@@ -69,7 +70,7 @@ class OutWriter:
             self.time_steps = ['{}{:02}'.format(y, mth) for y in year_range for mth in range(1, NMONTHS + 1)]
 
         # parameter checks
-        if self.out_format not in [FORMAT_NETCDF, FORMAT_CSV, FORMAT_MAT, FORMAT_PARQUET]:
+        if self.out_format not in [FORMAT_NETCDF, FORMAT_CSV, FORMAT_MAT, FORMAT_PARQUET, FORMAT_NPY]:
             logging.warning("Output format {} is invalid; writing output as .csv".format(self.out_format))
             self.out_format = FORMAT_CSV
 
@@ -79,6 +80,11 @@ class OutWriter:
 
     def write(self):
         """Format and call appropriate writer for output variables."""
+        # output_names will be an empty list if no outputs were requested
+        if not self.output_names:
+            logging.debug("No valid output variables specified")
+            return
+
         if self.output_in_year:
             logging.debug("Outputting data annually")
             self.outputs = [self.agg_to_year(df) for df in self.outputs]
@@ -137,7 +143,7 @@ class OutWriter:
         logging.info("Aggregated unit is {}".format(self.out_unit_str))
 
     def write_data(self, filename, var, data, col_names=None):
-        """Save output data as a NetCDF or .csv, .mat, or parquet file."""
+        """Save output data as a NetCDF or .csv, .mat, parquet, or .npy file."""
         if self.out_format == FORMAT_NETCDF:
             self.save_netcdf(filename, data, var)
 
@@ -151,6 +157,9 @@ class OutWriter:
 
         elif self.out_format == FORMAT_PARQUET:
             self.save_parquet(filename, data, col_names)
+
+        elif self.out_format == FORMAT_NPY:
+            np.save(filename, data)
 
     def save_mat(self, filename, data, varstr):
         """Write output data in the .mat format."""
@@ -208,7 +217,7 @@ class OutWriter:
         if col_names is not None:
             df.columns = col_names
 
-        fp_write(filename, df, row_group_offsets=len(df), file_scheme='hive', has_nulls=False, append=append)
+        fp_write(filename, df, row_group_offsets=len(df), compression="GZIP", file_scheme='hive', has_nulls=False, append=append)
 
     def agg_to_year(self, df):
         """Aggregate a DataFrame (cells x months) to (cells x years)."""

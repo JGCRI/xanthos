@@ -100,9 +100,11 @@ Config tag:
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | runoff_dir | The directory name of the runoff module chosen where its input files are stored | True |
-| PrecipitationFile | File name and extension to input mean monthly preciptation file in mm/month.  Array must be 2-D, where (gridcell_idx, month_idx).  File can be a NumPy array file (.npy) or a NetCDF Classic file (.nc). | True |
+| PrecipitationFile | File name and extension to input mean monthly precipitation file in mm/month.  Array must be 2-D, where (gridcell_idx, month_idx).  File can be a NumPy array file (.npy) or a NetCDF Classic file (.nc). | True |
 | PrecipVarName | If file is a NetCDF file, this is the variable name of precipitation. | False |
-
+| max_soil_moisture | File of maximum soil moisture (gridcells x 1) in mm/month. | True |
+| lakes_msm | File of water bodies: assign MSM = 999, 306 x 2, Col 1 is the cell number in 67420. | True |
+| addit_water_msm | File of additional water bodies: assign MSM = 999, 421 x 2, Col 1 is the cell number in 67420. | True |
 
 ## Routing
 Config tag:
@@ -154,6 +156,20 @@ Create time series plots of runoff.
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | MapID | Define the level of plotting:  999 = plot all; 0 = only global total; 1 = only by basin id | True |
+
+## Drought
+Config tag:
+```ini
+[Drought]
+```
+
+| Variable | Description | Required |
+| -------- | ----------- | -------- |
+| drought_var | Which output variable to use, either 'q' (runoff) or 'soilmoisture' (soil moisture). | True |
+| drought_thresholds | Path to NumPy array of quantile-based drought thresholds. If provided, Severity, Intensity, and Duration statistics are calculated. If not provided, the following three parameters are required, and thresholds are calculated. | False |
+| threshold_start_year | First year for which to calculate drought thresholds. | False |
+| threshold_end_year | Last year for which to calculate drought thresholds. | False |
+| threshold_nper | Number of periods to calculate thresholds for.  Generally either 1 (single threshold for all periods), or 12 (thresholds by month) | False |
 
 ## Accessible Water
 Config tag:
