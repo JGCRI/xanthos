@@ -80,7 +80,7 @@ class DroughtStats:
 
         histout = histout[smonth:emonth, :]
 
-        return cls.getthresh(cls, histout, settings.threshold_nper)
+        return cls.getthresh(histout, settings.threshold_nper)
 
     def droughtstats(self, hydroout, threshvals):
         """Compute Severity, Intensity, and Duration statistics for a matrix of hydrological output.
@@ -148,7 +148,8 @@ class DroughtStats:
 
         return (S, I, D)
 
-    def getthresh(self, histout, nper, quantile=0.1):
+    @staticmethod
+    def getthresh(histout, nper, quantile=0.1):
         """
         Compute quantile-based thresholds using data from a reference period.
 
