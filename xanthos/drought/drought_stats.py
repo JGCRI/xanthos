@@ -141,9 +141,9 @@ class DroughtStats:
             it = I[t, :]
 
             isdrought = hydro < thresh
-            dt = np.where(isdrought, dtm1+1, 0.0)
-            st = np.where(isdrought, stm1 + (thresh - hydro) / thresh, 0.0)
-            it = np.where(isdrought, st / dt, 0.0)
+            dt[:] = np.where(isdrought, dtm1+1, 0.0)
+            st[:] = np.where(isdrought, stm1 + (thresh - hydro) / thresh, 0.0)
+            it[:] = np.where(isdrought, st / dt, 0.0)
 
         return (S, I, D)
 
