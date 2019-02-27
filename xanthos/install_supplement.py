@@ -28,8 +28,8 @@ class InstallSupplement:
         # retrieve content from URL
         r = requests.get(InstallSupplement.URL)
 
-        with zipfile.ZipFile(BytesIO(r.content)) as zip:
+        with zipfile.ZipFile(BytesIO(r.content)) as zipped:
 
             # extract each file in the zipped dir to the project
-            for f in zip.namelist():
-                zip.extract(f, self.root_dir)
+            for f in zipped.namelist():
+                zipped.extract(f, self.root_dir)
