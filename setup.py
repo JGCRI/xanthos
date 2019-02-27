@@ -34,7 +34,7 @@ def get_requirements():
 
 
 # install supplemental and example data from Zenodo
-InstallSupplement.fetch_zenodo()
+InstallSupplement().fetch_zenodo()
 
 
 setup(
