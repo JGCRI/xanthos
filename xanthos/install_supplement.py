@@ -1,30 +1,35 @@
 import os
 import requests
+import sys
+import zipfile
 
+# get Python major version number
+pyversion = sys.version_info.major
+
+if pyversion <= 2:
+    from StringIO import StringIO as BytesIO
+else:
+    from io import BytesIO as BytesIO
 
 
 class InstallSupplement:
 
+    # URL for DOI minted example data hosted on Zenodo
+    URL = 'https://zenodo.org/record/2578287/files/example.zip?download=1'
+
     def __init__(self):
 
-        # full path to the xanthos root directory where the example dir will be stored
+        # full path to the Xanthos root directory where the example dir will be stored
         self.root_dir = os.path.split(os.path.dirname(__file__))[0]
-
-        self.save_zip = os.path.join(self.root_dir, 'example.zip')
-
-        self.url = ''
 
     def fetch_zenodo(self):
         """Retrieve data supplement from Zenodo and save as zipped directory."""
 
-        r = requests.get(self.url)
+        # retrieve content from URL
+        r = requests.get(InstallSupplement.URL)
 
-        with open(self.save_zip, 'wb') as out:
-            out.write(r.content)
+        with zipfile.ZipFile(BytesIO(r.content)) as zip:
 
-    def unzip_zenodo(self):
-        """Unzip data supplement and destroy zipped directory."""
-        #TODO: add in Python 2 and 3 support to read compressed data to memory and then to uncompressed file using
-        #TODO:  StringIO and BytesIO respectively;
-        #TODO: see (https://stackoverflow.com/questions/5710867/downloading-and-unzipping-a-zip-file-without-writing-to-disk)
-        pass
+            # extract each file in the zipped dir to the project
+            for f in zip.namelist():
+                zip.extract(f, self.root_dir)
