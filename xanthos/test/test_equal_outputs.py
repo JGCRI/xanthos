@@ -19,7 +19,7 @@ class TestEqualOutputs(unittest.TestCase):
         old_files = self.read_outputs()
 
         # Set up and run Xanthos
-        ini = 'example/pm_abcd_mrtm.ini'
+        ini = 'xanthos/test/configs/pm_abcd_mrtm.ini'
         xth = Xanthos(ini)
         res = xth.execute()
 
