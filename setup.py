@@ -8,6 +8,8 @@ License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 Copyright (c) 2017, Battelle Memorial Institute
 """
 
+from xanthos.install_supplement import InstallSupplement
+
 
 class VersionError(Exception):
     def __init__(self, *args, **kwargs):
@@ -29,6 +31,11 @@ def readme():
 def get_requirements():
     with open('requirements.txt') as f:
         return f.read().split()
+
+
+def install_supplement():
+    """Install supplemental and example data from Zenodo."""
+    InstallSupplement.fetch_zenodo()
 
 
 setup(
