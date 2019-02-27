@@ -33,9 +33,8 @@ def get_requirements():
         return f.read().split()
 
 
-def install_supplement():
-    """Install supplemental and example data from Zenodo."""
-    InstallSupplement.fetch_zenodo()
+# install supplemental and example data from Zenodo
+InstallSupplement.fetch_zenodo()
 
 
 setup(
