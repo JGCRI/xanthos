@@ -3,18 +3,21 @@
 Test that the hargreaves_gwam_mrtm configuration runs.
 """
 
-from xanthos import Xanthos
+import os
 import unittest
 import numpy as np
 
+from xanthos import Xanthos
+
 
 class testHargreavesGwamMrtm(unittest.TestCase):
-    """
-    Test the hargreaves_gwam_mrtm configuration.
+    """Test the hargreaves_gwam_mrtm configuration.
 
     Uses the config file test/configs/hargreaves_gwam_mrtm.ini which runs for
     one year with no outputs and no optional modules.
     """
+    TEST_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'hargreaves_gwam_mrtm.ini')
+    
     NCELL = 67420
     NMONTH = 12
 
@@ -24,8 +27,7 @@ class testHargreavesGwamMrtm(unittest.TestCase):
     def testHargreavesGwamMrtm(cls):
         """Test the hargreaves_gwam_mrtm configuration runs with reasonable input."""
         # Set up and run Xanthos
-        ini = 'xanthos/test/configs/hargreaves_gwam_mrtm.ini'
-        xth = Xanthos(ini)
+        xth = Xanthos(cls.TEST_CONFIG_FILE)
 
         # Run with data that is within a reasonable range of actual inputs
         args = {
