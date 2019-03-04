@@ -17,7 +17,7 @@ class testHargreavesGwamMrtm(unittest.TestCase):
     one year with no outputs and no optional modules.
     """
     TEST_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'hargreaves_gwam_mrtm.ini')
-    
+
     NCELL = 67420
     NMONTH = 12
 
