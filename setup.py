@@ -19,8 +19,7 @@ class VersionError(Exception):
 try:
     from setuptools import setup, find_packages
 except ImportError:
-    print("Must have setuptools installed to run setup.py. Please install and try again.")
-    raise
+    raise("Must have setuptools installed to run setup.py. Please install and try again.")
 
 
 def readme():
@@ -34,6 +33,7 @@ def get_requirements():
 
 
 # install supplemental and example data from Zenodo
+print("Installing supplemental data from Zenodo...")
 InstallSupplement().fetch_zenodo()
 
 
