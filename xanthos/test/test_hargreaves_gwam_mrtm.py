@@ -24,6 +24,7 @@ class testHargreavesGwamMrtm(unittest.TestCase):
     def setUp(self):
         pass
 
+    @classmethod
     def testHargreavesGwamMrtm(cls):
         """Test the hargreaves_gwam_mrtm configuration runs with reasonable input."""
         # Set up and run Xanthos
