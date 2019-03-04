@@ -7,6 +7,5 @@ matrix:
 cache: pip
 install:
   - pip install .
-  - python setup.py -q install
 script:
   - travis_wait 35 python -m unittest discover
