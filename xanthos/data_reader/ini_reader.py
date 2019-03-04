@@ -35,7 +35,7 @@ class ConfigReader:
         p = c['Project']
 
         # project dirs
-        self.root = p['RootDir']
+        self.root = os.path.abspath(p['RootDir'])
         self.ProjectName = p['ProjectName']
         self.OutputNameStr = p['ProjectName']
         self.InputFolder = os.path.join(self.root, p['InputFolder'])
