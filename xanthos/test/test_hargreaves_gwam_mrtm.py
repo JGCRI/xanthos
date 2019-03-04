@@ -24,24 +24,23 @@ class testHargreavesGwamMrtm(unittest.TestCase):
     def setUp(self):
         pass
 
-    @classmethod
-    def testHargreavesGwamMrtm(cls):
+    def testHargreavesGwamMrtm(self):
         """Test the hargreaves_gwam_mrtm configuration runs with reasonable input."""
         # Set up and run Xanthos
-        xth = Xanthos(cls.TEST_CONFIG_FILE)
+        xth = Xanthos(testHargreavesGwamMrtm.TEST_CONFIG_FILE)
 
         # Run with data that is within a reasonable range of actual inputs
         args = {
-            "TemperatureFile": np.random.uniform(-5, 30, (cls.NCELL, cls.NMONTH)),
-            "DailyTemperatureRangeFile": np.random.uniform(1, 10, (cls.NCELL, cls.NMONTH)),
-            "PrecipitationFile": np.random.normal(50, 10, (cls.NCELL, cls.NMONTH))
+            "TemperatureFile": np.random.uniform(-5, 30, (testHargreavesGwamMrtm.NCELL, testHargreavesGwamMrtm.NMONTH)),
+            "DailyTemperatureRangeFile": np.random.uniform(1, 10, (testHargreavesGwamMrtm.NCELL, testHargreavesGwamMrtm.NMONTH)),
+            "PrecipitationFile": np.random.normal(50, 10, (testHargreavesGwamMrtm.NCELL, testHargreavesGwamMrtm.NMONTH))
         }
 
         res = xth.execute(args)
 
-        cls.assertEqual(res.Q.shape, (cls.NCELL, cls.NMONTH))
-        cls.assertFalse(np.any(np.isnan(res.Q)))
-        cls.assertFalse(np.any(res.Q < 0))
+        self.assertEqual(res.Q.shape, (testHargreavesGwamMrtm.NCELL, testHargreavesGwamMrtm.NMONTH))
+        self.assertFalse(np.any(np.isnan(res.Q)))
+        self.assertFalse(np.any(res.Q < 0))
 
 
 if __name__ == '__main__':
