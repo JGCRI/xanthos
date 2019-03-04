@@ -19,8 +19,8 @@ class TestEqualOutputs(unittest.TestCase):
     EXAMPLE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'example'))
     DEFAULT_OUTPUTS_DIR = os.path.join(EXAMPLE_DIR, 'output', 'pm_abcd_mrtm_watch_1971_2001')
 
-    # def setUp(self):
-    #     pass
+    def setUp(self):
+        pass
 
     def testOutputs(self):
         """Test that Xanthos produces correct outputs for the default configuration."""
