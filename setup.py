@@ -7,7 +7,6 @@ License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
 """
-
 from xanthos.install_supplement import InstallSupplement
 
 
@@ -32,11 +31,6 @@ def get_requirements():
         return f.read().split()
 
 
-# install supplemental and example data from Zenodo
-print("Installing supplemental data from Zenodo...")
-InstallSupplement().fetch_zenodo()
-
-
 setup(
     name='xanthos',
     version='2.3.0',
@@ -50,3 +44,8 @@ setup(
     install_requires=get_requirements(),
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4',
 )
+
+
+# install supplemental and example data from Zenodo
+print("Installing supplemental data from Zenodo...")
+InstallSupplement().fetch_zenodo()
