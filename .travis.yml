@@ -5,6 +5,7 @@ matrix:
       dist: xenial
 cache: pip
 install:
-  - pip install .
+  - pip install -r requirements.txt
+  - python setup.py -q install
 script:
   - travis_wait 35 python -m unittest discover

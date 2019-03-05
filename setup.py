@@ -17,8 +17,7 @@ class VersionError(Exception):
 try:
     from setuptools import setup, find_packages
 except ImportError:
-    print("Must have setuptools installed to run setup.py. Please install and try again.")
-    raise
+    raise("Must have setuptools installed to run setup.py. Please install and try again.")
 
 
 def readme():
@@ -44,3 +43,9 @@ setup(
     install_requires=get_requirements(),
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4',
 )
+
+from xanthos.install_supplement import InstallSupplement
+
+# install supplemental and example data from Zenodo
+print("Installing supplemental data from Zenodo...")
+InstallSupplement().fetch_zenodo()
