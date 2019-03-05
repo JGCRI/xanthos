@@ -32,4 +32,5 @@ class InstallSupplement:
 
             # extract each file in the zipped dir to the project
             for f in zipped.namelist():
+                print("Unzipped: {}".format(os.path.join(self.root_dir, f)))
                 zipped.extract(f, self.root_dir)
