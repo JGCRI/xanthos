@@ -7,7 +7,6 @@ License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
 """
-from xanthos.install_supplement import InstallSupplement
 
 
 class VersionError(Exception):
@@ -44,6 +43,8 @@ setup(
     install_requires=get_requirements(),
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4',
 )
+
+from xanthos.install_supplement import InstallSupplement
 
 # install supplemental and example data from Zenodo
 print("Installing supplemental data from Zenodo...")
