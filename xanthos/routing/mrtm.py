@@ -42,7 +42,7 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
     tauinv = ChV / L
     dtinv = 1. / dt
 
-    erlateral = (q * area) / (1e6 * 10**9) / (nday * 24 * 3600)  # q -> erlateral: mm/month to m^3/s
+    erlateral = (q * area) * (1e6 / 1e3) / (nday * 24 * 3600)  # q -> erlateral: mm/month to m^3/s
 
     for t in range(nt):
 

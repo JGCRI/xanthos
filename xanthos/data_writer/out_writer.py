@@ -79,27 +79,43 @@ class OutWriter:
         return self.outputs[self.output_names.index(varstr)]
 
     def write(self):
-        """Format and call appropriate writer for output variables."""
-        # output_names will be an empty list if no outputs were requested
+        """
+        Format and call appropriate writer for output variables.
+
+        Writes all data to disk, using the settings defined in the config file.
+        Assumes all variables are DataFrames containing values in units of
+        mm/mth for sequential months over all years.
+
+        The output for average channel flow is a special case. It is expected
+        in units of m3/sec and no conversions will be made. Aggregating to
+        yearly time steps is done by taking the mean of all months over a year.
+        """
         if not self.output_names:
+            # output_names will be an empty list if no outputs were requested
             logging.debug("No valid output variables specified")
             return
 
-        if self.output_in_year:
-            logging.debug("Outputting data annually")
-            self.outputs = [self.agg_to_year(df) for df in self.outputs]
-
-        if self.out_unit == UNIT_KM3_MTH:
-            self.outputs = [df.multiply(self.conversion_mm_km3, axis=0) for df in self.outputs]
-
+        # output_in_year is 0 for monthly output and 1 for yearly
+        logging.debug("Outputting data {}".format(("monthly", "annually")[self.output_in_year]))
         logging.debug("Unit is {}".format(self.out_unit_str))
-        logging.debug("Output dimension is {}".format(self.outputs[0].shape))
 
         for var, data in zip(self.output_names, self.outputs):
+            # Special case needed for average channel flow
             if var == 'avgchflow':
                 unit = 'm3persec'
+
+                if self.output_in_year:
+                    data = self.agg_to_year(data, 'mean')
             else:
                 unit = self.out_unit_str
+
+                if self.output_in_year:
+                    data = self.agg_to_year(data, 'sum')
+
+                if self.out_unit == UNIT_KM3_MTH:
+                    data = data.multiply(self.conversion_mm_km3, axis=0)
+
+            logging.debug("{} output dimension is {}".format(var, data.shape))
 
             filename = '{}_{}_{}'.format(var, unit, self.proj_name)
             filename = os.path.join(self.out_folder, filename)
@@ -219,9 +235,9 @@ class OutWriter:
 
         fp_write(filename, df, row_group_offsets=len(df), compression="GZIP", file_scheme='hive', has_nulls=False, append=append)
 
-    def agg_to_year(self, df):
+    def agg_to_year(self, df, func='sum'):
         """Aggregate a DataFrame (cells x months) to (cells x years)."""
-        return df.groupby(np.arange(len(df.columns)) // NMONTHS, axis=1).sum()
+        return df.groupby(np.arange(len(df.columns)) // NMONTHS, axis=1).agg(func)
 
     def agg_spatial(self, df, id_map, name_map, inc_name_idx=False):
         """Aggregate a DataFrame (cells x time) to (geographic area x time)."""
