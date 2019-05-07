@@ -236,7 +236,16 @@ class OutWriter:
         fp_write(filename, df, row_group_offsets=len(df), compression="GZIP", file_scheme='hive', has_nulls=False, append=append)
 
     def agg_to_year(self, df, func='sum'):
-        """Aggregate a DataFrame (cells x months) to (cells x years)."""
+        """
+        Aggregate a DataFrame (cells x months) to (cells x years).
+
+        The groups are defined by an array the length of the number of columns,
+        where identical values are grouped. Integer division by 12 on the
+        column index gives sequential groups of length 12.
+
+        :param df:      DataFrame with months in columns
+        :param func:    Function to use for aggregation [default sum]
+        """
         return df.groupby(np.arange(len(df.columns)) // NMONTHS, axis=1).agg(func)
 
     def agg_spatial(self, df, id_map, name_map, inc_name_idx=False):
