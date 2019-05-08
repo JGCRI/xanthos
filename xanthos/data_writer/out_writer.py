@@ -99,31 +99,30 @@ class OutWriter:
         logging.debug("Outputting data {}".format(("monthly", "annually")[self.output_in_year]))
         logging.debug("Unit is {}".format(self.out_unit_str))
 
-        for var, data in zip(self.output_names, self.outputs):
-            # Special case needed for average channel flow
+        for i, var in enumerate(self.output_names):
             if var == 'avgchflow':
+                agg_function = 'mean'
                 unit = 'm3persec'
-
-                if self.output_in_year:
-                    data = self.agg_to_year(data, 'mean')
             else:
+                agg_function = 'sum'
                 unit = self.out_unit_str
 
-                if self.output_in_year:
-                    data = self.agg_to_year(data, 'sum')
+            # Take the yearly mean for aggregating channel flow, otherwise take the total
+            if self.output_in_year:
+                self.outputs[i] = self.agg_to_year(self.outputs[i], agg_function)
 
-                if self.out_unit == UNIT_KM3_MTH:
-                    data = data.multiply(self.conversion_mm_km3, axis=0)
+            if self.out_unit == UNIT_KM3_MTH and var != 'avgchflow':
+                self.outputs[i] = self.outputs[i].multiply(self.conversion_mm_km3, axis=0)
 
-            logging.debug("{} output dimension is {}".format(var, data.shape))
+            logging.debug("{} output dimension is {}".format(var, self.outputs[i].shape))
 
             filename = '{}_{}_{}'.format(var, unit, self.proj_name)
             filename = os.path.join(self.out_folder, filename)
 
             # Outputs are by grid cell and grid cell ids start at 1
-            data.index += 1
+            self.outputs[i].index += 1
 
-            self.write_data(filename, var, data, col_names=self.time_steps)
+            self.write_data(filename, var, self.outputs[i], col_names=self.time_steps)
 
     def write_aggregates(self, ref, df, basin, country, region):
         """
