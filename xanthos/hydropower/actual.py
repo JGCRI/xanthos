@@ -50,7 +50,7 @@ class HydropowerActual:
         self.filename_hydro = os.path.join(settings.OutputFolder, fname)
         self.start_date = settings.hact_start_date  # Get start date for simulation "M/YYYY"
         self.loc_refs = self.grid_data[["ID", "long", "lati"]]  # Get latitiude and longitude for all grid squares
-        self.grid_ids = self.res_data.ix[:, 0:2].apply(self.get_grid_id, 1)  # Get grid indices for all dams
+        self.grid_ids = self.res_data.iloc[:, 0:2].apply(self.get_grid_id, 1)  # Get grid indices for all dams
         self.q = np.transpose(self.q_grids[self.grid_ids - 1, :])  # get flows for all grids containing dams
         self.dr_ar_assumed = np.apply_along_axis(self.get_drain_area,
                                                  1,
