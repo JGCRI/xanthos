@@ -1,0 +1,8 @@
+include README.md
+include requirements.txt
+include DISCLAIMER
+include LICENSE
+include docs/*.md
+include docs/*.png
+include xanthos/data/*.txt
+include xanthos/data/*.csv
