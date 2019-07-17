@@ -1,23 +1,24 @@
 #!/usr/bin/env python
-"""
-Test that the default outputs do not change.
-"""
 
-import os
 import glob
 import unittest
+import pkg_resources
 import pandas as pd
 
 from xanthos import Xanthos
+from xanthos.install_supplement import InstallSupplement
 
 
 class TestEqualOutputs(unittest.TestCase):
+    """Test that the default outputs do not change."""
 
-    DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'pm_abcd_mrtm.ini')
+    DEFAULT_CONFIG_FILE = pkg_resources.resource_filename('xanthos', 'test/configs/pm_abcd_mrtm.ini')
 
-    # installed in setup.py as fetch from minted Zenodo supplementary data
-    EXAMPLE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'example'))
-    DEFAULT_OUTPUTS_DIR = os.path.join(EXAMPLE_DIR, 'output', 'pm_abcd_mrtm_watch_1971_2001')
+    # install example supplement for testing in Travis-CI
+    InstallSupplement(pkg_resources.resource_filename('xanthos', 'test/data'))
+
+    EXAMPLE_DIR = pkg_resources.resource_filename('xanthos', 'test/data/example')
+    DEFAULT_OUTPUTS_DIR = pkg_resources.resource_filename('xanthos', 'test/data/example/output/pm_abcd_mrtm_watch_1971_2001')
 
     def setUp(self):
         pass
