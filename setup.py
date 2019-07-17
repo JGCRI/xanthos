@@ -32,7 +32,7 @@ def get_requirements():
 
 setup(
     name='xanthos',
-    version='2.3.0',
+    version='2.3.1',
     packages=find_packages(),
     url='https://github.com/jgcri/xanthos',
     license='BSD 2-Clause',
@@ -43,9 +43,3 @@ setup(
     install_requires=get_requirements(),
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4',
 )
-
-from xanthos.install_supplement import InstallSupplement
-
-# install supplemental and example data from Zenodo
-print("Installing supplemental data from Zenodo...")
-InstallSupplement().fetch_zenodo()
