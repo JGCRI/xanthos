@@ -6,3 +6,5 @@ include docs/*.md
 include docs/*.png
 include xanthos/data/*.txt
 include xanthos/data/*.csv
+include xanthos/test/data/pm_abcd_mrtm_watch_1971_2001/*.csv
+include xanthos/test/data/configs/*.ini
