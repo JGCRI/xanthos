@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-"""
-Test that the Thornthwaite PET module outputs correctly.
-"""
 
 from xanthos.pet import thornthwaite
 import unittest
@@ -9,8 +6,11 @@ import numpy as np
 
 
 class TestThornthwaite(unittest.TestCase):
+    """Test that the Thornthwaite PET module outputs correctly."""
+
     def testDaylightHours(self):
         """Test the daylight hour calculation method."""
+
         mth_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
         equator = thornthwaite.calc_daylight_hours(mth_days, np.array([0]))
@@ -24,6 +24,7 @@ class TestThornthwaite(unittest.TestCase):
 
     def testThornthwaiteResults(self):
         """Make sure Thornthwaite results are as expected."""
+
         lat_radians = np.array([0.698132])   # 40 degrees N
         tas1 = np.array([[2,  5,  6,  8, 10, 12, 15, 12, 10,  8,  6,  5]])
         tas2 = np.array([[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]])
