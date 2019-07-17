@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import pkg_resources
-from xanthos.install_supplement import InstallSupplement
+from xanthos import InstallSupplement
 
 
 def install_supplement():
