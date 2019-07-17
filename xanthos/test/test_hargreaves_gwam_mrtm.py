@@ -5,6 +5,7 @@ Test that the hargreaves_gwam_mrtm configuration runs.
 
 import os
 import unittest
+import pkg_resources
 import numpy as np
 
 from xanthos import Xanthos
@@ -15,8 +16,10 @@ class testHargreavesGwamMrtm(unittest.TestCase):
 
     Uses the config file test/configs/hargreaves_gwam_mrtm.ini which runs for
     one year with no outputs and no optional modules.
+
     """
-    TEST_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'hargreaves_gwam_mrtm.ini')
+
+    TEST_CONFIG_FILE = pkg_resources.resource_filename('xanthos', 'test/configs/hargreaves_gwam_mrtm.ini')
 
     NCELL = 67420
     NMONTH = 12
@@ -26,6 +29,7 @@ class testHargreavesGwamMrtm(unittest.TestCase):
 
     def testHargreavesGwamMrtm(self):
         """Test the hargreaves_gwam_mrtm configuration runs with reasonable input."""
+
         # Set up and run Xanthos
         xth = Xanthos(testHargreavesGwamMrtm.TEST_CONFIG_FILE)
 
