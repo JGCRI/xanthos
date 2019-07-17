@@ -15,10 +15,10 @@ class TestEqualOutputs(unittest.TestCase):
     DEFAULT_CONFIG_FILE = pkg_resources.resource_filename('xanthos', 'test/configs/pm_abcd_mrtm.ini')
 
     # install example supplement for testing in Travis-CI
-    InstallSupplement(pkg_resources.resource_filename('xanthos', 'test/data'))
+    InstallSupplement(pkg_resources.resource_filename('xanthos', 'test'))
 
-    EXAMPLE_DIR = pkg_resources.resource_filename('xanthos', 'test/data/example')
-    DEFAULT_OUTPUTS_DIR = pkg_resources.resource_filename('xanthos', 'test/data/example/output/pm_abcd_mrtm_watch_1971_2001')
+    EXAMPLE_DIR = pkg_resources.resource_filename('xanthos', 'test/example')
+    DEFAULT_OUTPUTS_DIR = pkg_resources.resource_filename('xanthos', 'test/example/output/pm_abcd_mrtm_watch_1971_2001')
 
     def setUp(self):
         pass
