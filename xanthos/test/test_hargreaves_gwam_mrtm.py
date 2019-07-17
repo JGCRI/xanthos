@@ -3,7 +3,6 @@
 Test that the hargreaves_gwam_mrtm configuration runs.
 """
 
-import os
 import unittest
 import pkg_resources
 import numpy as np
