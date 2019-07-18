@@ -34,7 +34,7 @@ class TestEqualOutputs(unittest.TestCase):
         self.assertEqual(ctx.lat_lon_array.shape, (67420, 2))
 
         # check basin id array shape
-        self.assertEqual(ctx.basin_id_array, (67420, ))
+        self.assertEqual(ctx.basin_id_array.shape, (67420, ))
 
 
 if __name__ == '__main__':
