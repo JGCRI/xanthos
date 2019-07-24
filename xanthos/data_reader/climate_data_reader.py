@@ -165,7 +165,7 @@ class ClimateToXanthos:
 
         return arr_out
 
-    def format_pr(self, ncdf, data_variable_name, start_yr, through_yr, yr_interval=1,
+    def format_pr(self, ncdf, start_yr, through_yr, yr_interval=1, data_variable_name=None,
                   out_file=None):
         """Convert daily precipitation in units kg m-2 s-1 from a 3D shape where
         [day, latitude, longitude] to monthly mean precipitation shape
@@ -174,8 +174,6 @@ class ClimateToXanthos:
         :param ncdf:                    Full path with file name and extension to the NetCDF
                                         file.
 
-        :param data_variable_name:      Name of the NetCDF variable for the data
-
         :param start_yr:                Four digit integer for year dataset starts in.
                                         Dataset must start on January 01.
 
@@ -183,6 +181,9 @@ class ClimateToXanthos:
                                         Dataset must end covering December 31.
 
         :param yr_interval:             Integer for the year interval. Default: 1
+        
+        :param data_variable_name:      Name of the NetCDF variable for the data.  If set to None,
+                                        the code will auto detect the data variable name.
 
         :param out_file:                Full path with file name and extension for the output
                                         NPY file. Default: None.
@@ -197,6 +198,9 @@ class ClimateToXanthos:
 
         # convert daily to monthly mean
         dsr = ds.resample(time='M').mean(self.time_dimension_name)
+        
+        if data_variable_name is None:
+            data_variable_name = self.get_variable(dsr)
 
         data_arr = dsr.variables[data_variable_name][:]
 
@@ -224,7 +228,7 @@ class ClimateToXanthos:
 
         return arr_out
 
-    def format_tas(self, ncdf, data_variable_name, out_file=None):
+    def format_tas(self, ncdf, data_variable_name=None, out_file=None):
         """Convert daily near surface air temperature (tas, tasmin, tasmax) in
         Kelvin from a 3D shape where [day, latitude, longitude] to monthly mean
         temperature for each Xanthos land grid cell where [grid_cell, month] in
@@ -234,7 +238,8 @@ class ClimateToXanthos:
                                         file. Temperature units for input NetCDF are expected
                                         to be in Kelvin.
 
-        :param data_variable_name:      Name of the NetCDF variable for the data
+        :param data_variable_name:      Name of the NetCDF variable for the data.  If set to None,
+                                        the code will auto detect the data variable name.
 
         :param out_file:                Full path with file name and extension for the output
                                         NPY file. Default: None.
@@ -249,6 +254,9 @@ class ClimateToXanthos:
 
         # convert daily to monthly mean
         dsr = self.ds.resample(time='M').mean(self.time_dimension_name)
+        
+        if data_variable_name is None:
+            data_variable_name = self.get_variable(dsr)
 
         # replace nan values with means from corresponding basin
         data_arr = dsr.variables[data_variable_name][:]
