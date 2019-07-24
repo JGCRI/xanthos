@@ -196,7 +196,7 @@ class ClimateToXanthos:
         ds = xr.open_dataset(ncdf)
 
         # convert daily to monthly mean
-        dsr = ds.resample(time='m').mean(self.time_dimension_name)
+        dsr = ds.resample(time='M').mean(self.time_dimension_name)
 
         data_arr = dsr.variables[data_variable_name][:]
 
@@ -248,7 +248,7 @@ class ClimateToXanthos:
         self.ds = xr.open_dataset(ncdf)
 
         # convert daily to monthly mean
-        dsr = self.ds.resample(time='m').mean(self.time_dimension_name)
+        dsr = self.ds.resample(time='M').mean(self.time_dimension_name)
 
         # replace nan values with means from corresponding basin
         data_arr = dsr.variables[data_variable_name][:]
