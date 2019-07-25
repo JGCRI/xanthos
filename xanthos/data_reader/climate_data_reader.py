@@ -118,6 +118,25 @@ class ClimateToXanthos:
         if n_months != data_arr.shape[0]:
             raise AssertionError(msg.format(start_yr, through_yr, n_months, data_arr.shape[0]))
 
+    @staticmethod
+    def get_variable(ds):
+        """Get the data variable name in the dataset.  Raise error if more than one.
+
+        :param ds:                      xarray dataset object.
+
+        :return:                        Target variable name.
+
+        """
+
+        vars = list(ds.data_vars)
+        len_vars = len(vars)
+
+        if len_vars != 1:
+            raise KeyError("Dataset for {} has {} data variables. One required. Please specify data variable instead of auto detecting.".format(ds, len_vars))
+
+        else:
+            return vars[0]
+
     def replace_nan(self, data_arr):
         """Replace any nan elements in the array with the mean value for the basin.
 
