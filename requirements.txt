@@ -6,3 +6,4 @@ configobj>=5.0.6
 joblib>=0.11
 setuptools>=24.2.0
 requests>=2.18.4
+xarray>=0.12.3
