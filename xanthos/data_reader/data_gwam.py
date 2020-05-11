@@ -6,8 +6,7 @@ class DataGwam(DataUtils):
 
     def __init__(self, config, area, region_ids, country_ids, basin_ids):
 
-        super().__init__(config_obj=config)
-
+        self.config = config
         self.area = area
         self.region_ids = region_ids
         self.country_ids = country_ids

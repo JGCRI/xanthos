@@ -6,7 +6,12 @@ class DataPenmanMonteith(DataUtils):
 
     def __init__(self, config):
 
-        super().__init__(config_obj=config)
+        # TODO: remove config imports from data classes
+        self.config = config
+
+        # TODO create parameters that can be used instead of a config file
+        self._pm_params = None
+
 
         # values from literature
         et_params = np.genfromtxt(self.config.pm_params, delimiter=',')

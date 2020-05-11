@@ -17,14 +17,6 @@ class ValidationException(Exception):
 class DataUtils:
     """Methods to process input data.  Loads the configuration object."""
 
-    def __init__(self, config_obj):
-        """Validate the configuration set up.
-
-        :param config_obj:      A ConfigObj object that has data from a config file.
-
-        """
-        self.config = config_obj
-
     def load_to_array(self, f, var_name=None, neg_to_zero=False, nan_to_num=False, warn_nan=False):
         """Load and validate monthly input data.
 
