@@ -28,7 +28,7 @@ class DataReference(DataUtils):
 
     def __init__(self, config):
 
-        super().__init__(config_obj=config)
+        super().__init__(nmonths=config.nmonths)
 
         # load Xanthos landcell reference data as data frame
         ref_landcell_df = pd.read_csv(DataReference.REF_LANDCELL_FILE)

@@ -51,7 +51,7 @@ class Components(DataUtils):
 
     def __init__(self, config):
 
-        super().__init__(config_obj=config)
+        super().__init__(nmonths=config.nmonths)
 
         self.s = config
 

@@ -17,6 +17,11 @@ class ValidationException(Exception):
 class DataUtils:
     """Methods to process input data.  Loads the configuration object."""
 
+    def __init__(self, nmonths, ncells=67420):
+
+        self.nmonths = nmonths
+        self.ncells = ncells
+
     def load_to_array(self, f, var_name=None, neg_to_zero=False, nan_to_num=False, warn_nan=False):
         """Load and validate monthly input data.
 
@@ -65,11 +70,11 @@ class DataUtils:
 
         err = "Error: Inconsistent {0} data grid size. Expecting size: {1}. Received size: {2}"
 
-        if not arr.shape[0] == self.config.ncell:
-            raise ValidationException(err.format(text, self.config.ncell, arr.shape[0]))
+        if not arr.shape[0] == self.ncells:
+            raise ValidationException(err.format(text, self.ncells, arr.shape[0]))
 
-        if not arr.shape[1] == self.config.nmonths:
-            raise ValidationException(err.format(text, self.config.nmonths, arr.shape[1]))
+        if not arr.shape[1] == self.nmonths:
+            raise ValidationException(err.format(text, self.nmonths, arr.shape[1]))
 
         return arr
 

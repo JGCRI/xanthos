@@ -1,9 +1,7 @@
-import os
 import pkg_resources
 import unittest
 
 import numpy as np
-import pandas as pd
 
 from xanthos.data_reader.data_penman_monteith import DataPenmanMonteith
 from xanthos.pet.penman_monteith import run_pmpet
@@ -12,6 +10,14 @@ from xanthos.pet.penman_monteith import run_pmpet
 class TestPenmanMonteith(unittest.TestCase):
     """Test that the default outputs do not change."""
 
+    NCELLS = 67420
+    NLCS = 8
+    START_YR = 1971
+    THROUGH_YR = 2001
+    WATER_IDX = 0
+    SNOW_IDX = 6
+    LC_YEARS = [1900, 1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2005, 2010]
+
     INPUT_ELEV = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/elev.npy')
     INPUT_ALBEDO = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/gcam_albedo.csv')
     INPUT_ETPARS = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/gcam_ET_para.csv')
@@ -19,20 +25,15 @@ class TestPenmanMonteith(unittest.TestCase):
     INPUT_LAIMAX = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/gcam_laimax.csv')
     INPUT_LAIMIN = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/gcam_laimin.csv')
     INPUT_LUCC = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/lucc1901_2010_lump.npy')
-    INPUT_RHS = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/rhs_watch_monthly_percent_1971_1975.npy')
-    INPUT_RLDS = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/rlds_watch_monthly_wperm2_1971_1975.npy')
-    INPUT_RSDS = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/rsds_watch_monthly_wperm2_1971_1975.npy')
-    INPUT_TAS = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/tas_watch_monthly_degc_1971_1975.npy')
-    INPUT_TASMIN = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/tasmin_watch_monthly_degc_1971_1975.npy')
-    INPUT_WIND = pkg_resources.resource_filename('xanthos', 'tests/data/inputs/pet/penman_monteith/wind_watch_monthly_mpers_1971_1975.npy')
+    INPUT_RHS = pkg_resources.resource_filename('xanthos', f'tests/data/inputs/pet/penman_monteith/rhs_watch_monthly_percent_{START_YR}_{THROUGH_YR}.npy')
+    INPUT_RLDS = pkg_resources.resource_filename('xanthos', f'tests/data/inputs/pet/penman_monteith/rlds_watch_monthly_wperm2_{START_YR}_{THROUGH_YR}.npy')
+    INPUT_RSDS = pkg_resources.resource_filename('xanthos', f'tests/data/inputs/pet/penman_monteith/rsds_watch_monthly_wperm2_{START_YR}_{THROUGH_YR}.npy')
+    INPUT_TAS = pkg_resources.resource_filename('xanthos', f'tests/data/inputs/pet/penman_monteith/tas_watch_monthly_degc_{START_YR}_{THROUGH_YR}.npy')
+    INPUT_TASMIN = pkg_resources.resource_filename('xanthos', f'tests/data/inputs/pet/penman_monteith/tasmin_watch_monthly_degc_{START_YR}_{THROUGH_YR}.npy')
+    INPUT_WIND = pkg_resources.resource_filename('xanthos', f'tests/data/inputs/pet/penman_monteith/wind_watch_monthly_mpers_{START_YR}_{THROUGH_YR}.npy')
 
-    NCELLS = 67420
-    NLCS = 8
-    START_YR = 1971
-    THROUGH_YR = 1972
-    WATER_IDX = 0
-    SNOW_IDX = 8
-    LC_YEARS = [1900, 1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2005, 2010]
+    # TODO:  look up units for PET output
+    COMP_PET = pkg_resources.resource_filename('xanthos', f'tests/data/comp_data/pet_penman_monteith_watch_mmpermth_{START_YR}_{THROUGH_YR}.npy')
 
     def test_outputs(self):
         """Ensure the outputs match what is expected."""
@@ -50,9 +51,10 @@ class TestPenmanMonteith(unittest.TestCase):
                                   rsds_file=TestPenmanMonteith.INPUT_RSDS,
                                   rlds_file=TestPenmanMonteith.INPUT_RLDS,
                                   lulc_file=TestPenmanMonteith.INPUT_LUCC,
-                                  elev_file=TestPenmanMonteith.INPUT_ELEV)
+                                  elev_file=TestPenmanMonteith.INPUT_ELEV,
+                                  start_yr=TestPenmanMonteith.START_YR,
+                                  through_yr=TestPenmanMonteith.THROUGH_YR)
         # run the module
-        # for yr in range(TestPenmanMonteith.START_YR, TestPenmanMonteith.THROUGH_YR + 1, 1):
         pet = run_pmpet(data,
                         ncells=TestPenmanMonteith.NCELLS,
                         nlcs=TestPenmanMonteith.NLCS,
@@ -62,7 +64,7 @@ class TestPenmanMonteith(unittest.TestCase):
                         snow_idx=TestPenmanMonteith.SNOW_IDX,
                         land_cover_years=TestPenmanMonteith.LC_YEARS)
 
-        print(pet.shape)
+        np.save(TestPenmanMonteith.COMP_PET, pet)
 
 
 if __name__ == '__main__':

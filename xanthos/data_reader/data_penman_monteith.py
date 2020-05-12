@@ -6,7 +6,7 @@ class DataPenmanMonteith(DataUtils):
 
     def __init__(self, config_obj=None, params_file=None, albedo_file=None, lai_file=None, laimax_file=None,
                  laimin_file=None, tas_file=None, tasmin_file=None, rhs_file=None, wind_file=None, rsds_file=None,
-                 rlds_file=None, lulc_file=None, elev_file=None):
+                 rlds_file=None, lulc_file=None, elev_file=None, start_yr=None, through_yr=None):
 
         # enbale passing of args for config
         if config_obj is None:
@@ -23,6 +23,7 @@ class DataPenmanMonteith(DataUtils):
             self.pm_rlds = rlds_file
             self.pm_lct = lulc_file
             self.pm_elev = elev_file
+            nmonths = (through_yr - start_yr + 1) * 12
 
         else:
             self.pm_params = config_obj.pm_params
@@ -38,6 +39,9 @@ class DataPenmanMonteith(DataUtils):
             self.pm_rlds = config_obj.pm_rlds
             self.pm_lct = config_obj.pm_lct
             self.pm_elev = config_obj.pm_elev
+            nmonths = config_obj.nmonths
+
+        super().__init__(nmonths=nmonths)
 
         # values from literature
         et_params = np.genfromtxt(self.pm_params, delimiter=',')

@@ -6,9 +6,9 @@ from xanthos.utils.math import sub2ind
 
 class DataMrtm(DataUtils):
 
-    def __init__(self, config, coords):
+    def __init__(self, config_obj, coords):
 
-        super().__init__(config_obj=config)
+        self.config = config_obj
 
         map_index = sub2ind([self.config.ngridrow, self.config.ngridcol], coords[:, 4].astype(int) - 1,
                             coords[:, 3].astype(int) - 1)
@@ -25,6 +25,8 @@ class DataMrtm(DataUtils):
         self.instream_flow = np.zeros((self.config.ncell, ), dtype=float)
 
         self.chs_prev = self.load_chs_data()
+
+        super().__init__(nmonths=config_obj.nmonths)
 
     def load_chs_data(self):
         """Load channel velocity file into array if in future mode, else stage zeros array."""

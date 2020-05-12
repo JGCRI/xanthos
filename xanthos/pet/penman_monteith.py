@@ -390,7 +390,7 @@ def set_years(y, end_yr, process_nyrs):
     return st_yr, ed_yr
 
 
-def run_pmpet(data, ncells, nlcs, start_yr, end_yr, water_idx, snow_idx, land_cover_years):
+def run_pmpet(data, ncells, nlcs, start_yr, end_yr, water_idx, snow_idx, land_cover_years, process_nyrs=1):
     """
     Run Penman-Monteith PET.
 
@@ -409,10 +409,14 @@ def run_pmpet(data, ncells, nlcs, start_yr, end_yr, water_idx, snow_idx, land_co
     :param water_idx:           index of water in the land cover data
     :param snow_idx:            index of snow in the land cover data
     :param land_cover_years     list of integer years in YYYY format that are contained in the land cover data
+    :param process_nyrs:                    int. How many years to process at once.  Default is 1 due to local RAM c
+                                            RAM constraints.  This can be increased for faster run times on systems with
+                                            larger RAM available.
 
     :return:                    PET array [ncells, nmonths]
 
     """
+
     # calculate total project months
     tot_yrs = end_yr - start_yr
     if tot_yrs == 0:
@@ -422,9 +426,6 @@ def run_pmpet(data, ncells, nlcs, start_yr, end_yr, water_idx, snow_idx, land_co
 
     # set output array
     out_arr = np.zeros(shape=(ncells, tot_nmonths))
-
-    # how many years of data to process at one time
-    process_nyrs = 1
 
     st_mth_idx = 0
     ed_mth_idx = 0
