@@ -1,4 +1,3 @@
-from __future__ import division
 """
 Calculate Monthly PET using the Penman Monteith Method.
 
@@ -412,6 +411,7 @@ def run_pmpet(data, ncells, nlcs, start_yr, end_yr, water_idx, snow_idx, land_co
     :param land_cover_years     list of integer years in YYYY format that are contained in the land cover data
 
     :return:                    PET array [ncells, nmonths]
+
     """
     # calculate total project months
     tot_yrs = end_yr - start_yr
