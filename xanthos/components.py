@@ -453,9 +453,9 @@ class Components:
             'q': self.Q,
             'soilmoisture': self.Sav,
             'avgchflow': self.Avg_ChFlow,
-            'recharge': self.gw_recharge,
+            'groundwater-recharge': self.gw_recharge,
             'baseflow': self.baseflow,
-            'effective_recharge': self.effective_recharge
+            'effective-recharge': self.effective_recharge
         }
 
         output_writer = OutWriter(self.s, self.data.area, all_outputs)
