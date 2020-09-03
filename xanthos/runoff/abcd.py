@@ -78,22 +78,28 @@ class ABCD:
             self.tmin = tmin.T[0:self.steps, :]
             self.tmin0 = self.tmin[0:self.spinup_steps, :].copy()
 
-        # values [initial runoff, soil moisture storage, groundwater storage
+        # values [initial runoff, soil moisture storage, groundwater storage]
         self.inv = np.array([20, 100, 500])
-        self.soil_water_storage0 = self.inv[1]
+        self.soil_moisture_storage0 = self.inv[1]
         self.groundwater_storage0 = self.inv[2]
 
-        # populate param arrays
-        self.snm = None
-        self.actual_et = None
-        self.groundwater_storage = None
-        self.soil_water_storage = None
-        self.water_avail = None
-        self.et_op = None
-        self.snowpack = None
-        self.rsim = None
-        self.rain = None
-        self.snow = None
+        # populate param arrays; comments are the variable names in the original matlab code (Liu et al.)
+        self.snowmelt = None  # SNM
+        self.actual_et = None  # Ea
+        self.simulated_runoff = None  # Rsim
+        self.ground_water_recharge_array = None  # RE
+        self.direct_runoff = None  # DR
+        self.baseflow = None  # base; groundwater discharge
+        self.groundwater_storage = None  # G
+        self.soil_moisture_storage = None  # S
+        self.available_water = None  # W
+        self.et_opportunity = None  # Y
+        self.snowpack = None  # XS; accumulated snow water equivalent
+        self.rain = None  # RAIN
+        self.snow = None  # SNOW
+
+        # additional output not in the original code
+        self.effective_recharge = None
 
         self.SN0 = 0
         self.TRAIN = 2.5
@@ -123,9 +129,9 @@ class ABCD:
 
         self.snowpack = arr
 
-    def set_rsim(self, p, v):
+    def set_simulated_runoff(self, p, v):
         """
-        Set the initial streamflow.
+        Set the initial simulated runoff.
 
         :param p:   precipitation
         :param v:   initial runoff
@@ -136,7 +142,7 @@ class ABCD:
 
         arr[0, :] = v
 
-        self.rsim = arr
+        self.simulated_runoff = arr
 
     def set_rain_and_snow(self, p, tmin):
         """Assign rain and snow arrays."""
@@ -188,57 +194,68 @@ class ABCD:
             allsnow = tmin[i, :] < self.TSNOW
 
             # estimate snowmelt (SNM)
-            self.snm[i, allrain] = self.snowpack[i, allrain] * self.m[allrain]
-            self.snm[i, rainorsnow] = (self.snowpack[i, rainorsnow] * self.m[rainorsnow]) * \
+            self.snowmelt[i, allrain] = self.snowpack[i, allrain] * self.m[allrain]
+            self.snowmelt[i, rainorsnow] = (self.snowpack[i, rainorsnow] * self.m[rainorsnow]) * \
                 ((self.TRAIN - tmin[i, rainorsnow]) / (self.TRAIN - self.TSNOW))
-            self.snm[i, allsnow] = 0
+            self.snowmelt[i, allsnow] = 0
 
             # accumulated snow water equivalent
-            self.snowpack[i, :] -= self.snm[i, :]
+            self.snowpack[i, :] -= self.snowmelt[i, :]
 
         # get available water
         if i == 0:
-            self.water_avail[i, :] = self.rain[i, :] + self.soil_water_storage0
+            self.available_water[i, :] = self.rain[i, :] + self.soil_moisture_storage0
         else:
-            self.water_avail[i, :] = self.rain[i, :] + self.soil_water_storage[i - 1, :] + self.snm[i, :]
+            self.available_water[i, :] = self.rain[i, :] + self.soil_moisture_storage[i - 1, :] + self.snowmelt[i, :]
 
         # ET opportunity
-        rpt = (self.water_avail[i, :] + self.b)
+        rpt = (self.available_water[i, :] + self.b)
         rpt_over_pt2 = rpt / self.a_times2
-        self.et_op[i, :] = rpt_over_pt2 - np.sqrt(np.square(rpt_over_pt2) - (self.water_avail[i, :] * self.b_over_a))
+        self.et_opportunity[i, :] = rpt_over_pt2 - np.sqrt(np.square(rpt_over_pt2) - (self.available_water[i, :] * self.b_over_a))
 
         # soil water storage
-        self.soil_water_storage[i, :] = self.et_op[i, :] * np.exp(-pet[i, :].real / self.b)
+        self.soil_moisture_storage[i, :] = self.et_opportunity[i, :] * np.exp(-pet[i, :].real / self.b)
 
         # get the difference between available water and ET opportunity
-        awet = (self.water_avail[i, :] - self.et_op[i, :])
-        c_x_awet = self.c * awet
+        awet = (self.available_water[i, :] - self.et_opportunity[i, :])
+        ground_water_recharge = self.c * awet
 
         # groundwater storage
         if i == 0:
-            self.groundwater_storage[i, :] = (self.groundwater_storage0 + c_x_awet) / self.d_plus_1
+            self.groundwater_storage[i, :] = (self.groundwater_storage0 + ground_water_recharge) / self.d_plus_1
         else:
-            self.groundwater_storage[i, :] = (self.groundwater_storage[i - 1, :] + c_x_awet) / self.d_plus_1
+            self.groundwater_storage[i, :] = (self.groundwater_storage[i - 1, :] + ground_water_recharge) / self.d_plus_1
 
         # populate arrays
-        self.actual_et[i, :] = self.et_op[i, :] - self.soil_water_storage[i, :]
+        self.actual_et[i, :] = self.et_opportunity[i, :] - self.soil_moisture_storage[i, :]
         self.actual_et[i, :] = np.maximum(0, self.actual_et[i, :])
         self.actual_et[i, :] = np.minimum(pet[i, :].real, self.actual_et[i, :])
-        self.soil_water_storage[i, :] = self.et_op[i, :] - self.actual_et[i, :]
-        self.rsim[i, :] = (awet - c_x_awet) + self.d * self.groundwater_storage[i, :]
+        self.soil_moisture_storage[i, :] = self.et_opportunity[i, :] - self.actual_et[i, :]
+
+        # see https://github.com/JGCRI/xanthos/commit/abdae29c12b9090ea832968d8a4b583e9c439f2c
+        self.simulated_runoff[i, :] = (awet - ground_water_recharge) + self.d * self.groundwater_storage[i, :]
+
+        self.ground_water_recharge_array[i, :] = ground_water_recharge
+        self.baseflow[i, :] = self.d * self.groundwater_storage[i, :]
+        self.direct_runoff[i, :] = (1 - self.c) * awet
+        self.effective_recharge[i, :] = self.ground_water_recharge_array[i, :] - self.baseflow[i, :]
 
     def init_arrays(self, p, tmin):
         """Initialize arrays based on spin-up or simulation run status."""
         # construct simulated runoff, actual evapotranspiration, and snowpack arrays
-        self.set_rsim(p, self.inv[0])
+        self.set_simulated_runoff(p, self.inv[0])
         self.set_actual_et(p)
         self.set_snowpack(p)
 
-        self.snm = np.zeros_like(p)
+        self.snowmelt = np.zeros_like(p)
         self.groundwater_storage = np.zeros_like(p)
-        self.soil_water_storage = np.zeros_like(p)
-        self.water_avail = np.zeros_like(p)
-        self.et_op = np.zeros_like(p)
+        self.soil_moisture_storage = np.zeros_like(p)
+        self.available_water = np.zeros_like(p)
+        self.et_opportunity = np.zeros_like(p)
+        self.ground_water_recharge_array = np.zeros_like(p)
+        self.direct_runoff = np.zeros_like(p)
+        self.baseflow = np.zeros_like(p)
+        self.effective_recharge = np.zeros_like(p)
 
         # partition snow and rain
         self.set_rain_and_snow(p, tmin)
@@ -254,8 +271,8 @@ class ABCD:
             # get Decembers from end of array (-1=last december, -13=two years ago, -25=three years ago)
             dec_idx = [-1, -13, -25]
 
-            rsim_rollover = self.rsim[dec_idx, :]
-            sm_rollover = self.soil_water_storage[dec_idx, :]
+            rsim_rollover = self.simulated_runoff[dec_idx, :]
+            sm_rollover = self.soil_moisture_storage[dec_idx, :]
             gs_rollover = self.groundwater_storage[dec_idx, :]
 
         except IndexError:
@@ -278,7 +295,7 @@ class ABCD:
             gs[b_idx] = np.mean(np.nanmean(gs_rollover[:, b_idx], axis=1))
 
         self.inv = np.array([ro, sm, gs])
-        self.soil_water_storage0 = self.inv[1]
+        self.soil_moisture_storage0 = self.inv[1]
         self.groundwater_storage0 = self.inv[2]
 
     def spinup(self):
@@ -349,7 +366,14 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
     he.emulate()
 
     # stack outputs
-    vals = np.hstack([he.pet.T, he.actual_et.T, he.rsim.T, he.soil_water_storage.T])
+    vals = np.hstack([he.pet.T,
+                      he.actual_et.T,
+                      he.simulated_runoff.T,
+                      he.soil_moisture_storage.T,
+                      he.ground_water_recharge_array.T,
+                      he.baseflow.T,
+                      he.effective_recharge.T
+                      ])
 
     return vals
 
@@ -381,7 +405,7 @@ def abcd_parallel(n_basins, pars, basin_ids, pet, precip, tmin, n_months, spinup
                                                        (i, pars, basin_ids, pet, precip,
                                                         tmin, n_months, spinup_steps) for i in basin_ranges)
 
-    out = np.empty((len(basin_ids), n_months * 4))  # 4 output variables for every month
+    out = np.empty((len(basin_ids), n_months * 7))  # 7 output variables for every month
 
     # combine parallel results back in the correct order
     for i, br in enumerate(basin_ranges):
@@ -417,6 +441,14 @@ def abcd_execute(n_basins, basin_ids, pet, precip, tmin, calib_file, n_months, s
                           tmin=tmin, n_months=n_months, spinup_steps=spinup_steps, jobs=jobs)
 
     # build array to pass to router
-    _pet, _aet, _q, _sav = np.split(rslts, 4, axis=1)
+    _pet, _aet, _q, _sav, _gwre, _bf, _er = np.split(rslts, 7, axis=1)  # 7 variables
 
-    return _pet, _aet, _q, _sav
+    # np.save('/Users/d3y010/Desktop/pet.npy', _pet)
+    # np.save('/Users/d3y010/Desktop/aet.npy', _aet)
+    # np.save('/Users/d3y010/Desktop/runoff.npy', _q)
+    # np.save('/Users/d3y010/Desktop/soilmoisture.npy', _sav)
+    # np.save('/Users/d3y010/Desktop/groundwater_recharge.npy', _gwre)
+    # np.save('/Users/d3y010/Desktop/baseflow.npy', _bf)
+    # np.save('/Users/d3y010/Desktop/effective_recharge.npy', _er)
+
+    return _pet, _aet, _q, _sav, _gwre, _bf, _er

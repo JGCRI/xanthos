@@ -48,7 +48,8 @@ class OutWriter:
         :param grid_areas:      map of basin indices to grid cell area, in km2 (numpy array)
         :param all_outputs:     dictionary mapping all output names (strings) to their values (numpy arrays)
         """
-        self.output_names = [oname for oname in settings.output_vars if oname in all_outputs.keys()]
+
+        self.output_names = [i for i in settings.output_vars if i in all_outputs.keys()]
         self.outputs = [pd.DataFrame(all_outputs[out_name]) for out_name in self.output_names]
 
         # array for converting basin values from mm to km3
@@ -56,6 +57,7 @@ class OutWriter:
 
         # output options
         self.proj_name = settings.ProjectName
+        self.outnamestr = settings.OutputNameStr
         self.out_folder = settings.OutputFolder
         self.out_format = settings.OutputFormat
         self.out_unit = settings.OutputUnit
@@ -116,7 +118,7 @@ class OutWriter:
 
             logging.debug("{} output dimension is {}".format(var, self.outputs[i].shape))
 
-            filename = '{}_{}_{}'.format(var, unit, self.proj_name)
+            filename = '{}_{}_{}'.format(var, unit, self.outnamestr)
             filename = os.path.join(self.out_folder, filename)
 
             # Outputs are by grid cell and grid cell ids start at 1
@@ -134,7 +136,7 @@ class OutWriter:
         :param country:     bool - aggregate by country?
         :param region:      bool - aggregate by GCAM region?
         """
-        filename = '{}_{}_{}'.format('{}', self.out_unit_str, self.proj_name)
+        filename = '{}_{}_{}'.format('{}', self.out_unit_str, self.outnamestr)
         filepath = os.path.join(self.out_folder, filename)
 
         if basin:

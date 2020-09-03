@@ -238,7 +238,7 @@ class Components:
                                          calib_file=self.s.calib_file, n_months=self.s.nmonths,
                                          spinup_steps=self.s.runoff_spinup, jobs=self.s.ro_jobs)
 
-            self.PET, self.AET, self.Q, self.Sav = rg
+            self.PET, self.AET, self.Q, self.Sav, self.gw_recharge, self.baseflow, self.effective_recharge = rg
 
         else:
 
@@ -452,7 +452,10 @@ class Components:
             'aet': self.AET,
             'q': self.Q,
             'soilmoisture': self.Sav,
-            'avgchflow': self.Avg_ChFlow
+            'avgchflow': self.Avg_ChFlow,
+            'recharge': self.gw_recharge,
+            'baseflow': self.baseflow,
+            'effective_recharge': self.effective_recharge
         }
 
         output_writer = OutWriter(self.s, self.data.area, all_outputs)

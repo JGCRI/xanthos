@@ -37,7 +37,12 @@ class ConfigReader:
         # project dirs
         self.root = p['RootDir']
         self.ProjectName = p['ProjectName']
-        self.OutputNameStr = p['ProjectName']
+
+        if p.get('OutputNameStr') is not None:
+            self.OutputNameStr = p['OutputNameStr']
+        else:
+            self.OutputNameStr = p['ProjectName']
+
         self.InputFolder = os.path.join(self.root, p['InputFolder'])
         self.OutDir = self.create_dir(os.path.join(self.root, p['OutputFolder']))
         self.OutputFolder = self.create_dir(os.path.join(self.OutDir, self.ProjectName))
