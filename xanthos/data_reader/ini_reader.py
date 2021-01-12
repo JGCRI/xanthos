@@ -35,7 +35,7 @@ class ConfigReader:
         p = c['Project']
 
         # project dirs
-        self.root = p['RootDir']
+        self.root = os.path.abspath(p['RootDir'])
         self.ProjectName = p['ProjectName']
         self.OutputNameStr = p['ProjectName']
         self.InputFolder = os.path.join(self.root, p['InputFolder'])
@@ -47,11 +47,6 @@ class ConfigReader:
         # COMPONENT MODULE CHECK
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
-        try:
-            ref = True
-            self.Reference = os.path.join(self.InputFolder, p['RefDir'])
-        except KeyError:
-            ref = False
 
         try:
             pet_config = c['PET']
@@ -158,8 +153,6 @@ class ConfigReader:
 
         if self.mod_cfg == 'none_none_none':
             raise ValidationException('No PET, Runoff, or Routing model selected.')
-
-        self.configure_reference_data(ref)
 
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
@@ -421,20 +414,6 @@ class ConfigReader:
         else:
             raise ValidationException("ERROR: Routing module '{0}' not found. Please check "
                                       "spelling and try again.".format(self.routing_module))
-
-    def configure_reference_data(self, ref):
-        """Build reference data file paths."""
-        if ref:
-            self.Area = os.path.join(self.Reference, 'Grid_Areas_ID.csv')
-            self.Coord = os.path.join(self.Reference, 'coordinates.csv')
-            self.BasinIDs = os.path.join(self.Reference, 'basin.csv')
-            self.BasinNames = os.path.join(self.Reference, 'BasinNames235.txt')
-            self.GCAMRegionIDs = os.path.join(self.Reference, 'region32_grids.csv')
-            self.GCAMRegionNames = os.path.join(self.Reference, 'Rgn32Names.csv')
-            self.CountryIDs = os.path.join(self.Reference, 'country.csv')
-            self.CountryNames = os.path.join(self.Reference, 'country-names.csv')
-        else:
-            logging.warning('No reference data selected for use.')
 
     def configure_diagnostics(self, diagnostics_config):
         """Configure diagnostics post-processing module."""
