@@ -22,11 +22,21 @@ from xanthos.diagnostics.time_series import TimeSeriesPlot
 from xanthos.accessible.accessible import AccessibleWater
 from xanthos.hydropower.potential import HydropowerPotential
 from xanthos.hydropower.actual import HydropowerActual
-from xanthos.data_reader.data_load import DataLoader
 from xanthos.drought.drought_stats import DroughtStats
+from xanthos.data_reader.data_penman_monteith import DataPenmanMonteith
+from xanthos.data_reader.data_hargreaves import DataHargreaves
+from xanthos.data_reader.data_hargreaves_semani import DataHargreavesSemani
+from xanthos.data_reader.data_thornthwaite import DataThornthwaite
+from xanthos.data_reader.data_reference import DataReference
+from xanthos.data_reader.data_gwam import DataGwam
+from xanthos.data_reader.data_mrtm import DataMrtm
+from xanthos.data_reader.data_mrtm import DataUtils
+from xanthos.data_reader.data_abcd import DataAbcd
+from xanthos.data_reader.data_diagnostics import DataDiagnostics
+from xanthos.data_reader.data_calibration import DataCalibration
 
 
-class Components:
+class Components(DataUtils):
     """
     Components for use in model configurations.
 
@@ -41,18 +51,20 @@ class Components:
 
     def __init__(self, config):
 
+        super().__init__(nmonths=config.nmonths)
+
         self.s = config
 
         # import desired modules for PET, Runoff, and Routing
         self.import_core()
 
-        # load data
-        self.data = DataLoader(config)
+        # load reference data
+        self.data_reference = DataReference(config)
 
         # index arrays
         self.yr_imth_dys = helper.set_month_arrays(self.s.nmonths, self.s.StartYear, self.s.EndYear)
 
-        # pet
+        # setup PET data
         if self.s.pet_module == 'hargreaves':
             self.mth_temp_pet = None
             self.mth_dtr_pet = None
@@ -62,22 +74,24 @@ class Components:
             self.solar_dec = sft[0]
             self.dr = sft[1]
 
+            self.data_hargreaves = DataHargreaves(config)
+
         elif self.s.pet_module == 'hs':
-            pass
+            self.data_hargreaves_semani = DataHargreavesSemani(config)
 
         elif self.s.pet_module == 'pm':
-            pass
+            self.penman_monteith_data = DataPenmanMonteith(config)
 
         elif self.s.pet_module == 'thornthwaite':
-            pass
+            self.data_thornthwaite = DataThornthwaite(config)
 
         # runoff
         if self.s.runoff_module == 'gwam':
-            self.soil_moisture = self.data.soil_moisture
-            self.sm_prev = self.data.sm_prev
+            self.data_gwam = DataGwam(config, self.data_reference.area, self.data_reference.region_ids,
+                                      self.data_reference.country_ids, self.data_reference.basin_ids)
 
         elif self.s.runoff_module == 'abcd':
-            pass
+            self.data_abcd = DataAbcd(config)
 
         # routing
         if self.s.routing_module == 'mrtm':
@@ -91,6 +105,8 @@ class Components:
             self.routing_timestep_hours = 3 * 3600
             self.chs_prev = None
 
+            self.data_mrtm = DataMrtm(config, self.data_reference.coords)
+
         # outputs
         self.PET = np.zeros(shape=(self.s.ncell, self.s.nmonths))
         self.AET = np.zeros(shape=(self.s.ncell, self.s.nmonths))
@@ -100,9 +116,6 @@ class Components:
         self.Avg_ChFlow = np.zeros(shape=(self.s.ncell, self.s.nmonths))
 
         # simulation
-        self.P = None
-        self.T = None
-        self.D = None
         self.mth_solar_dec = None
         self.mth_dr = None
         self.mth_days = None
@@ -141,22 +154,6 @@ class Components:
         if self.s.routing_module == 'mrtm':
             import xanthos.routing.mrtm as routing_mod
 
-    def prep_arrays(self, nm=None):
-        """
-        Prepare arrays.
-
-        @:param nm:     time-step number
-        """
-        if nm is None:
-            self.P = np.copy(self.data.precip)  # keep nan in P
-            self.T = np.nan_to_num(self.data.temp)  # nan to zero
-            self.D = np.nan_to_num(self.data.dtr)  # nan to zero
-
-        else:
-            self.P = np.copy(self.data.precip[:, nm])  # keep nan in P
-            self.T = np.nan_to_num(self.data.temp[:, nm])  # nan to zero
-            self.D = np.nan_to_num(self.data.dtr[:, nm])  # nan to zero
-
     def prep_pet(self, nm):
         """
         Prepare PET for processing.
@@ -174,8 +171,8 @@ class Components:
             self.mth_solar_dec = np.copy(self.solar_dec[nm])
             self.mth_dr = np.copy(self.dr[nm])
             self.mth_days = np.copy(self.yr_imth_dys[nm, 2])
-            self.mth_temp_pet = np.nan_to_num(self.T)
-            self.mth_dtr_pet = np.nan_to_num(self.D)
+            self.mth_temp_pet = np.nan_to_num(self.data_hargreaves.temp)
+            self.mth_dtr_pet = np.nan_to_num(self.data_hargreaves.dtr)
 
         elif self.s.pet_module == 'hs':
             pass
@@ -190,24 +187,24 @@ class Components:
         """Calculate monthly potential evapo-transpiration."""
         if self.s.pet_module == 'hargreaves':
 
-            return pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data.lat_radians,
+            return pet_mod.calculate_pet(self.mth_temp_pet, self.mth_dtr_pet, self.data_reference.lat_radians,
                                          self.mth_solar_dec, self.mth_dr, self.mth_days)
         elif self.s.pet_module == 'hs':
 
-            return pet_mod.execute(self.s, self.data)
+            return pet_mod.execute(self.s, self.data_hargreaves_semani)
 
         elif self.s.pet_module == 'pm':
 
-            return pet_mod.run_pmpet(self.data, self.s.ncell, self.s.pm_nlcs, self.s.StartYear, self.s.EndYear,
+            return pet_mod.run_pmpet(self.penman_monteith_data, self.s.ncell, self.s.pm_nlcs, self.s.StartYear, self.s.EndYear,
                                      self.s.pm_water_idx, self.s.pm_snow_idx, self.s.pm_lc_years)
 
         elif self.s.pet_module == 'thornthwaite':
 
-            return pet_mod.execute(self.data.tair, self.data.lat_radians,
+            return pet_mod.execute(self.data_thornthwaite.tair, self.data_reference.lat_radians,
                                    self.s.StartYear, self.s.EndYear)
 
         elif self.s.pet_module == 'none':
-            return self.data.pet_out
+            return self.load_to_array(self.s.pet_file)
 
     def calculate_runoff(self, step_num=None, pet=None):
         """
@@ -227,14 +224,15 @@ class Components:
                                 Sav : Soil Moisture content (mm/month)
         """
         if self.s.runoff_module == 'gwam':
-            rg = runoff_mod.runoffgen(self.pet_t, self.P, self.s, self.soil_moisture, self.sm_prev)
+            rg = runoff_mod.runoffgen(self.pet_t, self.data_gwam.precip, self.s, self.data_gwam.soil_moisture,
+                                      self.data_gwam.sm_prev)
 
             self.PET[:, step_num], self.AET[:, step_num], self.Q[:, step_num], self.Sav[:, step_num] = rg
 
         elif self.s.runoff_module == 'abcd':
 
-            rg = runoff_mod.abcd_execute(n_basins=self.s.n_basins, basin_ids=self.data.basin_ids,
-                                         pet=pet, precip=self.data.precip, tmin=self.data.tmin,
+            rg = runoff_mod.abcd_execute(n_basins=self.s.n_basins, basin_ids=self.data_reference.basin_ids,
+                                         pet=pet, precip=self.data_abcd.precip, tmin=self.data_abcd.tmin,
                                          calib_file=self.s.calib_file, n_months=self.s.nmonths,
                                          spinup_steps=self.s.runoff_spinup, jobs=self.s.ro_jobs)
 
@@ -258,22 +256,23 @@ class Components:
                                     instream_flow : Streamflow (m3/s)
         """
         if self.s.routing_module == 'mrtm':
-            # initialize routing data
-            self.flow_dist = self.data.flow_dist
-            self.flow_dir = self.data.flow_dir
-            self.instream_flow = self.data.instream_flow
-            self.str_velocity = self.data.str_velocity
-            self.chs_prev = self.data.chs_prev
 
-            self.dsid = routing_mod.downstream(self.data.coords, self.flow_dir, self.s)
-            self.upid = routing_mod.upstream(self.data.coords, self.dsid, self.s)
+            # initialize routing data
+            self.flow_dist = self.data_mrtm.flow_dist
+            self.flow_dir = self.data_mrtm.flow_dir
+            self.instream_flow = self.data_mrtm.instream_flow
+            self.str_velocity = self.data_mrtm.str_velocity
+            self.chs_prev = self.data_mrtm.chs_prev
+
+            self.dsid = routing_mod.downstream(self.data_reference.coords, self.flow_dir, self.s)
+            self.upid = routing_mod.upstream(self.data_reference.coords, self.dsid, self.s)
             self.um = routing_mod.upstream_genmatrix(self.upid)
 
             # process spin up for channel storage from historic period
             for nm in range(0, self.s.routing_spinup, 1):
 
                 sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
-                                               runoff[:, nm], self.data.area, self.yr_imth_dys[nm, 2],
+                                               runoff[:, nm], self.data_reference.area, self.yr_imth_dys[nm, 2],
                                                self.routing_timestep_hours, self.um)
 
                 self.ChStorage[:, nm], self.Avg_ChFlow[:, nm], self.instream_flow = sr
@@ -283,9 +282,10 @@ class Components:
 
             # run routing simulation
             for nm in range(self.s.nmonths):
+
                 # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
                 sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
-                                               runoff[:, nm], self.data.area, self.yr_imth_dys[nm, 2],
+                                               runoff[:, nm], self.data_reference.area, self.yr_imth_dys[nm, 2],
                                                self.routing_timestep_hours, self.um)
 
                 self.ChStorage[:, nm], self.Avg_ChFlow[:, nm], self.instream_flow = sr
@@ -330,10 +330,8 @@ class Components:
                 pet_out = np.zeros_like(self.data.precip)
 
                 for nm in range(pet_num_steps):
-                    # set up climate data for processing (used by hargreaves)
-                    self.prep_arrays(nm)
 
-                    # set up PET data for processing
+                    # set up PET data for processing; hargreaves
                     self.prep_pet(nm)
 
                     # calculate pet
@@ -344,6 +342,7 @@ class Components:
                 pet_out = self.calculate_pet()
 
             logging.info("\tPET processed in {} seconds---".format(time.time() - t))
+            raise ValueError
 
         # Otherwise calculate_pet() will load user-provided PET dataset
         else:
@@ -404,7 +403,8 @@ class Components:
             logging.info("---Start Accessible Water:")
             t0 = time.time()
 
-            AccessibleWater(self.s, self.data, self.Q)
+            # TODO: check on this data reference
+            AccessibleWater(self.s, self.data_reference, self.Q)
 
             logging.info("---Accessible Water has finished successfully: %s seconds ------" % (time.time() - t0))
 
@@ -434,7 +434,7 @@ class Components:
             logging.info("---Start Diagnostics:")
             t0 = time.time()
 
-            Diagnostics(self.s, self.Q, self.data)
+            Diagnostics(self.s, self.Q, DataDiagnostics())
 
             logging.info("---Diagnostics has finished successfully: %s seconds ------" % (time.time() - t0))
 
@@ -455,7 +455,7 @@ class Components:
             'avgchflow': self.Avg_ChFlow
         }
 
-        output_writer = OutWriter(self.s, self.data.area, all_outputs)
+        output_writer = OutWriter(self.s, self.data_reference.area, all_outputs)
         output_writer.write()
 
         try:
@@ -468,7 +468,8 @@ class Components:
         except ValueError:
             self.ac = self.Avg_ChFlow
 
-        output_writer.write_aggregates(self.data, self.q, self.s.AggregateRunoffBasin, self.s.AggregateRunoffCountry,
+        # TODO: check data reference
+        output_writer.write_aggregates(self.data_reference, self.q, self.s.AggregateRunoffBasin, self.s.AggregateRunoffCountry,
                                        self.s.AggregateRunoffGCAMRegion)
 
         logging.info("---Output finished: %s seconds ---" % (time.time() - t0))
@@ -479,7 +480,8 @@ class Components:
             logging.info("---Creating Time Series Plots:")
             t0 = time.time()
 
-            TimeSeriesPlot(self.s, self.q, self.ac, self.data)
+            # check data reference
+            TimeSeriesPlot(self.s, self.q, self.ac, self.data_reference)
 
             logging.info("---Plots has finished successfully: %s seconds ------" % (time.time() - t0))
 
@@ -494,4 +496,4 @@ class Components:
 
         logging.info("---Running calibration:")
 
-        calib_mod.calibrate_all(settings=self.s, data=self.data, pet=pet_out, router_function=self.calculate_routing)
+        calib_mod.calibrate_all(settings=self.s, data=DataCalibration(), pet=pet_out, router_function=self.calculate_routing)
