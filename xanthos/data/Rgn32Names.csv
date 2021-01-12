@@ -1,0 +1,33 @@
+region, region_id
+USA,1
+Africa_Eastern,2
+Africa_Northern,3
+Africa_Southern,4
+Africa_Western,5
+Australia_NZ,6
+Brazil,7
+Canada,8
+Central America and Caribbean,9
+Central Asia,10
+China,11
+EU-12,12
+EU-15,13
+Europe_Eastern,14
+Europe_Non_EU,15
+European Free Trade Association,16
+India,17
+Indonesia,18
+Japan,19
+Mexico,20
+Middle East,21
+Pakistan,22
+Russia,23
+South Africa,24
+South America_Northern,25
+South America_Southern,26
+South Asia,27
+South Korea,28
+Southeast Asia,29
+Taiwan,30
+Argentina,31
+Colombia,32
