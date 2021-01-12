@@ -105,7 +105,7 @@ class Components(DataUtils):
             self.routing_timestep_hours = 3 * 3600
             self.chs_prev = None
 
-            self.data_mrtm = DataMrtm(config, self.data_reference.coords)
+            self.data_mrtm = DataMrtm(config_obj=config)
 
         # outputs
         self.PET = np.zeros(shape=(self.s.ncell, self.s.nmonths))

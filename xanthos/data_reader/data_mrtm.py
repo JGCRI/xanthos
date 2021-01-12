@@ -1,32 +1,68 @@
 import numpy as np
 
 from xanthos.data_reader.data_utils import DataUtils
+from xanthos.data_reader.data_reference import DataReference
 from xanthos.utils.math import sub2ind
 
 
 class DataMrtm(DataUtils):
 
-    def __init__(self, config_obj, coords):
+    NCELL = 67420
+    NGRIDROW = 360
+    NGRIDCOL = 720
+
+    def __init__(self, config_obj=None, start_year=1971, end_year=2001, flow_distance_file=None,
+                 flow_direction_file=None, stream_velocity_file=None):
+
+        if config_obj is None:
+            self.start_year = start_year
+            self.end_year = end_year
+            self.nmonths = (self.end_year - self.start_year + 1) * 12
+
+            # load reference data
+            self.reference_data = DataReference(nmonths=self.nmonths)
+
+            # routing files
+            self.flow_distance_file = flow_distance_file
+            self.flow_direction_file = flow_direction_file
+            self.stream_velocity_file = stream_velocity_file
+
+        else:
+            self.start_year = self.config_obj.StartYear
+            self.end_year = self.config_obj.EndYear
+            self.nmonths = self.config_obj.nmonths
+            self.reference_data = DataReference(config=config_obj)
+            self.flow_distance_file = config_obj.flow_distance
+            self.flow_direction_file = config_obj.flow_direction
+            self.stream_velocity_file = config_obj.strm_veloc
+
+
 
         self.config = config_obj
 
-        map_index = sub2ind([self.config.ngridrow, self.config.ngridcol], coords[:, 4].astype(int) - 1,
-                            coords[:, 3].astype(int) - 1)
+        map_index = sub2ind([DataMrtm.NGRIDROW, DataMrtm.NGRIDCOL], self.reference_data.coords[:, 4].astype(int) - 1,
+                            self.reference_data.coords[:, 3].astype(int) - 1)
 
-        self.flow_dist = self.load_routing_data(self.config.flow_distance, self.config.ngridrow, self.config.ngridcol,
+        self.flow_dist = self.load_routing_data(self.flow_distance_file,
+                                                DataMrtm.NGRIDROW,
+                                                DataMrtm.NGRIDCOL,
                                                 map_index, rep_val=1000)
 
-        self.flow_dir = self.load_routing_data(self.config.flow_direction, self.config.ngridrow, self.config.ngridcol,
+        self.flow_dir = self.load_routing_data(self.flow_direction_file,
+                                               DataMrtm.NGRIDROW,
+                                               DataMrtm.NGRIDCOL,
                                                map_index)
 
-        self.str_velocity = self.load_routing_data(self.config.strm_veloc, self.config.ngridrow, self.config.ngridcol,
+        self.str_velocity = self.load_routing_data(self.stream_velocity_file,
+                                                   DataMrtm.NGRIDROW,
+                                                   DataMrtm.NGRIDCOL,
                                                    map_index, rep_val=0)
 
-        self.instream_flow = np.zeros((self.config.ncell, ), dtype=float)
+        self.instream_flow = np.zeros((DataMrtm.NCELL, ), dtype=float)
 
         self.chs_prev = self.load_chs_data()
 
-        super().__init__(nmonths=config_obj.nmonths)
+        super().__init__(nmonths=self.nmonths)
 
     def load_chs_data(self):
         """Load channel velocity file into array if in future mode, else stage zeros array."""

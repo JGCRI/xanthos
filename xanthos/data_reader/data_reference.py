@@ -26,9 +26,13 @@ class DataReference(DataUtils):
     REF_COUNTRY_NAME_FILE = pkg_resources.resource_filename('xanthos', 'data/country-names.csv')
     REF_COORDS_FILE = pkg_resources.resource_filename('xanthos', 'data/coordinates.csv')
 
-    def __init__(self, config):
+    def __init__(self, config=None, nmonths=None):
 
-        super().__init__(nmonths=config.nmonths)
+        if config is None:
+            super().__init__(nmonths=nmonths)
+
+        else:
+            super().__init__(nmonths=config.nmonths)
 
         # load Xanthos landcell reference data as data frame
         ref_landcell_df = pd.read_csv(DataReference.REF_LANDCELL_FILE)
