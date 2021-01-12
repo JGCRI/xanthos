@@ -24,14 +24,14 @@ class TestPmAbcdMrtm(unittest.TestCase):
             os.makedirs(TestPmAbcdMrtm.DEFAULT_OUTPUTS_DIR)
 
         # Remember original (correct) example outputs
-        old_csv_files = self.read_csv_outputs()
+        old_csv_files = self.read_csv_outputs(data_dir='/Users/d3y010/repos/github/xanthos/example/output/pm_abcd_mrtm_watch_1971_2001')
 
         # Set up and run Xanthos
         xth = Xanthos(TestPmAbcdMrtm.DEFAULT_CONFIG_FILE)
         res = xth.execute()
 
         # Check result dimensions
-        self.assertEqual(res.Q.shape, (67420, 60))
+        self.assertEqual(res.Q.shape, (67420, 372))
 
         # Test that new outputs equal old outputs.
         new_csv_files = self.read_csv_outputs()
@@ -39,10 +39,13 @@ class TestPmAbcdMrtm(unittest.TestCase):
             pd.testing.assert_frame_equal(new_csv_files[k], old_csv_files[k])
 
     @classmethod
-    def read_csv_outputs(cls):
+    def read_csv_outputs(cls, data_dir=None):
         """Read all .csv files in output directory."""
 
-        out_file_names = glob.glob(f'{cls.DEFAULT_OUTPUTS_DIR}*.csv')
+        if data_dir is None:
+            out_file_names = glob.glob(f'{cls.DEFAULT_OUTPUTS_DIR}*.csv')
+        else:
+            out_file_names = glob.glob(f'{data_dir}*.csv')
 
         out_files = {}
         for f in out_file_names:

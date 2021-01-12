@@ -116,4 +116,3 @@ if __name__ == "__main__":
 
     xth = Xanthos(args.config_file)
     xth.execute()
-    del xth

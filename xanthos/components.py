@@ -342,7 +342,6 @@ class Components(DataUtils):
                 pet_out = self.calculate_pet()
 
             logging.info("\tPET processed in {} seconds---".format(time.time() - t))
-            raise ValueError
 
         # Otherwise calculate_pet() will load user-provided PET dataset
         else:
