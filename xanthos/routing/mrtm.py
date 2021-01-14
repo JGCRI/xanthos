@@ -7,21 +7,13 @@
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2017, Battelle Memorial Institute
-
-Water Management components by
-@date   10/14/2020
-@authors: HongYi Li : hli57@uh.edu,
-         University of Houston
-         Guta Abeshu : gwabeshu@uh.edu
-         University of Houston
 """
+
 import numpy as np
 import scipy.sparse as sparse
 
 
-def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM, UP,
-                  Sini, wdirr, irrmean, mtifl, ppose, cpa,
-                  HP_Release_LUT, HP_maxRelease, WConsumption, c, Sini_resv, res_flag):
+def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM):
     """
     L:    flow distance (m)                                        = (N x 1)
     S0:   initial channel storage value for the month (m^3)        = (N x 1)
@@ -32,137 +24,42 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM, UP,
     nday: number of days in the month                              = (1 x 1)
     dt:   size of the fixed time step (s)                          = (1 x 1)
     UM:   connection matrix (see notes in upstream_genmatrix)      = (N x N, sparse)
-    HP_Release_LUT: look up table for Hydropower
-    HP_maxRelease: maximum release for HP
-    WConsumption: water consumption
-    c : reservoir capacity reduction coeffitient
-    Sini : initial reservoir storage
-    Sini_resv: reservoir storage at begining of a year
-    wdirr: irrigation demand
-    irrmean: mean irrigation demand
-    mtifl : mean total inflow
-    ppose : reservoir purpose
-    cpa: reservoir capacity
-    res_flag: 0 for no water management and 1 for water management
 
     Outputs:
     S:     channel storage, unit m3
     Favg:  monthly average channel flow, unit m3/s
     F:     instantaneous channel flow, unit m3/s
-    Sending : reservoir storage at end of month
-    Qin_res_avg: reservoir inflow
-    Qout_res_avg : reservoir outflow
-
     """
 
-    N = L.shape[0]                   # number of cells
+    N = L.shape[0]  # number of cells
+
     nt = int(nday * 24 * 3600 / dt)  # number of time steps
 
     # setup
     S = np.copy(S0)
     F = np.copy(F0)
     Favg = np.zeros((N,), dtype=float)
-    Qin_res_avg = np.zeros((N,), dtype=float)
-    Qout_res_avg = np.zeros((N,), dtype=float)
-    Qin_Channel_avg = np.zeros((N,), dtype=float)
-    Qout_channel_avg = np.zeros((N,), dtype=float)
-    Sending  = np.zeros((N,), dtype=float)
-    Sstaten = np.zeros([N,1], dtype = float)
-    tauinv = np.divide(ChV, L)
-    dtinv = 1.0 / dt
+    tauinv = ChV / L
+    dtinv = 1. / dt
 
-    # water consumption
-    qq = q - WConsumption
-
-    # unmet consumption
-    Wunmet = qq < 0
-
-    # set excess runoff to zero for unmet cells
-    qq[Wunmet] = 0
-    erlateral = (qq * area) * (1e3) / (nday * 24 * 3600)    # q -> erlateral: mm/month to m^3/s
-
-    # water management
-    irrd  = wdirr # demand: m^3/s
-    meand = irrmean # mean demand:  m^3/s
-    monthly_demand   = np.reshape(irrd,(N,))
-    mean_demand  = np.reshape(meand,(N,))
-    mtifl = np.reshape(mtifl,(N,))
-    ppose = np.reshape(ppose,(N,))
-    cpa   = np.reshape(cpa,(N,))
-    demand = monthly_demand.copy()  # downstream demand
-    mdemand  = mean_demand.copy()   # downstream mean demand
-
-    # initialiaze release
-    Rp = np.zeros((N,), dtype = float) # provisional release
-    Rf = np.zeros((N,), dtype = float) # final release
-
-    # parameters
-    e = c
-    n = 2
-    m = mdemand - (0.5 * mtifl)
-    d = (cpa) /( mtifl * 365 * 24 * 3600)
-
-    # Reservoirs
-    cond0 = np.where(cpa != 0)[0] # reservoir cells
-
-    # irrigation
-    cond1 = np.where(ppose ==2)[0] # irrigation reservoir cells
-    #cond2 = np.intersect1d(cond1,cond0)
-
-    # mean demand & annual mean inflow
-    cond3 = np.where(m >= 0 )[0] # m >=0 ==> dmean > = 0.5*imean
-    cond4 = np.where(m < 0)[0]   # m < 0 ==> dmean <  0.5*imean
-
-    # capacity & annual total infow
-    cond5 = np.where(d >= 0.5)[0] # c = capacity/imean >= 0.5
-    cond6 = np.where(d < 0.5)[0]  # c = capacity/imean < 0.5
-
-    # flood control : non-irrigation/non-hydropower
-    cond7 = np.where(ppose ==3)[0]
-
-    # both irrigation and flood control reservoirs
-    cond8 = np.where((ppose ==2) | ( ppose ==3))[0]  # irr and flood reservoir cells
-
-    # Provisional Release Cases : Irrigation and Flood Control
-    ind1 = np.intersect1d(cond7,cond0)  # flood control
-    ind2 = np.intersect1d(cond1,cond3)  # irrigation : dmean > = 0.5*imean
-    ind3 = np.intersect1d(cond1,cond4)  # irrigation : dmean < 0.5*imean
-
-    # Final Release : Irrigation and Flood Control Reservoirs
-    ind4 = np.intersect1d(cond8,cond5)  # c = capacity/imean >= 0.5
-    ind5 = np.intersect1d(cond8,cond6)  # c = capacity/imean < 0.5
-
-    # Hydropower
-    cond9 = np.where(ppose ==1)[0]
-    ind6  = np.intersect1d(cond9,cond0)
-    #Hydropower: percent storage relative to capacity : for release of the rule curve
-    percd = np.array([0,.25,.50,.75,1])
-
-    # maximum releases for hydropower
-    Percent_sa = np.kron(np.ones((N,1)), percd) # percent storage : lookup table
-    Max_release = np.kron(np.ones((1,5)), HP_maxRelease)
-    HPlut_Max_release = np.multiply(Max_release, HP_Release_LUT)
+    erlateral = (q * area) * (1e6 / 1e3) / (nday * 24 * 3600)  # q -> erlateral: mm/month to m^3/s
 
     for t in range(nt):
-        # Channel Storage Balance
-        # compute trial steps for F, S
-        F = S * tauinv                # vector dot multiply
-        dSdt= UM.dot(F) + erlateral  # vector
-        Qin = UP.dot(F) + erlateral   # vector
 
-        Sin = S.copy()
+        # compute trial steps for F, S
+        F = S * tauinv  # vector dot multiply
+        dSdt = UM.dot(F) + erlateral  # vector
 
         # Have to check for any flows that will be greater than the actual amount of water available.
-        Sx = ((dSdt * dt)+S < 0 )     # logic
+        Sx = (dSdt * dt) < (-S)  # logic
 
         if Sx.any():
             # For cells with excess flow, let the flow be all the water available:  inbound + lateral + storage.
             # Since dSdt = inbound + lateral - F, we can get the new, adjusted value by adding to dSdt the F
             #  we calculated above and adding to that S / dt
-            F[Sx] = Qin[Sx] + S[Sx] * dtinv
-            # F[Sx] = Qin[Sx] + S[Sx] * dtinv
+            F[Sx] = dSdt[Sx] + F[Sx] + S[Sx] * dtinv
+
             # The new F is all the inflow plus all the storage, so the final value of S is zero.
-            dSdt[Sx] = -S[Sx]* dtinv
             S[Sx] = 0
 
             # For the rest of the cells, recalculate dSdt using the updated fluxes
@@ -178,87 +75,11 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM, UP,
             # No excess flow, so use the forward-Euler formula for all cells
             S += (dSdt * dt)
 
-        Sout = S.copy()
-        Qout = F.copy()
-        Qout_channel_avg += Qout
-        Qin_Channel_avg += Qin
-
-        if res_flag==1:
-
-            # Reservoir Storage Balance
-            #print(Sini_resv[VolgaN])
-            Qin_resv = F.copy()
-            Qinv = Qin_resv.copy()
-            # Reservoirs Release Calculation
-            # Provisional release of Irrigation and Flood-Control Reservoirs
-            Rp[ind1] = mtifl[ind1]   #Flood-Control
-            Rp[ind2] = (0.5 * mtifl[ind2])  + np.divide(np.multiply((0.5 * mtifl[ind2]),  demand[ind2]) , mdemand[ind2]) # Irrigation dmean >= 0.5*imean
-            Rp[ind3] = mtifl[ind3] + demand[ind3] - mdemand[ind3]                              # Irrigation dmean < 0.5*imean
-
-            # Final Release
-            Rf[ind4] = np.multiply(np.divide(Sini[ind4].T, (e*cpa[ind4])), Rp[ind4]) #Flood-Control
-            dd1 = (d[ind5]/0.5)**n # d =  (cpa) /( mtifl * 365 * 24 * 3600)
-            dd2 = np.multiply(np.divide(Sini[ind5].T, (e*cpa[ind5])), Rp[ind5]) # Krls,y * im,y
-            dd3 = np.multiply((1-dd1), Qin_resv[ind5])
-            Rf[ind5] = np.multiply(dd1,dd2) + dd3
-
-            # Hydropower Release Calculation
-            # current storage relative to reservoirs capacity
-            Sstaten[ind6,0] = (Sini_resv[ind6])/(e*cpa[ind6])
-
-            # compare current state of storage to look-up table
-            Sf =  (Sstaten) >= (Percent_sa)
-            HP_Release_possiblities = HPlut_Max_release*Sf
-            HP_Rf = np.max(HP_Release_possiblities,axis=1)
-
-            # Final release from the HP reservoirs
-            Rf[ind6] = HP_Rf[ind6]
-
-            # environmental release
-            envtl_Release = (Rf < (0.1 * mtifl)) & (cpa != 0)  # environmental release 10% of mean annual inflow
-            Rf[envtl_Release] = 0.1 * mtifl[envtl_Release]      # environmental release
-            # Final release from the HP reservoirs
-            Rf[ind6] = HP_Rf[ind6]
-
-            # Outflow : update the instantaneous channel flow
-            Qout_resv = Rf.copy()
-
-            # Reservoir outflow update
-            DSresv = (Qin_resv - Qout_resv)*dt
-            Sending = Sini_resv + DSresv
-
-            # final storage < 25% of capacity
-            Sres_x = ((Sending < (0.25*cpa)) & (cpa != 0))
-            if Sres_x.any():
-                Qout_resv[Sres_x] = 0
-                DSresv[Sres_x]    = Qin_resv[Sres_x]*dt
-                Sending[Sres_x]   = Sini_resv[Sres_x] + DSresv[Sres_x]
-
-            # final storage > capacity
-            Sres_y = ((Sending > e*cpa) & (cpa != 0))
-            if Sres_y.any():
-                Qout_resv[Sres_y] = Qout_resv[Sres_y] + (Sending[Sres_y]-e*cpa[Sres_y]) * dtinv
-                DSresv[Sres_y]    = (Qin_resv[Sres_y] - Qout_resv[Sres_y])*dt
-                Sending[Sres_y]   = Sini_resv[Sres_y] + DSresv[Sres_y]
-
-            if t==0 :
-                Sin_in  = Sini_resv.copy()
-
-            F[cond0] = Qout_resv[cond0]
-            Favg += F
-            Qin_res_avg +=  Qinv
-            Qout_res_avg += Qout_resv
-            Sini_resv = Sending.copy()
-        else:
-            Favg += F
+        Favg += F
 
     Favg /= nt
-    Qin_res_avg /= nt
-    Qout_res_avg /= nt
-    Qout_channel_avg /= nt
-    Qin_Channel_avg /= nt
 
-    return S , Favg, F ,Qin_Channel_avg, Qout_channel_avg,  Qin_res_avg, Qout_res_avg, Sending
+    return S, Favg, F
 
 
 def downstream(coord, flowdir, settings):
@@ -373,9 +194,13 @@ def upstream(coord, downstream, settings):
 def upstream_genmatrix(upid):
     """Generate a sparse matrix representation of the upstream cells for each cell.
     The RHS of the ODE for channel storage S can be writen as
+
     dS/dt = UP * F + erlateral - S / T
+
     Since the instantaneous channel flow, F = S / T, this is the same as:
+
     dS/dt = [UP - I] S / T + erlateral
+
     This function returns UM = UP - I
     The second argument is the Jacobian matrix, J."""
 
@@ -400,10 +225,9 @@ def upstream_genmatrix(upid):
     row = ivals[0:ub] - 1
     col = jvals[0:ub] - 1
 
-    UP = sparse.coo_matrix((data, (row, col)), shape=(N, N))
     UM = sparse.coo_matrix((data, (row, col)), shape=(N, N)) - sparse.eye(N, dtype=int)
 
-    return UM, UP
+    return UM
 
 
 def make_flowdirgrid(ilat, ilon, flowdir, gridlen):
@@ -432,45 +256,3 @@ def make_flowdirgrid(ilat, ilon, flowdir, gridlen):
     fdlon = fdlon + ilon
 
     return fdlat, fdlon
-
-
-def water_balance_reservoir(Qin, Qout, Sin, Sout, dt, Snorm):
-    DSdt_Q = (Qin - Qout)*dt
-    DSdt_S = (Sout - Sin)
-    DS_diff = np.abs(DSdt_Q - DSdt_S)
-    Res_Wbalance_relative_error = np.zeros_like(DS_diff)
-    Sxs = (Snorm < 1)
-    if Sxs.any():
-        Res_Wbalance_relative_error[Sxs] = DS_diff[Sxs]
-
-    Szs = np.logical_not(Sxs)
-    Res_Wbalance_relative_error[Szs] = np.divide(DS_diff[Szs],  Snorm[Szs])
-
-    if np.max(Res_Wbalance_relative_error[Szs]) > 1e-6:
-        print('Error: Reservoir water balance violated')
-
-        import sys
-        sys.exit()
-
-    return Res_Wbalance_relative_error
-
-
-def water_balance_channel2(Qin, Qout, Sin, Sout, dt, Snorm):
-    DSdt_Q = (Qin - Qout)*dt
-    DSdt_S = (Sout - Sin)
-    DS_diff = np.abs(DSdt_Q - DSdt_S)
-    Wbalance_relative_error = np.zeros_like(DS_diff)
-    Sxs = (Snorm < 1)
-    if Sxs.any():
-       Wbalance_relative_error[Sxs] =  DS_diff[Sxs]
-
-
-    Szs = np.logical_not(Sxs)
-    Wbalance_relative_error[Szs] = np.divide(DS_diff[Szs],  Snorm[Szs])
-
-    if np.max(Wbalance_relative_error[Szs]) > 1e-6:
-        print('Error: channel water balance violated')
-
-        import sys
-        sys.exit()
-    return Wbalance_relative_error
