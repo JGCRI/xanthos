@@ -30,10 +30,12 @@ from xanthos.data_reader.data_thornthwaite import DataThornthwaite
 from xanthos.data_reader.data_reference import DataReference
 from xanthos.data_reader.data_gwam import DataGwam
 from xanthos.data_reader.data_mrtm import DataMrtm
+from xanthos.data_reader.data_mrtm_managed import DataMrtmManaged
 from xanthos.data_reader.data_mrtm import DataUtils
 from xanthos.data_reader.data_abcd import DataAbcd
 from xanthos.data_reader.data_diagnostics import DataDiagnostics
 from xanthos.data_reader.data_calibration import DataCalibration
+from xanthos.data_reader.data_calibration_managed import DataCalibrationManaged
 
 
 class Components(DataUtils):
@@ -106,6 +108,19 @@ class Components(DataUtils):
             self.chs_prev = None
 
             self.data_mrtm = DataMrtm(config_obj=config)
+
+        elif self.s.routing_module == 'mrtm_managed':
+            self.flow_dist = None
+            self.flow_dir = None
+            self.instream_flow = None
+            self.str_velocity = None
+            self.dsid = None
+            self.upid = None
+            self.um = None
+            self.routing_timestep_hours = 3 * 3600
+            self.chs_prev = None
+
+            self.data_mrtm_managed = DataMrtmManaged(config_obj=config)
 
         # outputs
         self.PET = np.zeros(shape=(self.s.ncell, self.s.nmonths))
