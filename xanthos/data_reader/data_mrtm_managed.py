@@ -5,7 +5,7 @@ from xanthos.data_reader.data_reference import DataReference
 from xanthos.utils.math import sub2ind
 
 
-class DataMrtm(DataUtils):
+class DataMrtmManaged(DataUtils):
 
     NCELL = 67420
     NGRIDROW = 360
