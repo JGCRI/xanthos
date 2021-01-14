@@ -30,6 +30,7 @@ class ConfigRunner:
                         'gwam'  =  Global Water Assessment Model
     ROUTING:     One of:
                         'mrtm'  =  Modified River Transport Model
+                        'mrtm_managed' = MRTM with water mangement
 
     Available output statistics modules include:
         - Hydropower actual
@@ -60,7 +61,7 @@ class ConfigRunner:
         # acceptable components to run
         PET_COMPONENTS = ['hs', 'hargreaves', 'pm', 'thornthwaite']
         RUNOFF_COMPONENTS = ['abcd', 'gwam']
-        ROUTING_COMPONENTS = ['mrtm']
+        ROUTING_COMPONENTS = ['mrtm', 'mrtm_managed']
 
         # runoff components that need the whole model to do spin-up
         SPINUP_COMPONENTS = ['gwam']
