@@ -3,7 +3,7 @@ import scipy.io as sio
 from xanthos.data_reader.data_utils import DataUtils
 
 
-class DataCalibration(DataUtils):
+class DataCalibrationManaged(DataUtils):
     """Load data for calibration that uses streamflow and accounts for water management."""
 
     def __init__(self, config_obj=None, cal_observed=None, purpose_file=None, capacity_file=None, hp_release_file=None,
