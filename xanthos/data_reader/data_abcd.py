@@ -5,11 +5,11 @@ from xanthos.data_reader.data_utils import DataUtils
 
 class DataAbcd(DataUtils):
 
-    def __init__(self, config_obj=None, precip_file=None, precip_variable_name=None, tasmin_file=None,
+    def __init__(self, config=None, precip_file=None, precip_variable_name=None, tasmin_file=None,
                  tasmin_variable_name=None, start_yr=None, through_yr=None):
 
         # enable loading from arguments
-        if config_obj is None:
+        if config is None:
             self.precip_file = precip_file
             self.precip_variable_name = precip_variable_name
             self.tasmin_file = tasmin_file
@@ -17,11 +17,11 @@ class DataAbcd(DataUtils):
             nmonths = (through_yr - start_yr + 1) * 12
 
         else:
-            self.precip_file = config_obj.PrecipitationFile
-            self.precip_variable_name = config_obj.PrecipVarName
-            self.tasmin_file = config_obj.TempMinFile
-            self.tasmin_variable_name = config_obj.TempMinVarName
-            nmonths = config_obj.nmonths
+            self.precip_file = config.PrecipitationFile
+            self.precip_variable_name = config.PrecipVarName
+            self.tasmin_file = config.TempMinFile
+            self.tasmin_variable_name = config.TempMinVarName
+            nmonths = config.nmonths
 
         super().__init__(nmonths=nmonths)
 

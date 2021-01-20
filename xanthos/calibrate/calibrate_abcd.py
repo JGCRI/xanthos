@@ -255,8 +255,11 @@ def expand_str_range(str_ranges):
 
 def calibrate_all(settings, data, pet, router_function):
     """Run calibration for ABCD model for all basins."""
+
     for basin_num in expand_str_range(settings.cal_basins):
+
         basin_name = data.basin_names[basin_num - 1]
+
         logging.info("\tCalibrating Basin:  {} ({})".format(basin_num, basin_name))
 
         process_basin(basin_num, settings, data, pet, router_function)

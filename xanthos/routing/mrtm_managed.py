@@ -19,10 +19,11 @@ import numpy as np
 import scipy.sparse as sparse
 
 
-def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM, UP,
-                  Sini, wdirr, irrmean, mtifl, ppose, cpa,
+def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM, UP, Sini, wdirr, irrmean, mtifl, ppose, cpa,
                   HP_Release_LUT, HP_maxRelease, WConsumption, c, Sini_resv, res_flag):
     """
+    Convert runoff to routed streamflow.
+
     L:    flow distance (m)                                        = (N x 1)
     S0:   initial channel storage value for the month (m^3)        = (N x 1)
     F0:   initial channel flow value (instantaneous) for the month (m^3/s) = (N x 1)

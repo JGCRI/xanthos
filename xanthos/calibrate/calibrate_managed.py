@@ -15,10 +15,11 @@ import spotpy
 import numpy as np
 import pandas as pd
 
-from xanthos.runoff.abcd import ABCD
+from xanthos.runoff.abcd_managed import AbcdManaged
 from xanthos.data_reader.data_mrtm_managed import DataMrtmManaged
 from xanthos.data_reader.data_calibration_managed import DataCalibrationManaged
 from xanthos.data_reader.data_reference import DataReference
+from xanthos.data_reader.data_abcd import DataAbcd
 
 import xanthos.routing.mrtm_managed as routing_mod
 import xanthos.utils.general as helper
@@ -59,13 +60,13 @@ class CalibrateManaged:
                  capacity_file=None,
                  hp_release_file=None,
                  water_consumption_file=None,
-                 instream_natural_flow_file=None,
+                 instream_flow_natural_file=None,
                  initial_channel_storage_natural_file=None,
                  sm_file=None,
                  mtif_natural_file=None,
                  maxtif_natural_file=None,
                  total_demand_cumecs_file=None,
-                 grdc_xanthos_coord_index_file=None,
+                 grdc_coord_index_file=None,
                  start_year=None,
                  end_year=None,
                  gen=100,
@@ -93,21 +94,6 @@ class CalibrateManaged:
 
         """
 
-        # load calibration data
-        self.calib_data = DataCalibrationManaged(config_obj=config_obj,
-                                                 cal_observed=cal_observed,
-                                                 purpose_file=purpose_file,
-                                                 capacity_file=capacity_file,
-                                                 hp_release_file=hp_release_file,
-                                                 water_consumption_file=water_consumption_file,
-                                                 instream_natural_flow_file=instream_natural_flow_file,
-                                                 initial_channel_storage_natural_file=initial_channel_storage_natural_file,
-                                                 sm_file=sm_file,
-                                                 mtif_natural_file=mtif_natural_file,
-                                                 maxtif_natural_file=maxtif_natural_file,
-                                                 total_demand_cumecs_file=total_demand_cumecs_file,
-                                                 grdc_xanthos_coord_index_file=grdc_xanthos_coord_index_file)
-
         if config_obj is None:
             self.start_year = start_year
             self.end_year = end_year
@@ -124,10 +110,8 @@ class CalibrateManaged:
             self.flow_direction_file = flow_direction_file
             self.stream_velocity_file = stream_velocity_file
             self.historical_mode = historical_mode
-
-            if self.historical_mode != "True":
-                self.hist_channel_storage_file = hist_channel_storage_file
-                self.hist_channel_storage_varname = hist_channel_storage_varname
+            self.hist_channel_storage_file = hist_channel_storage_file
+            self.hist_channel_storage_varname = hist_channel_storage_varname
 
         else:
             self.start_year = config_obj.StartYear
@@ -135,16 +119,14 @@ class CalibrateManaged:
             self.nmonths = config_obj.nmonths
             self.reference_data = DataReference(config=config_obj)
 
-            self.flow_distance_file = config_obj.flow_dist
-            self.flow_direction_file = config_obj.flow_dir
-            self.stream_velocity_file = config_obj.str_velocity
+            self.flow_distance_file = config_obj.flow_distance
+            self.flow_direction_file = config_obj.flow_direction
+            self.stream_velocity_file = config_obj.strm_veloc
             self.historical_mode = config_obj.HistFlag
 
-            if self.historical_mode != "True":
-                self.hist_channel_storage_file = config_obj.ChStorageFile
-                self.hist_channel_storage_varname = config_obj.ChStorageVarName
+            self.hist_channel_storage_file = config_obj.ChStorageFile
+            self.hist_channel_storage_varname = config_obj.ChStorageVarName
 
-        self.nmonths = (self.end_year - self.start_year + 1) * 12
         self.basin_num = basin_num
         self.basin_ids = basin_ids
         self.basin_areas = basin_areas
@@ -160,13 +142,30 @@ class CalibrateManaged:
         self.gen = gen
         self.nChains = nchains
 
+        # load calibration data
+        self.calib_data = DataCalibrationManaged(config_obj=config_obj,
+                                                 cal_observed=cal_observed,
+                                                 purpose_file=purpose_file,
+                                                 capacity_file=capacity_file,
+                                                 hp_release_file=hp_release_file,
+                                                 water_consumption_file=water_consumption_file,
+                                                 instream_flow_natural_file=instream_flow_natural_file,
+                                                 initial_channel_storage_natural_file=initial_channel_storage_natural_file,
+                                                 sm_file=sm_file,
+                                                 mtif_natural_file=mtif_natural_file,
+                                                 maxtif_natural_file=maxtif_natural_file,
+                                                 total_demand_cumecs_file=total_demand_cumecs_file,
+                                                 grdc_coord_index_file=grdc_coord_index_file,
+                                                 start_year=self.start_year,
+                                                 end_year=self.end_year)
+
         # Minimum temperature is optional; if not provided, the snow components
         # of the model is effectively removed, so remove the model parameter
         # for snow (M)
         self.nosnow = self.tmin is None
 
         # index for gauge station locations
-        self.grdcData_info = np.copy(self.calib_data.grdc_coord_index)
+        self.grdcData_info = np.copy(self.calib_data.grdc_coord_index_file)
         self.grdc_xanthosID = self.grdcData_info[np.where(self.grdcData_info[:, 0] == self.basin_num), 1][0][0] - 1
 
         # routing inputs: wdirr, irrmean, tifl, ppose, cpa,dscells
@@ -198,11 +197,15 @@ class CalibrateManaged:
                                             hist_channel_storage_varname=self.hist_channel_storage_varname)
 
         # set number of parameter combinations
-        self.ModelPerformance = os.path.join(self.out_dir, 'Basins_Result', f"basin_calibration_{self.basin_num}")
+        self.ModelPerformance = os.path.join(self.out_dir, f"basin_calibration_{self.basin_num}")
 
         # set the bounds; if the values are exactly 0 or 1 the model returns nan
-        self.bounds = [(CalibrateManaged.LB, CalibrateManaged.UB), (CalibrateManaged.LB, 8 - CalibrateManaged.LB), (CalibrateManaged.LB, CalibrateManaged.UB),
-                       (CalibrateManaged.LB, CalibrateManaged.UB), (CalibrateManaged.LB, CalibrateManaged.UB), (CalibrateManaged.LBA, CalibrateManaged.UB2),
+        self.bounds = [(CalibrateManaged.LB, CalibrateManaged.UB),
+                       (CalibrateManaged.LB, 8 - CalibrateManaged.LB),
+                       (CalibrateManaged.LB, CalibrateManaged.UB),
+                       (CalibrateManaged.LB, CalibrateManaged.UB),
+                       (CalibrateManaged.LB, CalibrateManaged.UB),
+                       (CalibrateManaged.LBA, CalibrateManaged.UB2),
                        (CalibrateManaged.LB1, CalibrateManaged.UB)]
 
         if self.nosnow:
@@ -254,10 +257,14 @@ class CalibrateManaged:
         self.best_params = None
 
     def bestParams_combination(self):
+
         self.best_params = None
+
         if os.path.isfile(self.ModelPerformance + ".csv"):
+
             results = get_calib_data(self.ModelPerformance + ".csv")
             ObjFuns = 1
+
             try:
                 best = results[np.nanargmax([r[0] for r in results])]
                 self.kge_cal = best[0]
@@ -266,10 +273,12 @@ class CalibrateManaged:
                 self.best_params = np.array(x)
             except ValueError:
                 pass
+
             return self.best_params.astype(np.float)
 
     def parameters(self):
         '''Returns ABCD Params'''
+
         if os.path.isfile(self.ModelPerformance + ".csv"):
             if not os.stat(self.ModelPerformance + ".csv").st_size == 0:
                 self.best_params = self.bestParams_combination()
@@ -288,52 +297,58 @@ class CalibrateManaged:
                 self.bounds[p][0], self.bounds[p][1])
                 for p in names]
         else:
-            params = [spotpy.parameter.Uniform(
-                self.bounds[p][0], self.bounds[p][1], optguess=self.best_params[p])
-                for p in names]
+            params = [spotpy.parameter.Uniform(self.bounds[p][0], self.bounds[p][1], optguess=self.best_params[p]) for p in names]
 
         return spotpy.parameter.generate(params)
 
     def simulation(self, pars):
         """ABCD model and mrtm routing model : this function provides simulated streamflow"""
+
         if self.set_calibrate == 0:
+
             ncell_in_basin = len(self.basin_idx[0])
+
             self.target_basin_ids = np.zeros(ncell_in_basin)
-            he = ABCD(
-                pars,
-                self.bsn_SM,
-                self.bsn_PET,
-                self.bsn_P,
-                self.bsn_TMIN,
-                self.target_basin_ids,
-                self.nmonths,
-                self.runoff_spinup,
-                method="dist",
-            )
+
+            he = AbcdManaged(pars=pars,
+                             soil_water_initial=self.bsn_SM,
+                             pet=self.bsn_PET,
+                             precip=self.bsn_P,
+                             tmin=self.bsn_TMIN,
+                             basin_ids=self.target_basin_ids,
+                             process_steps=self.nmonths,
+                             spinup_steps=self.runoff_spinup,
+                             method="dist")
+
             he.emulate()
+
             self.qsim_with_validation = np.nansum(he.rsim[0:240, :] * self.conversion, 1)
+
             return np.nansum(he.rsim[0:120, :] * self.conversion, 1)
 
         else:
+
             ncell_in_basin = len(self.basin_ids)
+
             self.target_basin_ids = np.zeros(ncell_in_basin)
-            he = ABCD(pars,
-                      self.SM,
-                      self.pet,
-                      self.precip,
-                      self.tmin,
-                      self.target_basin_ids,
-                      self.nmonths,
-                      self.runoff_spinup,
-                      method="dist",
-                      )
+
+            he = AbcdManaged(pars=pars,
+                             soil_water_initial=self.SM,
+                             pet=self.pet,
+                             precip=self.precip,
+                             tmin=self.tmin,
+                             basin_ids=self.target_basin_ids,
+                             process_steps=self.nmonths,
+                             spinup_steps=self.runoff_spinup,
+                             method="dist")
+
             he.emulate()
 
             self.runoff = he.rsim.T
+
             runoff_out = self.runoff[self.basin_idx, :]
 
             # load routing data
-
             self.flow_dist = self.routing_data.flow_dist
             grid_size = np.sqrt(self.reference_data.area) * 1000
             nn_grids = np.where(self.flow_dist < grid_size)[0]
@@ -373,7 +388,9 @@ class CalibrateManaged:
             # spin up run
             # for nm in range(self.s.routing_spinup):
             mm_month = 120
+
             for nm in range(mm_month):
+
                 sr = routing_mod.streamrouting(self.flow_dist,
                                                self.chs_prev,
                                                self.instream_flow,
@@ -397,16 +414,14 @@ class CalibrateManaged:
                                                self.res_prev,
                                                self.res_flag)
 
-                (
-                    self.ChStorage[:, nm],
-                    self.Avg_ChFlow[:, nm],
-                    self.instream_flow,
-                    self.Qin_Channel_avg,
-                    self.Qout_channel_avg,
-                    self.Qin_res_avg[:, nm],
-                    self.Qout_res_avg[:, nm],
-                    self.ResStorage[:, nm],
-                ) = sr
+                (self.ChStorage[:, nm],
+                 self.Avg_ChFlow[:, nm],
+                 self.instream_flow,
+                 self.Qin_Channel_avg,
+                 self.Qout_channel_avg,
+                 self.Qin_res_avg[:, nm],
+                 self.Qout_res_avg[:, nm],
+                 self.ResStorage[:, nm]) = sr
 
                 # update data
                 self.chs_prev = np.copy(self.ChStorage[:, nm])
@@ -492,11 +507,14 @@ class CalibrateManaged:
 
         """
         # self.best_params = self.bestParams_combination()
-        sampler = spotpy.algorithms.demcz(
-            self, dbname=self.ModelPerformance, dbformat="csv", dbappend=True,
-            save_sim=False)  # , parallel='mpi')#demcz  sceua
+        sampler = spotpy.algorithms.demcz(self,
+                                          dbname=self.ModelPerformance,
+                                          dbformat="csv",
+                                          dbappend=True,
+                                          save_sim=False)  # , parallel='mpi')#demcz  sceua
 
         sampler.sample(self.gen)  # ,nChains=self.nChains)
+
         print('result with optimal params')
         self.best_params = self.bestParams_combination()
 
@@ -516,31 +534,38 @@ class CalibrateManaged:
         return qsimulated, self.bsn_obs, kge_cal, kge_val
 
 
-def process_basin(basin_num, settings, data, pet, router_function=None):
-    """
-    Process single basin.
-    """
+def process_basin(config_obj, calibration_data, pet, router_function=None):
+    """Process single basin."""
 
-    cal = CalibrateManaged(basin_num=settings.basin_num,
-                           set_calibrate=settings.set_calibrate,
-                           obs_unit=settings.obs_unit,
-                           basin_ids=data.basin_ids,
-                           basin_areas=data.area,
-                           precip=data.precip,
+    # load ABCD runoff module data
+    data_abcd = DataAbcd(config=config_obj)
+
+    cal = CalibrateManaged(config_obj=config_obj,
+                           basin_num=config_obj.basin_num,
+                           set_calibrate=config_obj.set_calibrate,
+                           obs_unit=config_obj.obs_unit,
+                           basin_ids=calibration_data.basin_ids,
+                           basin_areas=calibration_data.area,
+                           precip=data_abcd.precip,
                            pet=pet,
-                           obs=data.cal_obs,
-                           tmin=data.tmin,
-                           nmonths=settings.nmonths,
-                           runoff_spinup=settings.runoff_spinup,
+                           obs=calibration_data.cal_obs,
+                           tmin=data_abcd.tmin,
+                           nmonths=config_obj.nmonths,
+                           runoff_spinup=config_obj.runoff_spinup,
                            router_func=router_function,
-                           out_dir=settings.calib_out_dir)
+                           out_dir=config_obj.calib_out_dir,
+                           start_year=config_obj.StartYear,
+                           end_year=config_obj.EndYear
+                           )
     cal.calibrate_basin()
 
 
-def calibrate_all(settings, data, pet):
+def calibrate_all(settings, calibration_data, pet, router_fn=None):
     """Run calibration for ABCD model for a basins."""
+
     print("\tCalibrating Basin:  {}".format(settings.basin_num))
-    process_basin(settings.basin_num, settings, data, pet, router_function=None)
+
+    process_basin(settings, calibration_data, pet, router_function=router_fn)
 
 
 def get_calib_data(performance_file):

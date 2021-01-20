@@ -113,6 +113,7 @@ class ConfigReader:
         self.ngridrow = 360
         self.ngridcol = 720
         self.n_basins = int(p['n_basins'])
+        self.basin_num = int(p.get('basin_num', 0))
         self.HistFlag = p['HistFlag']
         self.StartYear = int(p['StartYear'])
         self.EndYear = int(p['EndYear'])
@@ -136,6 +137,12 @@ class ConfigReader:
         # Better to use this instead with force_list():
         #   http://www.voidspace.org.uk/python/articles/configobj.shtml#validation
         self.output_vars = [self.output_vars] if not isinstance(self.output_vars, list) else self.output_vars
+
+        # initial value for storage files to initialize with if needed
+        self.ChStorageFile = None
+        self.ChStorageVarName = None
+        self.SavFile = None
+        self.SavVarName = None
 
         # -------------------------------------------------------------------
         # -------------------------------------------------------------------
@@ -330,6 +337,11 @@ class ConfigReader:
                 except KeyError:
                     raise ValidationException("Error: ChStorageFile and ChStorageVarName "
                                               "are not defined for Future Mode.")
+            else:
+                self.ChStorageFile = None
+                self.ChStorageVarName = None
+                self.SavFile = None
+                self.SavVarName = None
 
             try:
                 self.PrecipitationFile = os.path.join(self.ro_model_dir, ro_mod['PrecipitationFile'])
@@ -484,10 +496,24 @@ class ConfigReader:
 
     def configure_calibration(self, calibration_config):
         """Configure calibration settings."""
+
         self.set_calibrate = int(calibration_config['set_calibrate'])
         self.cal_observed = calibration_config['observed']
         self.obs_unit = self.ck_obs_unit(self.set_calibrate, calibration_config['obs_unit'])
         self.calib_out_dir = self.create_dir(calibration_config['calib_out_dir'])
+
+        self.purpose_file = calibration_config['purpose_file']
+        self.capacity_file = calibration_config['capacity_file']
+        self.hp_release_file = calibration_config['hp_release_file']
+        self.water_consumption_file =calibration_config['water_consumption_file']
+        self.instream_flow_natural_file = calibration_config['instream_flow_natural_file']
+        self.initial_channel_storage_natural_file = calibration_config['initial_channel_storage_natural_file']
+        self.sm_file = calibration_config['sm_file']
+        self.mtif_natural_file = calibration_config['mtif_natural_file']
+        self.maxtif_natural_file = calibration_config['maxtif_natural_file']
+        self.total_demand_cumecs_file = calibration_config['total_demand_cumecs_file']
+        self.grdc_coord_index_file = calibration_config['grdc_coord_index_file']
+
         try:
             self.cal_basins = calibration_config['calibration_basins']
             # calibration basins can be specified as either a single

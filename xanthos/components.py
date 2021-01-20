@@ -16,6 +16,7 @@ import logging
 
 import xanthos.utils.general as helper
 import xanthos.calibrate.calibrate_abcd as calib_mod
+import xanthos.calibrate.calibrate_managed as calib_managed
 from xanthos.data_writer.out_writer import OutWriter
 from xanthos.diagnostics.diagnostics import Diagnostics
 from xanthos.diagnostics.time_series import TimeSeriesPlot
@@ -504,10 +505,22 @@ class Components(DataUtils):
         logging.info("---Processing PET...")
         t = time.time()
 
-        pet_out = self.calculate_pet()
+        # pet_out = self.calculate_pet()
+        # np.save('/Users/d3y010/Desktop/pet_out.npy', pet_out)
+
+        pet_out = np.load('/Users/d3y010/Desktop/pet_out.npy')
 
         logging.info("---PET processed in {} seconds---".format(time.time() - t))
 
-        logging.info("---Running calibration:")
+        logging.info("---Loading calibration data:")
+        calibration_data = DataCalibrationManaged(config_obj=self.s)
 
-        calib_mod.calibrate_all(settings=self.s, data=DataCalibration(), pet=pet_out, router_function=self.calculate_routing)
+        logging.info("---Running calibration:")
+        calib_managed.calibrate_all(settings=self.s,
+                                    calibration_data=calibration_data,
+                                    pet=pet_out)
+
+        # calib_mod.calibrate_all(settings=self.s,
+        #                         data=calibration_data,
+        #                         pet=pet_out,
+        #                         router_function=self.calculate_routing)

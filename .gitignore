@@ -1,3 +1,6 @@
+# do not push example data
+example/
+
 # OS-specific files
 .DS_Store
 

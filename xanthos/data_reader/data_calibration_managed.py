@@ -1,16 +1,26 @@
-import scipy.io as sio
+import numpy as np
+from xanthos.data_reader.data_reference import DataReference
 
-from xanthos.data_reader.data_utils import DataUtils
 
-
-class DataCalibrationManaged(DataUtils):
+class DataCalibrationManaged(DataReference):
     """Load data for calibration that uses streamflow and accounts for water management."""
 
-    def __init__(self, config_obj=None, cal_observed=None, purpose_file=None, capacity_file=None, hp_release_file=None,
-                         water_consumption_file=None, instream_natural_flow_file=None,
-                         initial_channel_storage_natural_file=None, sm_file=None, mtif_natural_file=None,
-                         maxtif_natural_file=None, total_demand_cumecs_file=None,
-                         grdc_xanthos_coord_index_file=None, start_year=None, end_year=None):
+    def __init__(self,
+                 config_obj=None,
+                 cal_observed=None,
+                 purpose_file=None,
+                 capacity_file=None,
+                 hp_release_file=None,
+                 water_consumption_file=None,
+                 instream_flow_natural_file=None,
+                 initial_channel_storage_natural_file=None,
+                 sm_file=None,
+                 mtif_natural_file=None,
+                 maxtif_natural_file=None,
+                 total_demand_cumecs_file=None,
+                 grdc_coord_index_file=None,
+                 start_year=None,
+                 end_year=None):
 
         if config_obj is None:
 
@@ -24,20 +34,21 @@ class DataCalibrationManaged(DataUtils):
             self.cal_obs = self.load_data(cal_observed, 0)[:, [0, 3]]
 
             # load dam and other input data
-            self.purpose = sio.loadmat(purpose_file)['purpose3']
-            self.capacity = sio.loadmat(capacity_file)['capacity']
-            self.hp_release = sio.loadmat(hp_release_file)['HEP_Release']
-            self.water_consumption = sio.loadmat(water_consumption_file)['WConsumption']
-            self.instream_flow_natural = sio.loadmat(instream_natural_flow_file)['Initial_instream_flow_Natural']
-            self.ini_channel_storage = sio.loadmat(initial_channel_storage_natural_file)['Initial_Channel_Storage_Natural']
-            self.sm = sio.loadmat(sm_file)['SM']
-            self.mtif_natural = sio.loadmat(mtif_natural_file)['mtif_natural']
-            self.maxtif_natural = sio.loadmat(maxtif_natural_file)['maxtif_natural']
-            self.total_demand_cumecs = sio.loadmat(total_demand_cumecs_file)['Total_Demand_cumecs']
-            self.grdc_coord_index = sio.loadmat(grdc_xanthos_coord_index_file)['GRDC_xanthosCoordIndx']
+            self.purpose = np.load(purpose_file)
+            self.capacity = np.load(capacity_file)
+            self.hp_release = np.load(hp_release_file)
+            self.water_consumption = np.load(water_consumption_file)
+            self.instream_flow_natural = np.load(instream_flow_natural_file)
+            self.ini_channel_storage = np.load(initial_channel_storage_natural_file)
+            self.sm = np.load(sm_file)
+            self.mtif_natural = np.load(mtif_natural_file)
+            self.maxtif_natural = np.load(maxtif_natural_file)
+            self.total_demand_cumecs = np.load(total_demand_cumecs_file)
+            self.grdc_coord_index_file = np.load(grdc_coord_index_file)
 
         else:
 
+            self.config_obj = config_obj
             self.start_year = config_obj.StartYear
             self.end_year = config_obj.EndYear
             self.nmonths = config_obj.nmonths
@@ -48,14 +59,14 @@ class DataCalibrationManaged(DataUtils):
             self.cal_obs = self.load_data(self.config_obj.cal_observed, 0)[:, [0, 3]]
 
             # load dam and other input data
-            self.purpose = sio.loadmat(config_obj.purpose_file)['purpose3']
-            self.capacity = sio.loadmat(config_obj.capacity_file)['capacity']
-            self.hp_release = sio.loadmat(config_obj.hp_release_file)['HEP_Release']
-            self.water_consumption = sio.loadmat(config_obj.water_consumption_file)['WConsumption']
-            self.instream_flow_natural = sio.loadmat(config_obj.instream_natural_flow_file)['Initial_instream_flow_Natural']
-            self.ini_channel_storage = sio.loadmat(config_obj.initial_channel_storage_natural_file)['Initial_Channel_Storage_Natural']
-            self.sm = sio.loadmat(config_obj.sm_file)['SM']
-            self.mtif_natural = sio.loadmat(config_obj.mtif_natural_file)['mtif_natural']
-            self.maxtif_natural = sio.loadmat(config_obj.maxtif_natural_file)['maxtif_natural']
-            self.total_demand_cumecs = sio.loadmat(config_obj.total_demand_cumecs_file)['Total_Demand_cumecs']
-            self.grdc_coord_index = sio.loadmat(config_obj.grdc_xanthos_coord_index_file)['GRDC_xanthosCoordIndx']
+            self.purpose = np.load(self.config_obj.purpose_file)
+            self.capacity = np.load(self.config_obj.capacity_file)
+            self.hp_release = np.load(self.config_obj.hp_release_file)
+            self.water_consumption = np.load(self.config_obj.water_consumption_file)
+            self.instream_flow_natural = np.load(self.config_obj.instream_flow_natural_file)
+            self.ini_channel_storage = np.load(self.config_obj.initial_channel_storage_natural_file)
+            self.sm = np.load(self.config_obj.sm_file)
+            self.mtif_natural = np.load(self.config_obj.mtif_natural_file)
+            self.maxtif_natural = np.load(self.config_obj.maxtif_natural_file)
+            self.total_demand_cumecs = np.load(self.config_obj.total_demand_cumecs_file)
+            self.grdc_coord_index_file = np.load(self.config_obj.grdc_coord_index_file)

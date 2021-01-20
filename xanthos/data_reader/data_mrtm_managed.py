@@ -47,25 +47,25 @@ class DataMrtmManaged(DataUtils):
                 self.hist_channel_storage_file = config_obj.ChStorageFile
                 self.hist_channel_storage_varname = config_obj.ChStorageVarName
 
-        map_index = sub2ind([DataMrtm.NGRIDROW, DataMrtm.NGRIDCOL], self.reference_data.coords[:, 4].astype(int) - 1,
+        map_index = sub2ind([DataMrtmManaged.NGRIDROW, DataMrtmManaged.NGRIDCOL], self.reference_data.coords[:, 4].astype(int) - 1,
                             self.reference_data.coords[:, 3].astype(int) - 1)
 
         self.flow_dist = self.load_routing_data(self.flow_distance_file,
-                                                DataMrtm.NGRIDROW,
-                                                DataMrtm.NGRIDCOL,
+                                                DataMrtmManaged.NGRIDROW,
+                                                DataMrtmManaged.NGRIDCOL,
                                                 map_index, rep_val=1000)
 
         self.flow_dir = self.load_routing_data(self.flow_direction_file,
-                                               DataMrtm.NGRIDROW,
-                                               DataMrtm.NGRIDCOL,
+                                               DataMrtmManaged.NGRIDROW,
+                                               DataMrtmManaged.NGRIDCOL,
                                                map_index)
 
         self.str_velocity = self.load_routing_data(self.stream_velocity_file,
-                                                   DataMrtm.NGRIDROW,
-                                                   DataMrtm.NGRIDCOL,
+                                                   DataMrtmManaged.NGRIDROW,
+                                                   DataMrtmManaged.NGRIDCOL,
                                                    map_index, rep_val=0)
 
-        self.instream_flow = np.zeros((DataMrtm.NCELL, ), dtype=float)
+        self.instream_flow = np.zeros((DataMrtmManaged.NCELL, ), dtype=float)
 
         self.chs_prev = self.load_chs_data()
 
@@ -76,14 +76,14 @@ class DataMrtmManaged(DataUtils):
         try:
             # Initialize channel storage/soil moisture.
             if self.historical_mode == "True":
-                return np.zeros((DataMrtm.NCELL,), dtype=float)
+                return np.zeros((DataMrtmManaged.NCELL,), dtype=float)
 
             # For future runs, initialize with the last value of the historical channel storage/soil moisture
             else:
                 return self.load_data(self.hist_channel_storage_file, 0, self.hist_channel_storage_varname)[:, -1]
 
         except AttributeError:
-            return np.zeros((DataMrtm.NCELL,), dtype=float)
+            return np.zeros((DataMrtmManaged.NCELL,), dtype=float)
 
     def load_routing_data(self, fn, ngridrow, ngridcol, map_index, skip=68, rep_val=None):
         """Load routing data.
