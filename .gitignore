@@ -1,5 +1,6 @@
 # do not push example data
 example/
+example/output/*.log
 
 # OS-specific files
 .DS_Store

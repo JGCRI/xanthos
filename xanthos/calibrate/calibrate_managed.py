@@ -1,9 +1,10 @@
 """
-CalibrateManaged the ABCD model.
+CalibrateManaged the ABCD model using water management rules.
 
-@author   Caleb Braun, Chris R. Vernon
-@email:   caleb.braun@pnnl.gov
-@Project: Xanthos 2.0
+@authors: HongYi Li : hli57@uh.edu,
+         University of Houston
+         Guta Abeshu : gwabeshu@uh.edu
+         University of Houston
 
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
@@ -249,8 +250,6 @@ class CalibrateManaged:
         grid_size = np.sqrt(self.reference_data.area) * 1000
         nn = np.where(Lst < grid_size)[0]
         Lst[nn] = grid_size[nn]
-
-        # residence time in hr
         self.Tr = np.divide(Lst, Vst) / 3600
 
         # best parameter from preceeding simulations
@@ -384,7 +383,6 @@ class CalibrateManaged:
             # routing time step
             self.routing_timestep = 3 * 3600  # seconds
 
-            #############################################################################
             # spin up run
             # for nm in range(self.s.routing_spinup):
             mm_month = 120
@@ -482,17 +480,18 @@ class CalibrateManaged:
         self.qsim_with_validation = self.Avg_ChFlow[self.grdc_xanthosID, 0:240]
         return self.Avg_ChFlow[self.grdc_xanthosID, 0:120]
 
+
     @staticmethod
     def objectivefunction(simulation, evaluation):
         """Calculates Model Performance.
         Objective function to be minimized (if sceua is used) and maximized (all others)
 
         """
-        kge = spotpy.objectivefunctions.kge(evaluation, simulation)
-        return kge
+        return spotpy.objectivefunctions.kge(evaluation, simulation)
 
     def evaluation(self):
         """observed streamflow data"""
+
         return self.bsn_Robs_calib
 
     def save(self, objectivefunctions, parameter, simulations):
@@ -501,8 +500,7 @@ class CalibrateManaged:
 
     # calibration set up
     def calibrate_basin(self):
-        """
-        This function is to calibrate the distributed ABCD + water management model against the GRDC to
+        """This function is to calibrate the distributed ABCD + water management model against the GRDC to
         obtain optimized parameters of ABCD(a, b, c, d, m) and Water management (beta and c)
 
         """
@@ -515,21 +513,30 @@ class CalibrateManaged:
 
         sampler.sample(self.gen)  # ,nChains=self.nChains)
 
-        print('result with optimal params')
+        # get the results of the sampler
+
+        print('Result using optimal parameters:')
         self.best_params = self.bestParams_combination()
+
+        print(self.best_params)
 
         # self.simulation(self.best_params)
         qsimulated, qobserved, kge_cal, kge_val = self.calibration_run(self.best_params)
 
     def calibration_run(self, x):
+
         qobs_cal = self.bsn_obs[0:120]
         qobs_val = self.bsn_obs[121:240]
         qsim_cal = self.simulation(x)
         qsimulated = self.qsim_with_validation
+
+        # KGE of the calibration period
         kge_cal = spotpy.objectivefunctions.kge(qobs_cal, qsimulated[0:120])
+
+        # KGE of the validation period
         kge_val = spotpy.objectivefunctions.kge(qobs_val, qsimulated[121:240])
 
-        print("kge_cal: {}, kge_val: {}".format(kge_cal, kge_val))
+        print("Calibration KGE: {}, Validation KGE: {}".format(kge_cal, kge_val))
 
         return qsimulated, self.bsn_obs, kge_cal, kge_val
 

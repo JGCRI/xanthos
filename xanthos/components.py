@@ -505,10 +505,7 @@ class Components(DataUtils):
         logging.info("---Processing PET...")
         t = time.time()
 
-        # pet_out = self.calculate_pet()
-        # np.save('/Users/d3y010/Desktop/pet_out.npy', pet_out)
-
-        pet_out = np.load('/Users/d3y010/Desktop/pet_out.npy')
+        pet_out = self.calculate_pet()
 
         logging.info("---PET processed in {} seconds---".format(time.time() - t))
 

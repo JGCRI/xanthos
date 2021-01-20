@@ -343,7 +343,7 @@ def _run_basins(basin_nums, pars_abcdm, basin_ids, pet, precip, tmin, n_months, 
         _tmin = tmin[basin_indices]
 
     # instantiate the model
-    he = ABCD(pars, _pet, _precip, _tmin, target_basins_ids, n_months, spinup_steps, method=method)
+    he = AbcdManaged(pars, _pet, _precip, _tmin, target_basins_ids, n_months, spinup_steps, method=method)
 
     # run it
     he.emulate()

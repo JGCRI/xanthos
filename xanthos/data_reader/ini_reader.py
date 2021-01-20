@@ -112,25 +112,25 @@ class ConfigReader:
         self.ncell = 67420
         self.ngridrow = 360
         self.ngridcol = 720
-        self.n_basins = int(p['n_basins'])
+        self.n_basins = int(p.get('n_basins',  235))
         self.basin_num = int(p.get('basin_num', 0))
-        self.HistFlag = p['HistFlag']
+        self.HistFlag = p.get('HistFlag', 'True')
         self.StartYear = int(p['StartYear'])
         self.EndYear = int(p['EndYear'])
         self.output_vars = p['output_vars']
         self.OutputFormat = int(p['OutputFormat'])
         self.OutputUnit = int(p['OutputUnit'])
         self.OutputInYear = int(p['OutputInYear'])
-        self.AggregateRunoffBasin = int(p['AggregateRunoffBasin'])
-        self.AggregateRunoffCountry = int(p['AggregateRunoffCountry'])
-        self.AggregateRunoffGCAMRegion = int(p['AggregateRunoffGCAMRegion'])
-        self.PerformDiagnostics = int(p['PerformDiagnostics'])
-        self.CreateTimeSeriesPlot = int(p['CreateTimeSeriesPlot'])
-        self.CalculateDroughtStats = int(p['CalculateDroughtStats'])
-        self.CalculateAccessibleWater = int(p['CalculateAccessibleWater'])
-        self.CalculateHydropowerPotential = int(p['CalculateHydropowerPotential'])
-        self.CalculateHydropowerActual = int(p['CalculateHydropowerActual'])
-        self.calibrate = int(p['Calibrate'])
+        self.AggregateRunoffBasin = int(p.get('AggregateRunoffBasin', 0))
+        self.AggregateRunoffCountry = int(p.get('AggregateRunoffCountry', 0))
+        self.AggregateRunoffGCAMRegion = int(p.get('AggregateRunoffGCAMRegion', 0))
+        self.PerformDiagnostics = int(p.get('PerformDiagnostics', 0))
+        self.CreateTimeSeriesPlot = int(p.get('CreateTimeSeriesPlot', 0))
+        self.CalculateDroughtStats = int(p.get('CalculateDroughtStats', 0))
+        self.CalculateAccessibleWater = int(p.get('CalculateAccessibleWater', 0))
+        self.CalculateHydropowerPotential = int(p.get('CalculateHydropowerPotential', 0))
+        self.CalculateHydropowerActual = int(p.get('CalculateHydropowerActual', 0))
+        self.calibrate = int(p.get('Calibrate', 0))
 
         self.nmonths = (self.EndYear - self.StartYear + 1) * 12
         self.OutputUnitStr = '{}per{}'.format(('mm', 'km3')[self.OutputUnit], ('month', 'year')[self.OutputInYear])
@@ -410,6 +410,19 @@ class ConfigReader:
             self.flow_distance = os.path.join(self.rt_model_dir, rt_mod['flow_distance'])
             self.flow_direction = os.path.join(self.rt_model_dir, rt_mod['flow_direction'])
 
+            # new files for water management
+            self.purpose_file = os.path.join(self.rt_model_dir, rt_mod['purpose_file'])
+            self.capacity_file = os.path.join(self.rt_model_dir, rt_mod['capacity_file'])
+            self.hp_release_file = os.path.join(self.rt_model_dir, rt_mod['hp_release_file'])
+            self.water_consumption_file = os.path.join(self.rt_model_dir, rt_mod['water_consumption_file'])
+            self.instream_flow_natural_file = os.path.join(self.rt_model_dir, rt_mod['instream_flow_natural_file'])
+            self.initial_channel_storage_natural_file = os.path.join(self.rt_model_dir, rt_mod['initial_channel_storage_natural_file'])
+            self.sm_file = os.path.join(self.rt_model_dir, rt_mod['sm_file'])
+            self.mtif_natural_file = os.path.join(self.rt_model_dir, rt_mod['mtif_natural_file'])
+            self.maxtif_natural_file = os.path.join(self.rt_model_dir, rt_mod['maxtif_natural_file'])
+            self.total_demand_cumecs_file = os.path.join(self.rt_model_dir, rt_mod['total_demand_cumecs_file'])
+            self.grdc_coord_index_file = os.path.join(self.rt_model_dir, rt_mod['grdc_coord_index_file'])
+
             try:
                 self.routing_spinup = int(rt_mod['routing_spinup'])
             except KeyError:
@@ -501,18 +514,6 @@ class ConfigReader:
         self.cal_observed = calibration_config['observed']
         self.obs_unit = self.ck_obs_unit(self.set_calibrate, calibration_config['obs_unit'])
         self.calib_out_dir = self.create_dir(calibration_config['calib_out_dir'])
-
-        self.purpose_file = calibration_config['purpose_file']
-        self.capacity_file = calibration_config['capacity_file']
-        self.hp_release_file = calibration_config['hp_release_file']
-        self.water_consumption_file =calibration_config['water_consumption_file']
-        self.instream_flow_natural_file = calibration_config['instream_flow_natural_file']
-        self.initial_channel_storage_natural_file = calibration_config['initial_channel_storage_natural_file']
-        self.sm_file = calibration_config['sm_file']
-        self.mtif_natural_file = calibration_config['mtif_natural_file']
-        self.maxtif_natural_file = calibration_config['maxtif_natural_file']
-        self.total_demand_cumecs_file = calibration_config['total_demand_cumecs_file']
-        self.grdc_coord_index_file = calibration_config['grdc_coord_index_file']
 
         try:
             self.cal_basins = calibration_config['calibration_basins']
