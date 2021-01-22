@@ -15,6 +15,7 @@ import os
 import spotpy
 import numpy as np
 import pandas as pd
+import matplotlib.pylab as plt
 
 from xanthos.runoff.abcd_managed import AbcdManaged
 from xanthos.data_reader.data_mrtm_managed import DataMrtmManaged
@@ -28,7 +29,12 @@ import xanthos.utils.math as umth
 
 
 class CalibrateManaged:
-    """CalibrateManaged the ABCD runoff module."""
+    """CalibrateManaged the ABCD runoff module.
+
+    :params repetitions:                    maximum number of function evaluations allowed during optimization
+    :type repetitions:                      int
+
+    """
 
     NCELL = 67420
     NGRIDROW = 360
@@ -36,9 +42,9 @@ class CalibrateManaged:
 
     LB = 1e-4
     UB = 1 - LB
-    LB1 = 0.75
+    LB1 = 0.5
     LB2 = 1
-    LBA = 9.9
+    LBA = 1.0
     UB2 = 10.0
 
     def __init__(self,
@@ -70,14 +76,15 @@ class CalibrateManaged:
                  grdc_coord_index_file=None,
                  start_year=None,
                  end_year=None,
-                 gen=100,
+                 repetitions=100,
                  nchains=10,
                  flow_distance_file=None,
                  flow_direction_file=None,
                  stream_velocity_file=None,
                  historical_mode="True",
                  hist_channel_storage_file=None,
-                 hist_channel_storage_varname=None):
+                 hist_channel_storage_varname=None,
+                 routing_spinup=None):
         """Initialize calibration data and parameters.
 
         :param basin_num:      basin number as an integer
@@ -113,12 +120,16 @@ class CalibrateManaged:
             self.historical_mode = historical_mode
             self.hist_channel_storage_file = hist_channel_storage_file
             self.hist_channel_storage_varname = hist_channel_storage_varname
+            self.routing_spinup = routing_spinup
+            self.repetitions = repetitions
 
         else:
             self.start_year = config_obj.StartYear
             self.end_year = config_obj.EndYear
             self.nmonths = config_obj.nmonths
             self.reference_data = DataReference(config=config_obj)
+            self.routing_spinup = config_obj.routing_spinup
+            self.repetitions = config_obj.repetitions
 
             self.flow_distance_file = config_obj.flow_distance
             self.flow_direction_file = config_obj.flow_direction
@@ -140,7 +151,6 @@ class CalibrateManaged:
         self.set_calibrate = set_calibrate
         self.obs_unit = obs_unit
         self.out_dir = out_dir
-        self.gen = gen
         self.nChains = nchains
 
         # load calibration data
@@ -359,8 +369,10 @@ class CalibrateManaged:
             self.str_velocity = self.str_v * pars[5]
             self.chs_prev = self.routing_data.chs_prev
 
-            self.dsid = routing_mod.downstream(self.reference_data.coords, self.flow_dir, self.s)
-            self.upid = routing_mod.upstream(self.reference_data.coords, self.dsid, self.s)
+            self.dsid = routing_mod.downstream(self.reference_data.coords, self.flow_dir, CalibrateManaged.NGRIDROW,
+                                               CalibrateManaged.NGRIDCOL)
+            self.upid = routing_mod.upstream(self.reference_data.coords, self.dsid, CalibrateManaged.NGRIDROW,
+                                               CalibrateManaged.NGRIDCOL)
             self.um, self.up = routing_mod.upstream_genmatrix(self.upid)
 
             # routing initializations
@@ -384,10 +396,7 @@ class CalibrateManaged:
             self.routing_timestep = 3 * 3600  # seconds
 
             # spin up run
-            # for nm in range(self.s.routing_spinup):
-            mm_month = 120
-
-            for nm in range(mm_month):
+            for nm in range(self.routing_spinup):
 
                 sr = routing_mod.streamrouting(self.flow_dist,
                                                self.chs_prev,
@@ -430,10 +439,8 @@ class CalibrateManaged:
                     self.Sini = self.ResStorage[:, nm]
 
             # simulation run
-            mm_month = 240
-            for nm in range(mm_month):
+            for nm in range(self.nmonths):
 
-                # for nm in range(self.s.nmonths ):
                 sr = routing_mod.streamrouting(self.flow_dist,
                                                self.chs_prev,
                                                self.instream_flow,
@@ -482,12 +489,18 @@ class CalibrateManaged:
 
 
     @staticmethod
-    def objectivefunction(simulation, evaluation):
+    def objectivefunction(simulation, evaluation, method='sceua'):
         """Calculates Model Performance.
         Objective function to be minimized (if sceua is used) and maximized (all others)
 
         """
-        return spotpy.objectivefunctions.kge(evaluation, simulation)
+        # sceua requires minimization which will result in a negative KGE
+        if method == 'sceua':
+            multiplier = -1
+        else:
+            multiplier = 1
+
+        return spotpy.objectivefunctions.kge(evaluation, simulation) * multiplier
 
     def evaluation(self):
         """observed streamflow data"""
@@ -504,23 +517,19 @@ class CalibrateManaged:
         obtain optimized parameters of ABCD(a, b, c, d, m) and Water management (beta and c)
 
         """
-        # self.best_params = self.bestParams_combination()
-        sampler = spotpy.algorithms.demcz(self,
+        sampler = spotpy.algorithms.sceua(self,
                                           dbname=self.ModelPerformance,
                                           dbformat="csv",
-                                          dbappend=True,
-                                          save_sim=False)  # , parallel='mpi')#demcz  sceua
+                                          dbappend=False,
+                                          save_sim=False)
 
-        sampler.sample(self.gen)  # ,nChains=self.nChains)
-
-        # get the results of the sampler
+        sampler.sample(self.repetitions, ngs=50, kstop=100, peps=1e-4, pcento=1e-4)
 
         print('Result using optimal parameters:')
         self.best_params = self.bestParams_combination()
 
         print(self.best_params)
 
-        # self.simulation(self.best_params)
         qsimulated, qobserved, kge_cal, kge_val = self.calibration_run(self.best_params)
 
     def calibration_run(self, x):
@@ -583,3 +592,19 @@ def get_calib_data(performance_file):
     perf_calib[:, 0] = perf_calib[:, 0]
     
     return perf_calib
+
+
+def plot_kge(calibration_result_file, output_file_name, dpi=300, figsize=(9, 5)):
+    """Plot the KGE result of a calibrated basin"""
+
+    # load results
+    results = spotpy.analyser.load_csv_results(calibration_result_file)
+
+    # create plot
+    fig = plt.figure(1, figsize=figsize)
+    plt.plot(results['like1'] * -1)
+    plt.ylabel('KGE')
+    plt.xlabel('Repetition')
+    fig.savefig(output_file_name, dpi=dpi)
+
+    return plt

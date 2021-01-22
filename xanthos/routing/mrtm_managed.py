@@ -20,7 +20,8 @@ import scipy.sparse as sparse
 
 
 def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM, UP, Sini, wdirr, irrmean, mtifl, ppose, cpa,
-                  HP_Release_LUT, HP_maxRelease, WConsumption, c, Sini_resv, res_flag):
+                  HP_Release_LUT, HP_maxRelease, WConsumption, c, Sini_resv, res_flag, ncell=67420, ngridrow=360,
+                  ngridcol=720):
     """
     Convert runoff to routed streamflow.
 
@@ -210,7 +211,7 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM, UP, Sini, wdirr, irrmea
             # compare current state of storage to look-up table
             Sf =  (Sstaten) >= (Percent_sa)
             HP_Release_possiblities = HPlut_Max_release*Sf
-            HP_Rf = np.max(HP_Release_possiblities,axis=1)
+            HP_Rf = np.max(HP_Release_possiblities, axis=1)
 
             # Final release from the HP reservoirs
             Rf[ind6] = HP_Rf[ind6]
@@ -262,10 +263,10 @@ def streamrouting(L, S0, F0, ChV, q, area, nday, dt, UM, UP, Sini, wdirr, irrmea
     return S , Favg, F ,Qin_Channel_avg, Qout_channel_avg,  Qin_res_avg, Qout_res_avg, Sending
 
 
-def downstream(coord, flowdir, settings):
+def downstream(coord, flowdir, ngridrow, ngridcol):
     """Generate downstream cell ID matrix"""
 
-    gridmap = np.zeros((settings.ngridrow, settings.ngridcol), dtype=int, order='F')
+    gridmap = np.zeros((ngridrow, ngridcol), dtype=int, order='F')
     # Insert grid cell ID to 2D grid index position
     gridmap[coord[:, 4].astype(int) - 1, coord[:, 3].astype(int) - 1] = coord[:, 0]
 
@@ -278,15 +279,15 @@ def downstream(coord, flowdir, settings):
 
     # Fix cells that are pointing off the edge of the full grid, if any.
     # Wrap the longitude
-    bad = (fdlon < 0) | (fdlon > (settings.ngridcol - 1))
-    fdlon[bad] = np.mod(fdlon[bad] + 1, settings.ngridcol)
+    bad = (fdlon < 0) | (fdlon > (ngridcol - 1))
+    fdlon[bad] = np.mod(fdlon[bad] + 1, ngridcol)
     # Set bad latitudes to point at self, which will be detected as an outlet below.
-    bad = (fdlat < 0) | (fdlat > (settings.ngridrow - 1))
+    bad = (fdlat < 0) | (fdlat > (ngridrow - 1))
     fdlat[bad] = ilat[bad]
     fdlon[bad] = ilon[bad]
 
     # Get index of the downstream cell.
-    tmp = np.ravel_multi_index((fdlat, fdlon), (settings.ngridrow, settings.ngridcol), order='F')
+    tmp = np.ravel_multi_index((fdlat, fdlon), (ngridrow, ngridcol), order='F')
     tmpGM = np.ravel(gridmap, order='F')
     dsid = tmpGM[tmp]
 
@@ -300,7 +301,7 @@ def downstream(coord, flowdir, settings):
     return dsid
 
 
-def upstream(coord, downstream, settings):
+def upstream(coord, downstream, ngridrow, ngridcol):
     """Return a matrix of ngrid x 9 values.
     For each cell, the first 8 values are the cellIDs neighbor cells.
     The 9th is the number of neighbor cells that actually flow into the center cell.
@@ -312,7 +313,7 @@ def upstream(coord, downstream, settings):
     if N==3, then id1, id2, ad id3 flow into the center cell; the others don't.
     Many cells will not have a full complement of neighbors. These missing neighbors are given the ID 0 """
 
-    gridmap = np.zeros((settings.ngridrow, settings.ngridcol), dtype=int, order='F')
+    gridmap = np.zeros((ngridrow, ngridcol), dtype=int, order='F')
     # Insert grid cell ID to 2D grid index position
     gridmap[coord[:, 4].astype(int) - 1, coord[:, 3].astype(int) - 1] = coord[:, 0]  # 1-67420
 
@@ -327,11 +328,11 @@ def upstream(coord, downstream, settings):
     for nbr in range(8):
         r = coord[:, 4].astype(int) - 1 + rowoff[nbr]
         c = coord[:, 3].astype(int) - 1 + coloff[nbr]
-        goodnbr = (r >= 0) & (c >= 0) & (r <= settings.ngridrow - 1) & (c <= settings.ngridcol - 1)
+        goodnbr = (r >= 0) & (c >= 0) & (r <= ngridrow - 1) & (c <= ngridcol - 1)
 
         if goodnbr.any():
             tmp = np.ravel_multi_index(
-                (r[goodnbr], c[goodnbr]), (settings.ngridrow, settings.ngridcol), order='F')
+                (r[goodnbr], c[goodnbr]), (ngridrow, ngridcol), order='F')
             tmpGM = np.ravel(gridmap, order='F')
             upcells[goodnbr, nbr] = tmpGM[tmp]
 

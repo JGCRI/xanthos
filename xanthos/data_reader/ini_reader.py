@@ -514,6 +514,7 @@ class ConfigReader:
         self.cal_observed = calibration_config['observed']
         self.obs_unit = self.ck_obs_unit(self.set_calibrate, calibration_config['obs_unit'])
         self.calib_out_dir = self.create_dir(calibration_config['calib_out_dir'])
+        self.repetitions = int(calibration_config.get('repetitions', 100))
 
         try:
             self.cal_basins = calibration_config['calibration_basins']
