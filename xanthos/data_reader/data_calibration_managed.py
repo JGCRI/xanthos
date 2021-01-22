@@ -31,7 +31,10 @@ class DataCalibrationManaged(DataReference):
             super().__init__(nmonths=self.nmonths)
 
             # use basin-level flow as target for calibration; select only columns for basin number and runoff
-            self.cal_obs = self.load_data(cal_observed, 0)[:, [0, 3]]
+            try:
+                self.cal_obs = self.load_data(cal_observed, 0)[:, [0, 3]]
+            except AttributeError:
+                pass
 
             # load dam and other input data
             self.purpose = np.load(purpose_file)
@@ -56,7 +59,10 @@ class DataCalibrationManaged(DataReference):
             super().__init__(nmonths=self.nmonths)
 
             # use basin-level flow as target for calibration; select only columns for basin number and runoff
-            self.cal_obs = self.load_data(self.config_obj.cal_observed, 0)[:, [0, 3]]
+            try:
+                self.cal_obs = self.load_data(self.config_obj.cal_observed, 0)[:, [0, 3]]
+            except AttributeError:
+                pass
 
             # load dam and other input data
             self.purpose = np.load(self.config_obj.purpose_file)

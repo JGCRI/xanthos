@@ -93,7 +93,7 @@ class Components(DataUtils):
             self.data_gwam = DataGwam(config, self.data_reference.area, self.data_reference.region_ids,
                                       self.data_reference.country_ids, self.data_reference.basin_ids)
 
-        elif self.s.runoff_module == 'abcd':
+        elif self.s.runoff_module in ('abcd', 'abcd_managed'):
             self.data_abcd = DataAbcd(config)
 
         # routing
@@ -122,6 +122,7 @@ class Components(DataUtils):
             self.chs_prev = None
 
             self.data_mrtm_managed = DataMrtmManaged(config_obj=config)
+            self.calib_data = DataCalibrationManaged(config_obj=self.s)
 
         # outputs
         self.PET = np.zeros(shape=(self.s.ncell, self.s.nmonths))
@@ -166,9 +167,15 @@ class Components(DataUtils):
         elif self.s.runoff_module == 'abcd':
             import xanthos.runoff.abcd as runoff_mod
 
+        elif self.s.runoff_module == 'abcd_managed':
+            import xanthos.runoff.abcd_managed as runoff_mod
+
         # import desired module for Routing
         if self.s.routing_module == 'mrtm':
             import xanthos.routing.mrtm as routing_mod
+
+        elif self.s.routing_module == 'mrtm_managed':
+            import xanthos.routing.mrtm_managed as routing_mod
 
     def prep_pet(self, nm):
         """
@@ -254,6 +261,31 @@ class Components(DataUtils):
 
             self.PET, self.AET, self.Q, self.Sav = rg
 
+        elif self.s.runoff_module == 'abcd_managed':
+
+            self.params = [self.s.a_param, self.s.b_param, self.s.c_param, self.s.d_param, self.s.m_param]
+
+            ncell_in_basin = len(self.calib_data.basin_ids)
+
+            self.target_basin_ids = np.zeros(ncell_in_basin)
+
+            he = runoff_mod.AbcdManaged(pars=self.params,
+                                        soil_water_initial=np.squeeze(self.calib_data.sm),
+                                        pet=pet,
+                                        precip=self.data_abcd.precip,
+                                        tmin=self.data_abcd.tmin,
+                                        basin_ids=self.target_basin_ids,
+                                        process_steps=self.nmonths,
+                                        spinup_steps=self.s.runoff_spinup,
+                                        method="dist")
+
+            he.emulate()
+
+            self.PET = he.pet.T
+            self.AET = he.actual_et.T
+            self.Q = he.rsim.T
+            self.Sav = he.soil_water_storage.T
+
         else:
 
             # if user is providing a custom runoff file
@@ -311,6 +343,153 @@ class Components(DataUtils):
 
             return self.Avg_ChFlow
 
+        elif self.s.routing_module == 'mrtm_managed':
+
+            # index for gauge station locations
+            self.grdcData_info = np.copy(self.calib_data.grdc_coord_index_file)
+            self.grdc_xanthosID = self.grdcData_info[np.where(self.grdcData_info[:, 0] == self.s.basin_num), 1][0][0] - 1
+
+            # load additional data
+            self.wdirr = np.copy(self.calib_data.total_demand_cumecs)
+            self.irrmean = np.mean(self.wdirr, axis=1)  # mean demand
+            self.ppose = np.copy(self.calib_data.purpose)
+            self.cpa = np.copy(self.calib_data.capacity) * 10 ** 6  # m3
+            self.HP_Release = np.copy(self.calib_data.hp_release)
+            self.WConsumption = np.copy(self.calib_data.water_consumption)
+            self.chs_ini = np.copy(self.calib_data.ini_channel_storage)
+            self.Initial_instream_flow = np.copy(self.calib_data.instream_flow_natural)
+            self.SM = np.squeeze(np.copy(self.calib_data.sm))
+            self.mtifl_natural = np.copy(self.calib_data.mtif_natural)
+            self.maxtifl_natural = np.copy(self.calib_data.maxtif_natural)
+
+            self.flow_dist = self.data_mrtm_managed.flow_dist
+            grid_size = np.sqrt(self.data_reference.area) * 1000
+            nn_grids = np.where(self.flow_dist < grid_size)[0]
+            self.flow_dist[nn_grids] = grid_size[nn_grids]
+
+            self.flow_dir = self.data_mrtm_managed.flow_dir
+
+            self.str_v = self.data_mrtm_managed.str_velocity
+            self.str_v[self.str_v < 0.01] = 0.01
+            self.str_velocity = self.str_v * self.s.beta_param
+
+            self.chs_prev = self.data_mrtm_managed.chs_prev
+
+            self.dsid = routing_mod.downstream(self.data_reference.coords, self.flow_dir, self.data_mrtm_managed.NGRIDROW,
+                                               self.data_mrtm_managed.NGRIDCOL)
+            self.upid = routing_mod.upstream(self.data_reference.coords, self.dsid, self.data_mrtm_managed.NGRIDROW,
+                                             self.data_mrtm_managed.NGRIDCOL)
+            self.um, self.up = routing_mod.upstream_genmatrix(self.upid)
+
+            # routing initializations
+            self.chs_prev = np.squeeze(self.chs_ini)  # initial channel storage in m3
+            self.instream_flow = np.squeeze(self.Initial_instream_flow)  # initial channel flow in m3 /s
+            self.Sini = 0.5 * np.squeeze(self.cpa)  # initial reservoir storage in m3
+            self.res_prev = np.squeeze(self.cpa)  # reservoir storage from t-1 in m3
+
+            # Preallocation for variables to be returned from routing module
+            self.Avg_ChFlow = np.zeros_like(self.data_abcd.precip)  # average channel flow m3/s
+            self.ChStorage = np.zeros_like(self.data_abcd.precip)  # channel storage
+            self.ResStorage = np.zeros_like(self.data_abcd.precip)  # reservoir storage
+            self.Qout_res_avg = np.zeros_like(self.data_abcd.precip)  # reservoir storage
+            self.Qin_res_avg = np.zeros_like(self.data_abcd.precip)  # reservoir storage
+
+            # Reservoir flag
+            self.res_flag = 1  # 1 if with reservoir, 0 without reservoir
+            # routing time step
+            self.routing_timestep = 3 * 3600  # seconds
+
+            # spin up run
+            for nm in range(self.s.routing_spinup):
+
+                sr = routing_mod.streamrouting(self.flow_dist,
+                                               self.chs_prev,
+                                               self.instream_flow,
+                                               self.str_velocity,
+                                               runoff[:, nm],
+                                               self.calib_data.area,
+                                               self.yr_imth_dys[nm, 2],
+                                               self.routing_timestep,
+                                               self.um,
+                                               self.up,
+                                               self.Sini,
+                                               self.wdirr[:, nm],
+                                               self.irrmean,
+                                               self.mtifl_natural,
+                                               self.ppose,
+                                               self.cpa,
+                                               self.HP_Release[:, :, np.mod(nm, 12)],
+                                               self.maxtifl_natural,
+                                               self.WConsumption[:, nm],
+                                               self.s.alpha_param,
+                                               self.res_prev,
+                                               self.res_flag)
+
+                (self.ChStorage[:, nm],
+                 self.Avg_ChFlow[:, nm],
+                 self.instream_flow,
+                 self.Qin_Channel_avg,
+                 self.Qout_channel_avg,
+                 self.Qin_res_avg[:, nm],
+                 self.Qout_res_avg[:, nm],
+                 self.ResStorage[:, nm]) = sr
+
+                # update data
+                self.chs_prev = np.copy(self.ChStorage[:, nm])
+                self.res_prev = np.copy(self.ResStorage[:, nm])
+
+                # update the reservoir storage at beginning of year
+                if np.mod(nm, 12) == 11:
+                    self.Sini = self.ResStorage[:, nm]
+
+            # simulation run
+            for nm in range(self.nmonths):
+
+                sr = routing_mod.streamrouting(self.flow_dist,
+                                               self.chs_prev,
+                                               self.instream_flow,
+                                               self.str_velocity,
+                                               runoff[:, nm],
+                                               self.calib_data.area,
+                                               self.yr_imth_dys[nm, 2],
+                                               self.routing_timestep,
+                                               self.um,
+                                               self.up,
+                                               self.Sini,
+                                               self.wdirr[:, nm],
+                                               self.irrmean,
+                                               self.mtifl_natural,
+                                               self.ppose,
+                                               self.cpa,
+                                               self.HP_Release[:, :, np.mod(nm, 12)],
+                                               self.maxtifl_natural,
+                                               self.WConsumption[:, nm],
+                                               self.s.alpha_param,
+                                               self.res_prev,
+                                               self.res_flag)
+
+                (
+                    self.ChStorage[:, nm],
+                    self.Avg_ChFlow[:, nm],
+                    self.instream_flow,
+                    self.Qin_Channel_avg,
+                    self.Qout_channel_avg,
+                    self.Qin_res_avg[:, nm],
+                    self.Qout_res_avg[:, nm],
+                    self.ResStorage[:, nm],
+                ) = sr
+
+                # update channel storage (chs) arrays for next step
+                # update data
+                self.chs_prev = np.copy(self.ChStorage[:, nm])
+                self.res_prev = np.copy(self.ResStorage[:, nm])
+
+                # update the reservoir storage at beginning of year
+                if np.mod(nm, 12) == 11:
+                    self.Sini = self.ResStorage[:, nm]
+
+        return self.Avg_ChFlow[self.grdc_xanthosID, :]
+
     def simulation(self, run_pet, run_runoff, run_routing, pet_num_steps=0, runoff_num_steps=0, routing_num_steps=0,
                    notify='simulation'):
         """
@@ -343,7 +522,7 @@ class Components(DataUtils):
 
             # Calculate PET step by step
             if pet_num_steps > 0:
-                pet_out = np.zeros_like(self.data.precip)
+                pet_out = np.zeros_like(self.data_abcd.precip)
 
                 for nm in range(pet_num_steps):
 

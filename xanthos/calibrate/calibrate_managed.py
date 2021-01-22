@@ -47,6 +47,8 @@ class CalibrateManaged:
     LBA = 1.0
     UB2 = 10.0
 
+    PARAMETER_NAMES = ['a', 'b', 'd', 'm', 'beta', 'alpha']
+
     def __init__(self,
                  basin_num,
                  basin_ids,
@@ -152,6 +154,8 @@ class CalibrateManaged:
         self.obs_unit = obs_unit
         self.out_dir = out_dir
         self.nChains = nchains
+
+        self.parameternames = CalibrateManaged.PARAMETER_NAMES
 
         # load calibration data
         self.calib_data = DataCalibrationManaged(config_obj=config_obj,
@@ -597,8 +601,14 @@ def get_calib_data(performance_file):
 def plot_kge(calibration_result_file, output_file_name, dpi=300, figsize=(9, 5)):
     """Plot the KGE result of a calibrated basin"""
 
+    split_extension = os.path.splitext(calibration_result_file)
+    if len(split_extension) > 1:
+        f = split_extension[0]
+    else:
+        f = calibration_result_file
+
     # load results
-    results = spotpy.analyser.load_csv_results(calibration_result_file)
+    results = spotpy.analyser.load_csv_results(f)
 
     # create plot
     fig = plt.figure(1, figsize=figsize)

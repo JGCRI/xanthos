@@ -355,13 +355,20 @@ class ConfigReader:
             except KeyError:
                 self.PrecipVarName = None
 
-        elif self.runoff_module == 'abcd':
+        elif self.runoff_module in ('abcd', 'abcd_managed'):
 
-            ro_mod = runoff_config['abcd']
+            ro_mod = runoff_config[self.runoff_module]
             self.ro_model_dir = os.path.join(self.RunoffDir, ro_mod['runoff_dir'])
             self.calib_file = os.path.join(self.ro_model_dir, ro_mod['calib_file'])
             self.runoff_spinup = int(ro_mod['runoff_spinup'])
             self.ro_jobs = int(ro_mod['jobs'])
+
+            # get parameters
+            self.a_param = float(ro_mod.get('a', 0.0))
+            self.b_param = float(ro_mod.get('b', 0.0))
+            self.c_param = float(ro_mod.get('c', 0.0))
+            self.d_param = float(ro_mod.get('d', 0.0))
+            self.m_param = float(ro_mod.get('m', 0.0))
 
             try:
                 self.PrecipitationFile = ro_mod['PrecipitationFile']
@@ -401,7 +408,7 @@ class ConfigReader:
 
         self.routing_module = routing_config['routing_module'].lower()
 
-        if self.routing_module == 'mrtm':
+        if self.routing_module in ('mrtm', 'mrtm_managed'):
             rt_mod = routing_config[self.routing_module]
             self.rt_model_dir = os.path.join(self.RoutingDir, rt_mod['routing_dir'])
 
@@ -422,6 +429,10 @@ class ConfigReader:
             self.maxtif_natural_file = os.path.join(self.rt_model_dir, rt_mod['maxtif_natural_file'])
             self.total_demand_cumecs_file = os.path.join(self.rt_model_dir, rt_mod['total_demand_cumecs_file'])
             self.grdc_coord_index_file = os.path.join(self.rt_model_dir, rt_mod['grdc_coord_index_file'])
+
+            # parameters
+            self.beta_param = float(rt_mod.get('beta', 0.0))
+            self.alpha_param = float(rt_mod.get('alpha', 0.0))
 
             try:
                 self.routing_spinup = int(rt_mod['routing_spinup'])
@@ -511,7 +522,7 @@ class ConfigReader:
         """Configure calibration settings."""
 
         self.set_calibrate = int(calibration_config['set_calibrate'])
-        self.cal_observed = calibration_config['observed']
+        self.cal_observed = calibration_config.get('observed', None)
         self.obs_unit = self.ck_obs_unit(self.set_calibrate, calibration_config['obs_unit'])
         self.calib_out_dir = self.create_dir(calibration_config['calib_out_dir'])
         self.repetitions = int(calibration_config.get('repetitions', 100))
