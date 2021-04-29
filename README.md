@@ -18,9 +18,11 @@ Figure:  Xanthos 2.0 performance when calibrated to the VIC model forced by WATC
 
 # Get Started with Xanthos
 Set up Xanthos using the following steps:
-1.  Clone Xanthos into your desired location `git clone https://github.com/JGCRI/xanthos.git`.
-2.  From the directory you cloned Xanthos into run `python setup.py install`.
-3.  Download the example data using the following in a Python prompt:
+1.  Install Xanthos from GitHub using:
+    ```bash
+    python -m pip install git+https://github.com/JGCRI/xanthos.git
+    ```
+2.  Download the example data using the following in a Python prompt:
     ```python
     import xanthos
     
@@ -28,10 +30,21 @@ Set up Xanthos using the following steps:
     data_dir = "<my data download location>"
     
     # download and unzip the package data to your local machine
-    xanthos.get_package_data(data_dir)```
-4.  Setup your configuration file (.ini).  Examples are located in the "example" directory.  Be sure to change the root directory to the directory that holds your data (use the `xanthos/example` directory as an example).
-5. If running Xanthos from an IDE:  Be sure to include the path to your config file.  See the "xanthos/example/example.py" script as a reference.
-6. If running Xanthos from terminal:  Run model.py found in xanthos/xanthos/model.py passing the full path to the config file as the only argument. (e.g., `python model.py <dirpath>/config.ini`).
+    xanthos.get_package_data(data_dir)
+    ```
+3.  Setup your configuration file (.ini).  Examples are located in the "example" directory that you just downloaded.  Be sure to change the following variables to represent the local path to your example data:  `RootDir`, `TempMinFile`, `PrecipitationFile`.
+4.  To run Xanthos:
+
+    ```python
+    import xanthos
+    
+    # the path and file name that my example configuration (.ini) file was downloaded to
+    config_file = '<path to my example config file>/pm_abcd_mrtm.ini'
+    
+    # run Xanthos 
+    xanthos.run_model(config_file)
+    ```
+
 
 # Setting up a Xanthos run
 A detailed Wiki set up to describe how to set up a Xanthos run can be viewed here:  https://github.com/JGCRI/xanthos/wiki/Tutorial-1:--Setting-up-a-Xanthos-run

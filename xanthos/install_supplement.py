@@ -1,7 +1,7 @@
-import argparse
 import os
-import requests
 import zipfile
+
+import requests
 
 from pkg_resources import get_distribution
 from io import BytesIO as BytesIO
@@ -38,7 +38,7 @@ class InstallSupplement:
             raise(msg.format(current_version))
 
         # retrieve content from URL
-        print("Downloading example data for Xanthos version {}".format(current_version))
+        print("Downloading example data for Xanthos version {}...".format(current_version))
         r = requests.get(data_link)
 
         with zipfile.ZipFile(BytesIO(r.content)) as zipped:
@@ -61,16 +61,6 @@ def get_package_data(example_data_directory):
 
     """
 
-    zen = InstallSupplement(args.example_data_directory)
+    zen = InstallSupplement(example_data_directory)
 
     zen.fetch_zenodo()
-
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    help_msg = 'Full path to the directory you wish to install the Xanthos example data to.'
-    parser.add_argument('example_data_directory', type=str, help=help_msg)
-    args = parser.parse_args()
-
-    zen = InstallSupplement(args.example_data_directory)
