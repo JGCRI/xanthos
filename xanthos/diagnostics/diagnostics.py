@@ -15,7 +15,7 @@ Copyright (c) 2018, Battelle Memorial Institute
 import numpy as np
 import os
 import pandas as pd
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 class Diagnostics:

@@ -108,6 +108,19 @@ class Xanthos:
             logger.removeHandler(handler)
 
 
+def run_model(config_file):
+    """Run the Xanthos model based on a user-defined configuration.
+
+    :param config_file:                 Full path with file name and extension to the input configuration file.
+    :type config_file:                  str
+
+    """
+
+    xth = Xanthos(config_file)
+
+    xth.execute()
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
