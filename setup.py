@@ -33,4 +33,5 @@ setup(
     long_description=readme(),
     install_requires=get_requirements(),
     python_requires='>=3.6',
+    include_package_data=True
 )
