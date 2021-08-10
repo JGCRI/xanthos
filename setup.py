@@ -16,21 +16,25 @@ def readme():
         return f.read()
 
 
-def get_requirements():
-    with open('requirements.txt') as f:
-        return f.read().split()
-
-
 setup(
     name='xanthos',
-    version='2.4.0',
+    version='2.4.1',
     packages=find_packages(),
-    url='https://github.com/jgcri/xanthos',
-    license='BSD 2-Clause',
-    author='Chris R. Vernon; Xinya Li',
+    url='https://github.com/JGCRI/xanthos',
+    license='BSD2-Simplified',
+    author='Chris R. Vernon',
     author_email='chris.vernon@pnnl.gov',
-    description='A global hydrologic modeling framework for GCAM',
+    description='A global hydrologic modeling framework',
     long_description=readme(),
-    install_requires=get_requirements(),
+    long_description_content_type="text/markdown",
+    install_requires=[
+        "numpy~=1.19.4",
+        "scipy>=1.6",
+        "pandas~=1.1.4",
+        "configobj>=5.0.6",
+        "joblib~=1.0.1",
+        "matplotlib~=3.4.2",
+    ],
     python_requires='>=3.6',
+    include_package_data=True
 )
