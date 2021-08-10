@@ -5,9 +5,9 @@ Xanthos is an open-source hydrologic model, written in Python, designed to quant
 
 # Get Started with Xanthos
 Set up Xanthos using the following steps:
-1.  Install Xanthos from GitHub using:
+1.  Install Xanthos from PyPi using:
     ```bash
-    python -m pip install git+https://github.com/JGCRI/xanthos.git
+    pip install xanthos
     ```
 2.  Download the example data using the following in a Python prompt:
     ```python
