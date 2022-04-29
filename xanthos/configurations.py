@@ -59,7 +59,7 @@ class ConfigRunner:
         """
         # acceptable components to run
         PET_COMPONENTS = ['hs', 'hargreaves', 'pm', 'thornthwaite']
-        RUNOFF_COMPONENTS = ['abcd', 'gwam']
+        RUNOFF_COMPONENTS = ['abcd', 'gwam', 'none']
         ROUTING_COMPONENTS = ['mrtm']
 
         # runoff components that need the whole model to do spin-up

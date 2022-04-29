@@ -4,3 +4,4 @@ pandas~=1.1.4
 configobj>=5.0.6
 joblib~=1.0.1
 matplotlib~=3.4.2
+requests~=2.27.1
