@@ -16,7 +16,7 @@ class InstallSupplement:
     """
 
     # URL for DOI minted example data hosted on Zenodo
-    DATA_VERSION_URLS = {'2.4.0': 'https://zenodo.org/record/2578287/files/example.zip?download=1'}
+    DATA_VERSION_URLS = {'2.4.1': 'https://zenodo.org/record/2578287/files/example.zip?download=1'}
 
     def __init__(self, example_data_directory):
 
