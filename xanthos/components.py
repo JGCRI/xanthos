@@ -244,6 +244,7 @@ class Components:
 
             # if user is providing a custom runoff file
             if self.s.alt_runoff is not None:
+                self.PET = pet
                 self.Q = np.load(self.s.alt_runoff)
 
     def calculate_routing(self, runoff):

@@ -72,7 +72,6 @@ Config tag:
 | -------- | ----------- | -------- |
 | runoff_module | The name of the runoff model to be used.  Currently supported:  abcd (for ABCD), gwam (for GWAM), and none (for cases where the user will provide their own runoff input file). | True |
 | runoff_dir | The directory name of the runoff module chosen where its input files are stored | True |
-| runoff_file | Only used if `runoff_module` is set to `none`.  This will be a full path file with extension to the input runoff data in mm/month.  Array must be 2-D, where (gridcell_idx, month_idx).  File must be saved as a NumPy array file (.npy). | False |
 
 ### ABCD
 Config tag:

@@ -3,7 +3,7 @@ import zipfile
 
 import requests
 
-from pkg_resources import get_distribution
+from pkg_resources import get_distribution, DistributionNotFound
 from io import BytesIO as BytesIO
 
 
@@ -28,7 +28,10 @@ class InstallSupplement:
         current Xanthos distribution."""
 
         # get the current version of xanthos that is installed
-        current_version = get_distribution('xanthos').version
+        try:
+            current_version = get_distribution('xanthos').version
+        except DistributionNotFound:
+            current_version = list(InstallSupplement.DATA_VERSION_URLS.keys())[-1]
 
         try:
             data_link = InstallSupplement.DATA_VERSION_URLS[current_version]
