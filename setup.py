@@ -34,6 +34,7 @@ setup(
         "configobj>=5.0.6",
         "joblib~=1.0.1",
         "matplotlib~=3.4.2",
+        "requests"
     ],
     python_requires='>=3.6',
     include_package_data=True
