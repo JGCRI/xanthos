@@ -217,7 +217,7 @@ class OutWriter:
         griddata.description = varstr + "_" + unit
 
         # data
-        griddata[:, :] = data[:, :].copy()
+        griddata[:, :] = data.iloc[:, :].copy()
 
         # close
         datagrp.close()
