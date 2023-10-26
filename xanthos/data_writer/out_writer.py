@@ -16,6 +16,7 @@ import os
 import logging
 import numpy as np
 import pandas as pd
+import xarray as xr
 from scipy import io as spio
 
 FORMAT_NETCDF = 0
@@ -195,32 +196,40 @@ class OutWriter:
 
     def save_netcdf(self, filename, data, varstr):
         """Write numpy array as a NetCDF."""
+
+        # set filename
         filename += ".nc"
 
-        # open
-        datagrp = spio.netcdf.netcdf_file(filename, 'w')
-        (nrows, ncols) = data.shape
-
-        # dimensions
-        datagrp.createDimension('index', nrows)
-
+        # set variables
+        names = data.name.values
         if self.output_in_year:
-            datagrp.createDimension('year', ncols)
-            griddata = datagrp.createVariable('data', 'f4', ('index', 'year'))
+            times = pd.to_datetime(self.time_steps, format='%Y').strftime('%Y')
         else:
-            datagrp.createDimension('month', ncols)
-            griddata = datagrp.createVariable('data', 'f4', ('index', 'month'))
+            times = pd.to_datetime(self.time_steps, format='%Y%m').strftime('%Y-%m')
 
-        # variables
+        # set attributes
         unit = self.out_unit_str
-        griddata.units = unit
-        griddata.description = varstr + "_" + unit
+        attrs = dict(
+            description=varstr + "_" + unit,
+            units=unit
+        )
 
-        # data
-        griddata[:, :] = data.iloc[:, :].copy()
+        # convert dataframe to numpy array
+        arr = data.iloc[:, 1:].transpose().to_numpy()
 
-        # close
-        datagrp.close()
+        # set dimensions
+        spatial = varstr.replace('_runoff', '').lower()
+        if self.output_in_year:
+            temporal = "year"
+        else:
+            temporal = "month"
+        dims = [temporal, spatial]
+
+        # create xarray
+        da = xr.DataArray(data=arr, coords=[times, names], dims=dims, attrs=attrs)
+
+        # save to netcdf
+        da.to_netcdf(path=filename)
 
     def save_parquet(self, filename, df, col_names=None):
         """Write pandas DataFrame to parquet file."""
