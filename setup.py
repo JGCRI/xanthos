@@ -28,12 +28,12 @@ setup(
     long_description=readme(),
     long_description_content_type="text/markdown",
     install_requires=[
-        "numpy~=1.19.4",
+        "numpy>=1.24.4",
         "scipy>=1.6",
-        "pandas~=1.1.4",
-        "configobj>=5.0.6",
-        "joblib~=1.0.1",
-        "matplotlib~=3.4.2",
+        "pandas~=2.0.3",
+        "configobj>=5.0.8",
+        "joblib>=1.3.2",
+        "matplotlib>=3.7.2",
         "xarray>=2023.8.0",
         "requests"
     ],

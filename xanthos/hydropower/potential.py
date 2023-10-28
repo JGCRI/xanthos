@@ -33,7 +33,7 @@ def HydropowerPotential(settings, q_grids):
     q_ex_h = settings.ef * sww * q_grids_ * av_hours_in_month * watthr_to_twh
 
     # Multiply by elevation difference (head) to get energy (TWh)
-    e_grids = q_ex_h * hyd_grid_data["elevD"][:, np.newaxis]
+    e_grids = q_ex_h * hyd_grid_data["elevD"].to_numpy()[:, np.newaxis]
 
     e_grids_ = pd.DataFrame(e_grids.T)
 
