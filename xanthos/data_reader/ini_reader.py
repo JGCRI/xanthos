@@ -603,5 +603,5 @@ class ConfigReader:
         """
         for k, v in args.items():
             if not hasattr(self, k):
-                print('Warning: {} is not a valid parameter'.format(k))
+                logging.warning('{} is not a valid parameter'.format(k))
             setattr(self, k, v)
