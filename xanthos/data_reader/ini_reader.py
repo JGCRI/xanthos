@@ -568,7 +568,7 @@ class ConfigReader:
     def create_dir(pth):
         """Check to see if the target path is exists and create directory."""
         if os.path.isdir(pth) is False:
-            os.mkdir(pth)
+            os.makedirs(pth, exist_ok=True)
         return pth
 
     def log_info(self):

@@ -65,11 +65,12 @@ Vernon, C.R., Hejazi, M.I., Turner, S.W.D., Liu, Y., Braun, C.J., Li, X. and Lin
 
 # Related Publications
 
-* Abeshu, G. W., Tian, F., Wild, T., Zhao, M., Turner, S., Chowdhury, A. F. M. K., Vernon, C. R., Hu, H., Zhuang, Y., Hejazi, M., and Li, H.-Y. (2023). Enhancing the representation of water management in global hydrological models, Geosci. Model Dev. Discuss. https://doi.org/10.5194/gmd-2023-12.
-* Chowdhury, K., Wessel, J., Wild, T.B., Lamontagne, J., Kanyako, F. (2023). Exploring Sustainable Electricity System Development Pathways in South America’s MERCOSUR Sub-Region. Energy Strategy Reviews. https://doi.org/10.1016/j.esr.2023.101150.
-* Khan, Z., Thompson, I., Vernon, C., Graham, N., Chen, M., Wild, T.B. (2023). A global 0.5° gridded multi-sector monthly water withdrawal dataset for 2015-2100 under alternative futures. Nature Scientific Data. https://doi.org/10.1038/s41597-023-02086-2.
+* Abeshu, G. W., Tian, F., Wild, T., Zhao, M., Turner, S., Chowdhury, A. F. M. K., Vernon, C. R., Hu, H., Zhuang, Y., Hejazi, M., and Li, H.-Y. (2023). Enhancing the representation of water management in global hydrological models, Geosci. Model Dev. Discuss. DOI: https://doi.org/10.5194/gmd-2023-12.
+* Chowdhury, K., Wessel, J., Wild, T.B., Lamontagne, J., Kanyako, F. (2023). Exploring Sustainable Electricity System Development Pathways in South America’s MERCOSUR Sub-Region. Energy Strategy Reviews. DOI: https://doi.org/10.1016/j.esr.2023.101150.
+* Khan, Z., Thompson, I., Vernon, C., Graham, N., Chen, M., Wild, T.B. (2023). A global 0.5° gridded multi-sector monthly water withdrawal dataset for 2015-2100 under alternative futures. Nature Scientific Data. DOI: https://doi.org/10.1038/s41597-023-02086-2.
 * Kanyako, F., Baker, E., Lamontagne, J., Turner, S., Wild, T.B. (2022). Seasonality and Trade in Hydro-heavy Electricity Markets: The West Africa Power Pool (WAPP). Applied Energy. DOI: https://doi.org/10.1016/j.apenergy.2022.120214.
 * Birnbaum, A.N., Lamontagne, J.R., Wild, T.B., Dolan, F., Yarlagadda, B. (2022). Drivers of Physical and Economic Water Scarcity in Latin America and the Caribbean. Earth’s Future. DOI: https://doi.org/10.1029/2022EF002764.
-* Liu, Y., Hejazi, M., Li, H., Zhang, X., and Leng, G. (2018). A hydrological emulator for global applications – HE v1.0.0, Geosci. Model Dev., 11, 1077–1092, https://doi.org/10.5194/gmd-11-1077-2018.
+* Liu, Y., Hejazi, M., Li, H., Zhang, X., and Leng, G. (2018). A hydrological emulator for global applications – HE v1.0.0, Geosci. Model Dev., 11, 1077–1092. DOI: https://doi.org/10.5194/gmd-11-1077-2018.
 * Turner, S.W., Ng, J.Y. and Galelli, S. (2017). Examining global electricity supply vulnerability to climate change using a high-fidelity hydropower dam model. Science of the Total Environment, 590: 663–675. DOI: https://doi.org/10.1016/j.scitotenv.2017.03.022.
 * Turner, S.W., Hejazi, M., Kim, S.H., Clarke, L., Edmonds, J. (2017). Climate impacts on hydropower and consequences for global electricity supply investment needs. Energy, 141: 2081–2090. DOI: https://doi.org/10.1016/j.energy.2017.11.089.
+* Wang, J., Duan, Y., Jiang, H. and Wang, C., 2024. China's energy-water-land system co-evolution under carbon neutrality goal and climate impacts. Journal of Environmental Management, 352, p.120036. DOI: https://doi.org/10.1016/j.jenvman.2024.120036
