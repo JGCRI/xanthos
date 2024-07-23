@@ -126,8 +126,8 @@ class Diagnostics:
         agg_df.set_index('id', inplace=True)
 
         # Add global total as top row
-        agg_df.loc[-1, 'name'] = 'Global'
-        agg_df.loc[-1, 1:] = agg_df.sum(numeric_only=True)
+        agg_df.iloc[-1, agg_df.columns.get_loc('name')] = 'Global'
+        agg_df.iloc[-1, 1:] = agg_df.sum(numeric_only=True)
         agg_df.index = agg_df.index + 1
         agg_df = agg_df.sort_index()
 
@@ -135,7 +135,7 @@ class Diagnostics:
         output_name = os.path.join(self.output_folder, file_name)
 
         # Write out as .csv, replacing nan values with zero
-        agg_df.to_csv(output_name + '.csv', na_rep=0, index=False)
+        agg_df.to_csv(output_name + '.csv', na_rep='0', index=False)
 
         # self.plot_diagnostics(qs[1:, :], output_name, scale)
 

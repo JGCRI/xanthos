@@ -8,7 +8,6 @@ Modified:
 @author: Xinya Li (xinya.li@pnl.gov), Chris R. Vernon (chris.vernon@pnnl.gov)
 @Project: Xanthos V2.0
 
-
 License:  BSD 2-Clause, see LICENSE and DISCLAIMER files
 
 Copyright (c) 2018, Battelle Memorial Institute

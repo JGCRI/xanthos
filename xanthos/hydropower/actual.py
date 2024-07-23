@@ -86,6 +86,7 @@ class HydropowerActual:
         # write output
         self.write_output()
 
+
     @staticmethod
     def find_nearest(array, value):
         """Get value from within an array closest to a value."""
@@ -101,8 +102,7 @@ class HydropowerActual:
         """Get the grid location of a dam based on longitude/latitude."""
         lon = self.find_nearest(self.loc_refs["long"], longlat["LONG_DD"])
         lat = self.find_nearest(self.loc_refs["lati"], longlat["LAT_DD"])
-        return int((self.loc_refs[(self.loc_refs["long"] == lon) & (self.loc_refs["lati"] == lat)]["ID"]).iloc[0])
-
+        return int(self.loc_refs[(self.loc_refs["long"] == lon) & (self.loc_refs["lati"] == lat)]["ID"].iloc[0])
     def get_drain_area(self, x, drainage_area):
         """Get drainage area implied by the routing network."""
         lonseq = np.unique(self.loc_refs["long"])
