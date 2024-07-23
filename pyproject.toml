@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xanthos"
+version = "2.4.1"
+description = "A global hydrologic modeling framework"
+readme = "README.md"
+readme-content-type = "text/markdown"
+requires-python = ">=3.6"
+license = {file = "LICENSE"}
+authors = [
+    { name = "Chris R. Vernon", email = "chris.vernon@pnnl.gov" }
+]
+urls = { "Homepage" = "https://github.com/JGCRI/xanthos" }
+
+[project.optional-dependencies]
+test = []
+
+[project.dependencies]
+numpy = ">=1.24.4"
+scipy = ">=1.6"
+pandas = "~=2.0.3"
+configobj = ">=5.0.8"
+joblib = ">=1.3.2"
+matplotlib = ">=3.7.2"
+xarray = ">=2023.8.0"
+toml = ">=0.10.2"
+requests = "*"
+
+[project.urls]
+Repository = "https://github.com/JGCRI/xanthos"
+Documentation = "https://github.com/JGCRI/xanthos/wiki"
+
+[tool.hatch.build]
+include = ["README.md"]
