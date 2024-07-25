@@ -14,8 +14,6 @@ authors = [
     { name = "Chris R. Vernon", email = "chris.vernon@pnnl.gov" }
 ]
 urls = { "Homepage" = "https://github.com/JGCRI/xanthos", "Repository" = "https://github.com/JGCRI/xanthos", "Documentation" = "https://github.com/JGCRI/xanthos/wiki" }
-
-[project.dependencies]
 dependencies = [
     "numpy>=1.24.4",
     "scipy>=1.6",
