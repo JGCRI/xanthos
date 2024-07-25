@@ -27,10 +27,5 @@ jobs:
     - name: Upgrade pip
       run: python -m pip install --upgrade pip
 
-    - name: Clone Xanthos repository
-      run: git clone --branch dev-testing https://github.com/JGCRI/xanthos.git
-
     - name: Install Xanthos
-      run: |
-        cd xanthos
-        pip install .
+      run: pip install git+https://github.com/JGCRI/xanthos@dev-testing
