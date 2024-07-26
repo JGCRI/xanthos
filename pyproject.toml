@@ -8,7 +8,7 @@ version = "2.4.1"
 description = "A global hydrologic modeling framework"
 readme = "README.md"
 readme-content-type = "text/markdown"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {file = "LICENSE"}
 authors = [
     { name = "Chris R. Vernon", email = "chris.vernon@pnnl.gov" }
