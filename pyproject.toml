@@ -8,20 +8,20 @@ version = "2.4.1"
 description = "A global hydrologic modeling framework"
 readme = "README.md"
 readme-content-type = "text/markdown"
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 license = {file = "LICENSE"}
 authors = [
     { name = "Chris R. Vernon", email = "chris.vernon@pnnl.gov" }
 ]
 urls = { "Homepage" = "https://github.com/JGCRI/xanthos", "Repository" = "https://github.com/JGCRI/xanthos", "Documentation" = "https://github.com/JGCRI/xanthos/wiki" }
 dependencies = [
-    "numpy~=1.19.4",
+    "numpy>=1.19.3,<2",
     "scipy>=1.6",
-    "pandas~=1.1.4",
-    "configobj>=5.0.6",
-    "joblib~=1.0.1",
-    "matplotlib~=3.4.2",
-    "toml>=0.10.2",
+    "pandas>=2.0.3",
+    "configobj>=5.0.8",
+    "joblib>=1.3.2",
+    "matplotlib>=3.5.3",
+    "xarray>=2023.8.0",
     "requests"
 ]
 
