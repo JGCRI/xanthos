@@ -1,4 +1,4 @@
-name: "Xanthos Tests"
+name: "build"
 
 on:
   push:
