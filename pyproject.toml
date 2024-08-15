@@ -28,17 +28,6 @@ dependencies = [
 [project.optional-dependencies]
 test = []
 
-[project.dependencies]
-numpy = ">=1.24.4"
-scipy = ">=1.6"
-pandas = "~=2.0.3"
-configobj = ">=5.0.8"
-joblib = ">=1.3.2"
-matplotlib = ">=3.7.2"
-xarray = ">=2023.8.0"
-toml = ">=0.10.2"
-requests = "*"
-
 [project.urls]
 Repository = "https://github.com/JGCRI/xanthos"
 Documentation = "https://github.com/JGCRI/xanthos/wiki"

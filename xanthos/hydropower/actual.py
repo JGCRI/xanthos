@@ -22,9 +22,9 @@ class HydropowerActual:
     Compute country and GCAM-region level hydropower production time series based on xanthos streamflow output.
 
     Gridded streamflow is used to drive dam simulations for 1593 large dams (~54% global hydropower installed capacity).
-    Each dam is has been pre-assigned an optimized look-up table, which assigns a turbine release at each time step
+    Each dam has been pre-assigned an optimized look-up table, which assigns a turbine release at each time step
     using current reservoir storage, inflow and month of year. Power output time series are summed across dams for each
-    country and scaled up to account for unsimulated capacity (i.e., for dams not represented in the model).
+    country and scaled up to account for non-simulated capacity (i.e., for dams not represented in the model).
     """
 
     secs_in_month = 2629800  # number of seconds in an average month
@@ -34,6 +34,8 @@ class HydropowerActual:
     mwh_to_exajoule = 3.6 * (10 ** -9)  # megawatts to exajoules
 
     def __init__(self, settings, q_grids):
+        print(settings, q_grids)
+
         """Load inputs, run simulation, and output results."""
         self.settings = settings
         self.q_grids = q_grids
@@ -80,12 +82,11 @@ class HydropowerActual:
         # run simulation
         self.hydro_sim()
 
-        # convert power production time series to GCAM region enery production
+        # convert power production time series to GCAM region energy production
         self.to_region()
 
         # write output
         self.write_output()
-
 
     @staticmethod
     def find_nearest(array, value):
@@ -103,6 +104,7 @@ class HydropowerActual:
         lon = self.find_nearest(self.loc_refs["long"], longlat["LONG_DD"])
         lat = self.find_nearest(self.loc_refs["lati"], longlat["LAT_DD"])
         return int(self.loc_refs[(self.loc_refs["long"] == lon) & (self.loc_refs["lati"] == lat)]["ID"].iloc[0])
+
     def get_drain_area(self, x, drainage_area):
         """Get drainage area implied by the routing network."""
         lonseq = np.unique(self.loc_refs["long"])
