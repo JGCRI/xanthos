@@ -28,9 +28,5 @@ dependencies = [
 [project.optional-dependencies]
 test = []
 
-[project.urls]
-Repository = "https://github.com/JGCRI/xanthos"
-Documentation = "https://github.com/JGCRI/xanthos/wiki"
-
 [tool.hatch.build]
 include = ["README.md"]
